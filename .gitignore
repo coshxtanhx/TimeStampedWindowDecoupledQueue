@@ -1,3 +1,9 @@
 RelaxationAlgorithm/
-time_stamped_lateral_queue/build/
-time_stamped_lateral_queue/.vscode
+TimeStampedLateralQueue/build/
+TimeStampedLateralQueue/.vs/
+TimeStampedLateralQueue/*.sln
+TimeStampedLateralQueue/*.vcxproj
+TimeStampedLateralQueue/*.vcxproj.filters
+TimeStampedLateralQueue/*.vcxproj.user
+TimeStampedLateralQueue/TimeStam.7ed6bc86
+TimeStampedLateralQueue/x64

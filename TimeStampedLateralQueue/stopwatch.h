@@ -1,5 +1,5 @@
-#ifndef STOPWATCH_HH
-#define STOPWATCH_HH
+#ifndef STOPWATCH_H
+#define STOPWATCH_H
 
 #include <chrono>
 

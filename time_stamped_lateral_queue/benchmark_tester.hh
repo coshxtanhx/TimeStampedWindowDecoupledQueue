@@ -5,6 +5,7 @@
 #include <thread>
 #include <stdio.h>
 #include "stopwatch.hh"
+#include "benchmark_setting.hh"
 
 namespace benchmark {
 	class Tester;

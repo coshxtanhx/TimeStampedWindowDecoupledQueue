@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include "stopwatch.h"
 #include "benchmark_setting.h"
+#include "microbenchmark_thread_func.h"
 
 namespace benchmark {
-	class Tester;
-	template<class T>
-	using ThreadFunc = void(*)(Tester*, int, int, T*);
+	template<class BenchmarkSetting, class Subject>
+	using ThreadFunc = void(*)(BenchmarkSetting, int, int, Subject*);
 
 	class Tester{
 	public:
@@ -34,7 +34,6 @@ namespace benchmark {
 				switch (microbenchmark_setting_.subject)
 				{
 				case Subject::kLRU:
-					//AddThread(tf, num_thread, subject);
 					break;
 				case Subject::kRR:
 					break;
@@ -49,6 +48,7 @@ namespace benchmark {
 				case Subject::kTSL:
 					break;
 				default:
+					AddThread(MicrobenchmarkFunc<int>, num_thread);
 					break;
 				}
 
@@ -63,12 +63,12 @@ namespace benchmark {
 			}
 		}
 	private:
-		template<class SubjectT>
-		void AddThread(ThreadFunc<SubjectT> thread_func, int num_thread) {
+		template<class Subject>
+		void AddThread(ThreadFunc<MicrobenchmarkSetting, Subject> thread_func, int num_thread) {
 			auto subject = new Subject{};
 			
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
-				threads_.emplace_back(thread_func, this, thread_id, num_thread, subject);
+				threads_.emplace_back(thread_func, microbenchmark_setting_, thread_id, num_thread, subject);
 			}
 
 			for (auto& t : threads_) {

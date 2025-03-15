@@ -3,14 +3,29 @@
 
 #include <utility>
 #include <optional>
-#include "queue_node.h"
+#include <vector>
+#include <chrono>
 #include "ebr.h"
 
 namespace lf::dqrr {
-	using Node = QueueNode;
+	struct Node {
+		Node() = default;
+		Node(int v) : v{ v } {}
+
+		void SetEnqTime() {
+			enq_time = std::chrono::steady_clock::now();
+		}
+
+		Node* volatile next{};
+		uint64_t retire_epoch{};
+		std::chrono::steady_clock::time_point enq_time{};
+		int v{};
+	};
 
 	class PartialQueue {
 	public:
+		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
+
 		void Enq(int v) {
 			auto node = new Node{ v };
 
@@ -119,13 +134,13 @@ namespace lf::dqrr {
 		}
 
 	private:
-		uint64_t GetEnqueuerIndex() {
+		size_t GetEnqueuerIndex() {
 			int rr_id = thread::ID() % b_;
 			auto enq_rr = enq_rrs_[rr_id].fetch_add(1);
 			return enq_rr % queues_.size();
 		}
 
-		uint64_t GetDequeuerIndex() {
+		size_t GetDequeuerIndex() {
 			int rr_id = thread::ID() % b_;
 			auto deq_rr = deq_rrs_[rr_id].fetch_add(1);
 			return deq_rr % queues_.size();

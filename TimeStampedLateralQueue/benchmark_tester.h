@@ -23,8 +23,8 @@ namespace benchmark {
 			Stopwatch stopwatch;
 
 			for (int num_thread = kMaxThread / 8; num_thread <= kMaxThread; num_thread *= 2){
-				if (num_thread == 0) {
-					num_thread = 1;
+				if (num_thread < 4) {
+					num_thread = kMaxThread / 2;
 				}
 				
 				threads_.clear();
@@ -58,6 +58,7 @@ namespace benchmark {
 				auto throughput = microbenchmark_setting_.num_op / elapsed_sec;
 
 				std::printf("   threads: %d\n", num_thread);
+				std::printf("elapsedsec: %.2lf s\n", elapsed_sec);
 				std::printf("throughput: %.2lf MOp/s\n", throughput / 1e6);
 				std::printf("\n");
 			}

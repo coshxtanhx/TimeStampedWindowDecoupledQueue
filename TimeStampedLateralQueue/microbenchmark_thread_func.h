@@ -18,8 +18,9 @@ namespace benchmark {
 
 	void Idle(int contention)
 	{
-		while (contention--) {
-			volatile double pi = ComputePi(560);
+		volatile double pi;
+		for (int i = 0; i < contention; ++i) {
+			pi = ComputePi(560);
 		}
 	}
 
@@ -27,11 +28,13 @@ namespace benchmark {
 	void MicrobenchmarkFunc(MicrobenchmarkSetting setting, int thread_id, int num_thread, QueueT* queue)
 	{
 		auto num_op = setting.num_op / num_thread;
+
 		for (int i = 0; i < num_op; ++i) {
 			auto v = rng.Get(0, 65535);
 			auto op = rng.Get(0, 1);
+			//auto op = 0;
 
-			if (op == 0 or i < setting.num_op / 10000 / num_thread) {
+			if (op == 0 or i < num_op / 10000) {
 				//queue->Enq(v);
 			}
 			else {

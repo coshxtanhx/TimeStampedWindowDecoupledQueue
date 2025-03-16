@@ -25,6 +25,14 @@ namespace lf::dqrr {
 	class PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
+		~PartialQueue() {
+			while (nullptr != head_->next) {
+				Node* t = head_;
+				head_ = head_->next;
+				delete t;
+			}
+			delete head_;
+		}
 
 		void Enq(int v) {
 			auto node = new Node{ v };

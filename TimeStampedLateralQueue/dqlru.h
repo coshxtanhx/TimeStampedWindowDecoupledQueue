@@ -25,6 +25,14 @@ namespace lf::dqlru {
 	class PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
+		~PartialQueue() {
+			while (nullptr != head_->next) {
+				Node* t = head_;
+				head_ = head_->next;
+				delete t;
+			}
+			delete head_;
+		}
 
 		bool TryEnq(Node* node, Node* expected_tail) {
 			while (true) {

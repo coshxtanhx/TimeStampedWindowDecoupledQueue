@@ -2,6 +2,7 @@
 #define BENCHMARK_SETTING_H
 
 #include <fstream>
+#include <array>
 #include <stdio.h>
 
 namespace benchmark{

@@ -16,7 +16,7 @@ namespace lf::dqrr {
 			enq_time = std::chrono::steady_clock::now();
 		}
 
-		Node* volatile next{};
+		Node* volatile next{ nullptr };
 		uint64_t retire_epoch{};
 		std::chrono::steady_clock::time_point enq_time{};
 		int v{};
@@ -50,7 +50,7 @@ namespace lf::dqrr {
 			}
 		}
 
-		std::pair<int, Node*> Deq(EBR<Node>& ebr) {
+		std::pair<int, Node*> TryDeq(EBR<Node>& ebr) {
 			while (true) {
 				auto loc_head = head_;
 				auto loc_tail = tail_;
@@ -86,8 +86,8 @@ namespace lf::dqrr {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
-		Node* volatile head_;
 		Node* volatile tail_;
+		Node* volatile head_;
 	};
 
 	class DQRR {
@@ -110,7 +110,7 @@ namespace lf::dqrr {
 			while (true) {
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto id = (start + i) % queues_.size();
-					auto [value, old_tail] = queues_[id].Deq(ebr_);
+					auto [value, old_tail] = queues_[id].TryDeq(ebr_);
 
 					if (nullptr == old_tail) {
 						ebr_.EndOp();

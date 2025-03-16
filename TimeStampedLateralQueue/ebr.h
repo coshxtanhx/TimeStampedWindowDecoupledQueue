@@ -5,6 +5,7 @@
 #include <vector>
 #include <atomic>
 #include <iostream>
+#include <limits>
 #include "thread.h"
 
 namespace lf {

@@ -3,6 +3,7 @@
 
 #include "benchmark_setting.h"
 #include "random.h"
+#include "thread.h"
 
 namespace benchmark {
 	double ComputePi(int n)
@@ -27,18 +28,19 @@ namespace benchmark {
 	template<class QueueT>
 	void MicrobenchmarkFunc(MicrobenchmarkSetting setting, int thread_id, int num_thread, QueueT* queue)
 	{
+		thread::ID(thread_id);
+
 		auto num_op = setting.num_op / num_thread;
 
 		for (int i = 0; i < num_op; ++i) {
-			auto v = rng.Get(0, 65535);
 			auto op = rng.Get(0, 1);
 			//auto op = 0;
 
 			if (op == 0 or i < num_op / 10000) {
-				//queue->Enq(v);
+				queue->Enq(rng.Get(0, 65535));
 			}
 			else {
-				//v = queue->Deq();
+				auto v = queue->Deq();
 			}
 
 			Idle(setting.contention);

@@ -55,7 +55,7 @@ namespace lf::dqra {
 			}
 		}
 
-		std::pair<int, Node*> Deq(EBR<Node>& ebr) {
+		std::pair<int, Node*> TryDeq(EBR<Node>& ebr) {
 			while (true) {
 				auto loc_head = head_;
 				auto loc_tail = tail_;
@@ -95,18 +95,19 @@ namespace lf::dqra {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
-		Node* volatile head_;
 		Node* volatile tail_;
+		Node* volatile head_;
 	};
-
-	inline thread_local std::vector<size_t> indices;
 
 	class DQRA {
 	public:
 		DQRA(int num_queue, int num_thread, int d)
-			: num_thread_{ num_thread }, d_{ d }, queues_(num_queue), ebr_{ num_thread } {
-			indices.resize(num_queue);
-			std::iota(indices.begin(), indices.end(), 0);
+			: num_thread_{ num_thread }, d_{ d }, indices_(num_thread)
+			, queues_(num_queue), ebr_{ num_thread } {
+			for (auto& indices : indices_) {
+				indices.resize(num_queue);
+				std::iota(indices.begin(), indices.end(), 0);
+			}
 		}
 
 		void Enq(int v) {
@@ -123,7 +124,7 @@ namespace lf::dqra {
 			while (true) {
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto id = (start + i) % queues_.size();
-					auto [value, old_tail] = queues_[id].Deq(ebr_);
+					auto [value, old_tail] = queues_[id].TryDeq(ebr_);
 
 					if (nullptr == old_tail) {
 						ebr_.EndOp();
@@ -149,6 +150,7 @@ namespace lf::dqra {
 	private:
 		size_t GetEnqueuerIndex() {
 			ShuffleIndex();
+			auto& indices = indices_[thread::ID()];
 			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetSize() < queues_[b].GetSize();
 				});
@@ -156,19 +158,22 @@ namespace lf::dqra {
 
 		size_t GetDequeuerIndex() {
 			ShuffleIndex();
+			auto& indices = indices_[thread::ID()];
 			return *std::max_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetSize() < queues_[b].GetSize();
 				});
 		}
 
-		void ShuffleIndex() const {
+		void ShuffleIndex() {
+			auto& indices = indices_[thread::ID()];
 			for (int i = 0; i < d_; ++i) {
-				auto r = rng.Get(i, num_thread_ - 1);
+				auto r = rng.Get(i, indices.size() - 1);
 				std::swap(indices[i], indices[r]);
 			}
 		}
 
 		int num_thread_, d_;
+		std::vector<std::vector<size_t>> indices_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 	};

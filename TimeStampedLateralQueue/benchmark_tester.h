@@ -3,10 +3,12 @@
 
 #include <vector>
 #include <thread>
-#include <stdio.h>
 #include "stopwatch.h"
 #include "benchmark_setting.h"
 #include "microbenchmark_thread_func.h"
+#include "dqrr.h"
+#include "dqra.h"
+#include "dqlru.h"
 
 namespace benchmark {
 	template<class BenchmarkSetting, class Subject>
@@ -31,24 +33,38 @@ namespace benchmark {
 
 				stopwatch.Start();
 
-				switch (microbenchmark_setting_.subject)
-				{
-				case Subject::kLRU:
+				switch (microbenchmark_setting_.subject) {
+				case Subject::kLRU: {
+					auto subject = new lf::dqlru::DQLRU{ num_thread * 85 / 9, num_thread };
+					AddThread(MicrobenchmarkFunc, num_thread, subject);
+					delete subject;
 					break;
-				case Subject::kRR:
+				}
+				case Subject::kRR: {
+					auto subject = new lf::dqrr::DQRR{ num_thread * 13 / 9, num_thread, num_thread };
+					AddThread(MicrobenchmarkFunc, num_thread, subject);
+					delete subject;
 					break;
-				case Subject::kRA:
+				}
+				case Subject::kRA: {
+					auto subject = new lf::dqra::DQRA{ num_thread, num_thread, 2 };
+					AddThread(MicrobenchmarkFunc, num_thread, subject);
+					delete subject;
 					break;
-				case Subject::kTSCAS:
+				}
+				case Subject::kTSCAS: {
 					break;
-				case Subject::kTSInterval:
+				}
+				case Subject::kTSInterval: {
 					break;
-				case Subject::k2Dd:
+				}
+				case Subject::k2Dd: {
 					break;
-				case Subject::kTSL:
+				}
+				case Subject::kTSL: {
 					break;
+				}
 				default:
-					AddThread(MicrobenchmarkFunc<int>, num_thread);
 					break;
 				}
 
@@ -57,17 +73,21 @@ namespace benchmark {
 				auto elapsed_sec = stopwatch.GetDuration();
 				auto throughput = microbenchmark_setting_.num_op / elapsed_sec;
 
-				std::printf("   threads: %d\n", num_thread);
-				std::printf("elapsedsec: %.2lf s\n", elapsed_sec);
-				std::printf("throughput: %.2lf MOp/s\n", throughput / 1e6);
-				std::printf("\n");
+				printf("   threads: %d\n", num_thread);
+				printf("elapsedsec: %.2lf s\n", elapsed_sec);
+				printf("throughput: %.2lf MOp/s\n", throughput / 1e6);
+				printf("\n");
 			}
 		}
+		
+		void SetParameter() {
+			std::cout << "input parameter: ";
+			std::cin >> parameter_;
+		}
+
 	private:
 		template<class Subject>
-		void AddThread(ThreadFunc<MicrobenchmarkSetting, Subject> thread_func, int num_thread) {
-			auto subject = new Subject{};
-			
+		void AddThread(ThreadFunc<MicrobenchmarkSetting, Subject> thread_func, int num_thread, Subject* subject) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				threads_.emplace_back(thread_func, microbenchmark_setting_, thread_id, num_thread, subject);
 			}
@@ -78,6 +98,7 @@ namespace benchmark {
 		}
 
 		std::vector<std::thread> threads_;
+		int parameter_{};
 		benchmark::MicrobenchmarkSetting microbenchmark_setting_;
 	};
 }

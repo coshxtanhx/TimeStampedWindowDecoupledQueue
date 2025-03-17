@@ -16,7 +16,7 @@ namespace lf::dqrr {
 			enq_time = std::chrono::steady_clock::now();
 		}
 
-		Node* volatile next{ nullptr };
+		Node* volatile next{};
 		uint64_t retire_epoch{};
 		std::chrono::steady_clock::time_point enq_time{};
 		int v{};
@@ -154,7 +154,8 @@ namespace lf::dqrr {
 			return deq_rr % queues_.size();
 		}
 
-		int num_thread_, b_;
+		int num_thread_;
+		int b_;
 		std::vector<PartialQueue> queues_;
 		std::vector<std::atomic<uint64_t>> enq_rrs_;
 		std::vector<std::atomic<uint64_t>> deq_rrs_;

@@ -5,6 +5,6 @@ num_op
 3600000
 
 subject
-2
+4
 
-# 1: LRU, 2: RR, 3: RA, 4: TS-CAS, 5: TS-interval, 6: 2Dd, 7: TSL
+# 1: LRU, 2: RR, 3: RA, 4: TS-interval, 5: 2Dd, 6: TSL

@@ -9,6 +9,7 @@
 #include "dqrr.h"
 #include "dqra.h"
 #include "dqlru.h"
+#include "ts_interval.h"
 
 namespace benchmark {
 	template<class BenchmarkSetting, class Subject>
@@ -52,10 +53,10 @@ namespace benchmark {
 					delete subject;
 					break;
 				}
-				case Subject::kTSCAS: {
-					break;
-				}
 				case Subject::kTSInterval: {
+					auto subject = new lf::ts::TSInterval{ num_thread, 3600 };
+					AddThread(MicrobenchmarkFunc, num_thread, subject);
+					delete subject;
 					break;
 				}
 				case Subject::k2Dd: {

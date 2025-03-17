@@ -7,7 +7,7 @@
 
 namespace benchmark{
 	enum class Subject {
-		kNone, kLRU, kRR, kRA, kTSCAS, kTSInterval, k2Dd, kTSL
+		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL
 	};
 
     struct MicrobenchmarkSetting{
@@ -36,9 +36,10 @@ namespace benchmark{
 					subject = static_cast<Subject>(subject_id);
 				}
 			}
-			printf("contention: %d / num_op: %d / subject: %d\n\n", contention, num_op, subject);
+			printf("contention: %d / num_op: %d / subject: %s\n\n", contention, num_op, subject_names[static_cast<int>(subject)]);
 		}
 
+		static constexpr const char* subject_names[]{ "NONE", "LRU", "RR", "RA", "TS-interval", "2Dd", "TSL" };
 		int contention{};
         int num_op{};
 		Subject subject{};

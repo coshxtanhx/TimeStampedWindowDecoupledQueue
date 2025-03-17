@@ -180,7 +180,8 @@ namespace lf::dqra {
 			}
 		}
 
-		int num_thread_, d_;
+		int num_thread_;
+		int d_;
 		std::vector<std::vector<size_t>> indices_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;

@@ -1,0 +1,164 @@
+#ifndef TS_INTERVAL_H
+#define TS_INTERVAL_H
+
+#include <utility>
+#include <optional>
+#include <vector>
+#include <chrono>
+#include <limits>
+#include "ebr.h"
+
+namespace lf::ts {
+	class TimeStamp {
+	public:
+		TimeStamp() = default;
+		TimeStamp(uint64_t t1, uint64_t t2) : t1_{ t1 }, t2_{ t2 } {}
+		TimeStamp(int delay) {
+			Set(delay);
+		}
+
+		void Set(int delay) {
+			using namespace std::chrono;
+			t1_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
+			for (volatile int i = 0; i < delay; ++i) {}
+			t2_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
+		}
+
+		bool operator<(const TimeStamp& rhs) const {
+			return t2_ < rhs.t1_;
+		}
+	private:
+		static std::chrono::steady_clock::time_point tp_base_;
+		uint64_t t1_;
+		uint64_t t2_;
+	};
+	std::chrono::steady_clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
+
+	struct Node {
+		Node() = default;
+		Node(int v, int delay) : v{ v }, time_stamp{ delay } {}
+
+		void SetEnqTime() {
+			enq_time = std::chrono::steady_clock::now();
+		}
+
+		Node* volatile next{};
+		uint64_t retire_epoch{};
+		std::chrono::steady_clock::time_point enq_time{};
+		TimeStamp time_stamp{};
+		int v{};
+	};
+
+	class PartialQueue {
+	public:
+		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
+		~PartialQueue() {
+			while (nullptr != head_->next) {
+				Node* t = head_;
+				head_ = head_->next;
+				delete t;
+			}
+			delete head_;
+		}
+
+		void Enq(int v, int delay) {
+			auto node = new Node{ v, delay };
+			node->SetEnqTime();
+			tail_->next = node;
+			tail_ = node;
+		}
+
+		std::optional<int> TryDeq(EBR<Node>& ebr, Node* expected) {
+			auto loc_head = head_;
+			if (loc_head->next != expected) {
+				return std::nullopt;
+			}
+			if (false == CAS(head_, loc_head, expected)) {
+				return std::nullopt;
+			}
+			ebr.Retire(loc_head);
+			return expected->v;
+		}
+
+		const auto GetHead() const {
+			return head_;
+		}
+
+	private:
+		bool CAS(Node* volatile& trg, Node* expected, Node* desired) {
+			return std::atomic_compare_exchange_strong(
+				reinterpret_cast<volatile std::atomic<uint64_t>*>(&trg),
+				reinterpret_cast<uint64_t*>(&expected),
+				reinterpret_cast<uint64_t>(desired));
+		}
+
+		Node* volatile tail_;
+		Node* volatile head_;
+	};
+
+	class TSInterval {
+	public:
+		TSInterval(int num_thread, int delay)
+			: num_thread_{ num_thread }, delay_{ delay }, queues_(num_thread) , ebr_{ num_thread } {}
+
+		void Enq(int v) {
+			ebr_.StartOp();
+			queues_[thread::ID()].Enq(v, delay_);
+			ebr_.EndOp();
+		}
+
+		std::optional<int> Deq() {
+			ebr_.StartOp();
+			size_t id = thread::ID();
+			while (true) {
+				TimeStamp min_time_stamp{ std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max() };
+				Node* youngest{};
+				PartialQueue* trg{};
+				std::vector<Node*> old_heads(queues_.size());
+
+				for (size_t i = 0; i < queues_.size(); ++i) {
+					auto head = queues_[id].GetHead();
+					auto first = head->next;
+					if (nullptr == first) {
+						old_heads[id] = head;
+					}
+					else {
+						if (first->time_stamp < min_time_stamp) {
+							min_time_stamp = first->time_stamp;
+							youngest = first;
+							trg = &queues_[id];
+						}
+					}
+					id = (id + 1) % queues_.size();
+				}
+
+				if (nullptr == youngest) {
+					for (size_t i = 0; i < old_heads.size(); ++i) {
+						if (nullptr != old_heads[i]->next) {
+							id = i;
+							break;
+						}
+						if (i == old_heads.size() - 1) {
+							ebr_.EndOp();
+							return std::nullopt;
+						}
+					}
+				}
+				else {
+					auto value = trg->TryDeq(ebr_, youngest);
+					if (value.has_value()) {
+						ebr_.EndOp();
+						return value;
+					}
+				}
+			}
+		}
+	private:
+		int num_thread_;
+		int delay_;
+		std::vector<PartialQueue> queues_;
+		EBR<Node> ebr_;
+	};
+}
+
+#endif

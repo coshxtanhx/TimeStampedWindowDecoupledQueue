@@ -184,21 +184,21 @@ namespace lf::dqlru {
 		}
 
 		std::pair<size_t, uint64_t> GetLowestHead(int start) const {
-			auto head_stamp = queues_[start].GetHead()->stamp - 1;
+			auto head_stamp = queues_[start].GetHead()->stamp;
 
 			for (int i = 1; i < queues_.size(); ++i) {
 				auto other_id = (start + i) % queues_.size();
-				auto other_head_stamp = queues_[other_id].GetHead()->stamp - 1;
+				auto other_head_stamp = queues_[other_id].GetHead()->stamp;
 
 				if (head_stamp > other_head_stamp) {
-					return std::make_pair(other_id, other_head_stamp + 1);
+					return std::make_pair(other_id, other_head_stamp);
 				}
 				else if (head_stamp < other_head_stamp) {
-					return std::make_pair(start, head_stamp + 1);
+					return std::make_pair(start, head_stamp);
 				}
 			}
 
-			return std::make_pair(start, head_stamp + 1);
+			return std::make_pair(start, head_stamp);
 		}
 
 		std::vector<PartialQueue> queues_;

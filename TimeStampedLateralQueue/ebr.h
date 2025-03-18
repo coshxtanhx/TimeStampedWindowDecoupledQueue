@@ -14,7 +14,7 @@ namespace lf {
 	public:
 		EBR() = delete;
 		EBR(int num_thread) noexcept : reservations_{ new RetiredEpoch[num_thread] },
-			thread_num_{ num_thread }, epoch_{} {
+			num_thread_{ num_thread }, epoch_{} {
 			for (int i = 0; i < num_thread; ++i) {
 				reservations_[i] = std::numeric_limits<RetiredEpoch>::max();
 				retired_.emplace_back();
@@ -53,12 +53,12 @@ namespace lf {
 		using RetiredNodeQueue = std::queue<T*>;
 
 		constexpr RetiredEpoch GetCapacity() const noexcept {
-			return (RetiredEpoch)(3 * thread_num_ * 2 * 10);
+			return (RetiredEpoch)(3 * num_thread_ * 2 * 10);
 		}
 
 		RetiredEpoch GetMinReservation() const noexcept {
 			RetiredEpoch min_re = std::numeric_limits<RetiredEpoch>::max();
-			for (int i = 0; i < thread_num_; ++i) {
+			for (int i = 0; i < num_thread_; ++i) {
 				min_re = std::min(min_re, (RetiredEpoch)reservations_[i]);
 			}
 			return min_re;
@@ -79,7 +79,7 @@ namespace lf {
 
 		RetiredEpoch* volatile reservations_;
 		std::vector<RetiredNodeQueue> retired_;
-		int thread_num_;
+		int num_thread_;
 		std::atomic<RetiredEpoch> epoch_;
 	};
 }

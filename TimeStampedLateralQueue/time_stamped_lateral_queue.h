@@ -25,7 +25,7 @@ namespace lf::tsl {
 		int v{};
 	};
 
-	class LateralQueue {
+	class alignas(std::hardware_destructive_interference_size) LateralQueue {
 	public:
 		LateralQueue() : tail_{ new Node }, head_{ tail_ } {}
 		~LateralQueue() {
@@ -101,7 +101,7 @@ namespace lf::tsl {
 		Node* volatile head_;
 	};
 
-	class PartialQueue {
+	class alignas(std::hardware_destructive_interference_size) PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
 		~PartialQueue() {

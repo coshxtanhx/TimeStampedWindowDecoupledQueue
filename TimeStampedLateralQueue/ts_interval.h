@@ -49,7 +49,7 @@ namespace lf::ts {
 		int v{};
 	};
 
-	class PartialQueue {
+	class alignas(std::hardware_destructive_interference_size) PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
 		~PartialQueue() {

@@ -1,10 +1,10 @@
 contention
-1
+0
 
 num_op
 3600000
 
 subject
-1
+6
 
 # 1: LRU, 2: RR, 3: RA, 4: TS-interval, 5: 2Dd, 6: TSL

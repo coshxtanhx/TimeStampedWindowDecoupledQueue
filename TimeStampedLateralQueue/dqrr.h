@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 #include <chrono>
+#include <limits>
 #include "ebr.h"
 
 namespace lf::dqrr {

@@ -1,7 +1,10 @@
 #ifndef DQLRU_H
 #define DQLRU_H
 
+#include <utility>
+#include <vector>
 #include <chrono>
+#include <limits>
 #include <optional>
 #include "random.h"
 #include "ebr.h"

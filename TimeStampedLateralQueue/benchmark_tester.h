@@ -10,6 +10,7 @@
 #include "dqra.h"
 #include "dqlru.h"
 #include "ts_interval.h"
+#include "time_stamped_lateral_queue.h"
 
 namespace benchmark {
 	template<class BenchmarkSetting, class Subject>
@@ -36,25 +37,25 @@ namespace benchmark {
 
 				switch (microbenchmark_setting_.subject) {
 				case Subject::kLRU: {
-					auto subject = new lf::dqlru::DQLRU{ num_thread * 85 / 9, num_thread };
+					auto subject = new lf::dqlru::DQLRU{ num_thread * parameter_ / 9, num_thread };
 					AddThread(MicrobenchmarkFunc, num_thread, subject);
 					delete subject;
 					break;
 				}
 				case Subject::kRR: {
-					auto subject = new lf::dqrr::DQRR{ num_thread * 13 / 9, num_thread, num_thread };
+					auto subject = new lf::dqrr::DQRR{ num_thread * parameter_ / 9, num_thread, num_thread };
 					AddThread(MicrobenchmarkFunc, num_thread, subject);
 					delete subject;
 					break;
 				}
 				case Subject::kRA: {
-					auto subject = new lf::dqra::DQRA{ num_thread, num_thread, 2 };
+					auto subject = new lf::dqra::DQRA{ num_thread, num_thread, parameter_ };
 					AddThread(MicrobenchmarkFunc, num_thread, subject);
 					delete subject;
 					break;
 				}
 				case Subject::kTSInterval: {
-					auto subject = new lf::ts::TSInterval{ num_thread, 3600 };
+					auto subject = new lf::ts::TSInterval{ num_thread, parameter_ };
 					AddThread(MicrobenchmarkFunc, num_thread, subject);
 					delete subject;
 					break;
@@ -63,6 +64,9 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSL: {
+					auto subject = new lf::tsl::TimeStampedLateralQueue{ num_thread, parameter_ };
+					AddThread(MicrobenchmarkFunc, num_thread, subject);
+					delete subject;
 					break;
 				}
 				default:

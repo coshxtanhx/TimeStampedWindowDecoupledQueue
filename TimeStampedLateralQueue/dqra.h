@@ -109,8 +109,7 @@ namespace lf::dqra {
 
 	class DQRA {
 	public:
-		DQRA(int num_queue, int num_thread, int d)
-			: num_thread_{ num_thread }, d_{ d }, indices_(num_thread)
+		DQRA(int num_queue, int num_thread, int d) : d_{ d }, indices_(num_thread)
 			, queues_(num_queue), ebr_{ num_thread } {
 			for (auto& indices : indices_) {
 				indices.resize(num_queue);
@@ -180,7 +179,6 @@ namespace lf::dqra {
 			}
 		}
 
-		int num_thread_;
 		int d_;
 		std::vector<std::vector<size_t>> indices_;
 		std::vector<PartialQueue> queues_;

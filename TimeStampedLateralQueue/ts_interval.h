@@ -98,8 +98,7 @@ namespace lf::ts {
 
 	class TSInterval {
 	public:
-		TSInterval(int num_thread, int delay)
-			: num_thread_{ num_thread }, delay_{ delay }, queues_(num_thread) , ebr_{ num_thread } {}
+		TSInterval(int num_thread, int delay) : delay_{ delay }, queues_(num_thread) , ebr_{ num_thread } {}
 
 		void Enq(int v) {
 			ebr_.StartOp();
@@ -154,7 +153,6 @@ namespace lf::ts {
 			}
 		}
 	private:
-		int num_thread_;
 		int delay_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;

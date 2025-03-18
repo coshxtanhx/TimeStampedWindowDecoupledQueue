@@ -163,7 +163,7 @@ namespace lf::tsl {
 	class TimeStampedLateralQueue {
 	public:
 		TimeStampedLateralQueue(int num_thread, int depth)
-			: num_thread_{ num_thread }, depth_{ depth }, queues_(num_thread), ebr_ { num_thread } {}
+			: depth_{ depth }, queues_(num_thread), ebr_ { num_thread } {}
 
 		void Enq(int v) {
 			ebr_.StartOp();
@@ -229,7 +229,6 @@ namespace lf::tsl {
 			}
 		}
 	private:
-		int num_thread_;
 		int depth_;
 		LateralQueue lateral_queue_;
 		std::vector<PartialQueue> queues_;

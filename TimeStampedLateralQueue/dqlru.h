@@ -103,8 +103,7 @@ namespace lf::dqlru {
 
 	class DQLRU {
 	public:
-		DQLRU(int num_queue, int num_thread)
-			: num_thread_{ num_thread }, queues_(num_queue), ebr_{ num_thread } {}
+		DQLRU(int num_queue, int num_thread) : queues_(num_queue), ebr_{ num_thread } {}
 
 		void Enq(int v) {
 			auto node = new Node{ v };
@@ -185,24 +184,23 @@ namespace lf::dqlru {
 		}
 
 		std::pair<size_t, uint64_t> GetLowestHead(int start) const {
-			auto head_level = queues_[start].GetHead()->stamp;
+			auto head_stamp = queues_[start].GetHead()->stamp;
 
 			for (int i = 1; i < queues_.size(); ++i) {
 				auto other_id = (start + i) % queues_.size();
-				auto other_head_level = queues_[other_id].GetHead()->stamp;
+				auto other_head_stamp = queues_[other_id].GetHead()->stamp;
 
-				if (head_level > other_head_level) {
-					return std::make_pair(other_id, other_head_level);
+				if (head_stamp > other_head_stamp) {
+					return std::make_pair(other_id, other_head_stamp);
 				}
-				else if (head_level < other_head_level) {
-					return std::make_pair(start, head_level);
+				else if (head_stamp < other_head_stamp) {
+					return std::make_pair(start, head_stamp);
 				}
 			}
 
-			return std::make_pair(start, head_level);
+			return std::make_pair(start, head_stamp);
 		}
 
-		int num_thread_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 	};

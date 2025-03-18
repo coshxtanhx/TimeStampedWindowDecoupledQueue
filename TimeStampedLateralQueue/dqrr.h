@@ -102,8 +102,7 @@ namespace lf::dqrr {
 	class DQRR {
 	public:
 		DQRR(int num_queue, int num_thread, int b)
-			: num_thread_{ num_thread }, b_{ b }, queues_(num_queue)
-			, enq_rrs_(b), deq_rrs_(b), ebr_{ num_thread } {}
+			: b_{ b }, queues_(num_queue), enq_rrs_(b), deq_rrs_(b), ebr_{ num_thread } {}
 
 		void Enq(int v) {
 			ebr_.StartOp();
@@ -155,7 +154,6 @@ namespace lf::dqrr {
 			return deq_rr % queues_.size();
 		}
 
-		int num_thread_;
 		int b_;
 		std::vector<PartialQueue> queues_;
 		std::vector<std::atomic<uint64_t>> enq_rrs_;

@@ -78,7 +78,7 @@ namespace lf::tsl {
 				ebr.Retire(loc_head);
 				return std::make_pair(value, false);
 			}
-			return std::make_pair(std::nullopt, false); // retry required
+			return std::make_pair(std::nullopt, (nullptr == first->next));
 		}
 
 		auto GetFirstTimeStamp() const {

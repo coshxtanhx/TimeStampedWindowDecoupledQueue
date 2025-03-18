@@ -75,7 +75,7 @@ namespace lf::dqlru {
 				}
 				auto value = first->v;
 				if (false == CAS(head_, expected_head, first)) {
-					return std::make_pair(0, loc_tail);
+					return std::make_pair(0, expected_head);
 				}
 				ebr.Retire(expected_head);
 				return std::make_pair(value, nullptr);

@@ -60,25 +60,27 @@ namespace lf::tsl {
 		}
 
 		std::pair<std::optional<int>, bool> TryDeq(EBR<Node>& ebr, uint64_t lq_ts) {
-			auto loc_head = head_;
-			auto first = loc_head->next;
-			auto loc_tail = tail_;
-			if (nullptr == first) {
-				return std::make_pair(std::nullopt, true); // lq is empty
+			while (true) {
+				auto loc_head = head_;
+				auto first = loc_head->next;
+				auto loc_tail = tail_;
+				if (nullptr == first) {
+					return std::make_pair(std::nullopt, true); // lq is empty
+				}
+				if (loc_head == loc_tail) {
+					CAS(tail_, loc_tail, first);
+					continue;
+				}
+				if (first->time_stamp > lq_ts) {
+					return std::make_pair(std::nullopt, false); // retry required
+				}
+				auto value = first->v;
+				if (true == CAS(head_, loc_head, first)) {
+					ebr.Retire(loc_head);
+					return std::make_pair(value, false);
+				}
+				return std::make_pair(std::nullopt, (nullptr == first->next));
 			}
-			if (loc_head == loc_tail) {
-				CAS(tail_, loc_tail, first);
-				return std::make_pair(std::nullopt, false); // retry required
-			}
-			if (first->time_stamp > lq_ts) {
-				return std::make_pair(std::nullopt, false); // retry required
-			}
-			auto value = first->v;
-			if (true == CAS(head_, loc_head, first)) {
-				ebr.Retire(loc_head);
-				return std::make_pair(value, false);
-			}
-			return std::make_pair(std::nullopt, (nullptr == first->next));
 		}
 
 		auto GetFirstTimeStamp() const {

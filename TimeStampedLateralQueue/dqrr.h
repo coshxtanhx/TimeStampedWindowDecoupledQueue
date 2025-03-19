@@ -99,6 +99,9 @@ namespace lf::dqrr {
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
+	struct alignas(std::hardware_destructive_interference_size) RRCounter : std::atomic<uint64_t> {
+	};
+
 	class DQRR {
 	public:
 		DQRR(int num_queue, int num_thread, int b)
@@ -156,8 +159,8 @@ namespace lf::dqrr {
 
 		int b_;
 		std::vector<PartialQueue> queues_;
-		std::vector<std::atomic<uint64_t>> enq_rrs_;
-		std::vector<std::atomic<uint64_t>> deq_rrs_;
+		std::vector<RRCounter> enq_rrs_;
+		std::vector<RRCounter> deq_rrs_;
 		EBR<Node> ebr_;
 	};
 }

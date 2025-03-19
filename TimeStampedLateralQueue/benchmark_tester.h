@@ -10,6 +10,7 @@
 #include "dqra.h"
 #include "dqlru.h"
 #include "ts_interval.h"
+#include "twodd.h"
 #include "time_stamped_lateral_queue.h"
 
 namespace benchmark {
@@ -61,6 +62,9 @@ namespace benchmark {
 					break;
 				}
 				case Subject::k2Dd: {
+					auto subject = new lf::twodd::TwoDd{ num_thread, num_thread, parameter_ };
+					AddThread(MicrobenchmarkFunc, num_thread, subject);
+					delete subject;
 					break;
 				}
 				case Subject::kTSL: {

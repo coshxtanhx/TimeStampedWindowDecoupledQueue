@@ -54,7 +54,7 @@ namespace lf::twodd {
 		}
 
 		void Enq(int v) {
-			has_contented = false;
+			has_contented_ = false;
 			ebr_.StartOp();
 			auto node = new Node{ v };
 			Node* tail;
@@ -66,21 +66,21 @@ namespace lf::twodd {
 					if (CAS(tail->next, nullptr, node)) {
 						break;
 					}
-					has_contented = true;
+					has_contented_ = true;
 				}
 			}
-			if (false == CAS(tails_[index].ptr, tail, node)) {
-				has_contented = true;
+			if (false == CAS(tails_[index_].ptr, tail, node)) {
+				has_contented_ = true;
 			}
 			ebr_.EndOp();
 		}
 
 		std::optional<int> Deq() {
-			has_contented = false;
+			has_contented_ = false;
 			ebr_.StartOp();
 			while (true) {
 				auto head = GetHead();
-				auto tail = tails_[index].ptr;
+				auto tail = tails_[index_].ptr;
 				auto first = head->next;
 				if (head == tail) {
 					if (nullptr == first) {
@@ -88,25 +88,25 @@ namespace lf::twodd {
 						return std::nullopt;
 					}
 					else {
-						if (false == CAS(tails_[index].ptr, head, first)) {
-							has_contented = true;
+						if (false == CAS(tails_[index_].ptr, head, first)) {
+							has_contented_ = true;
 						}
 					}
 				}
 				else {
-					if (true == CAS(heads_[index].ptr, head, first)) {
+					if (true == CAS(heads_[index_].ptr, head, first)) {
 						ebr_.Retire(head);
 						ebr_.EndOp();
 						return first->v;
 					}
-					has_contented = true;
+					has_contented_ = true;
 				}
 			}
 		}
 
 	private:
 		Node* GetHead() {
-			is_empty = true;
+			is_empty_ = true;
 			int random{};
 			int index_search{};
 			auto loc_get_max = window_get.max;
@@ -117,34 +117,34 @@ namespace lf::twodd {
 						window_get.CAS(loc_get_max, loc_get_max + depth_);
 					}
 					loc_get_max = window_get.max;
-					is_empty = true;
+					is_empty_ = true;
 					index_search = 0;
 				}
-				auto head = heads_[index].ptr;
+				auto head = heads_[index_].ptr;
 				if (head != nullptr and head->cnt < window_get.max) {
 					return head;
 				}
 				else if (loc_get_max == window_get.max) {
 					if (head != nullptr) {
-						is_empty = false;
+						is_empty_ = false;
 					}
 					// HOP
 					if (random < 2) {
-						index = rng.Get(0, width_ - 1);
+						index_ = rng.Get(0, width_ - 1);
 						random += 1;
 					}
 					else {
 						index_search += 1;
-						if (index_search == width_ and is_empty == true) {
+						if (index_search == width_ and is_empty_ == true) {
 							return head;
 						}
-						index = (index + 1) % width_;
+						index_ = (index_ + 1) % width_;
 					}
 				}
 				else {
 					loc_get_max = window_get.max;
 					index_search = 0;
-					is_empty = true;
+					is_empty_ = true;
 				}
 			}
 		}
@@ -162,22 +162,22 @@ namespace lf::twodd {
 					loc_put_max = window_put.max;
 					index_search = 0;
 				}
-				auto tail = tails_[index].ptr;
+				auto tail = tails_[index_].ptr;
 				if (tail->cnt < window_put.max) {
 					return tail;
 				}
 				else if (loc_put_max == window_put.max) {
 					// HOP
 					if (random < 2) {
-						index = rng.Get(0, width_ - 1);
+						index_ = rng.Get(0, width_ - 1);
 						random += 1;
 					}
 					else {
 						index_search += 1;
-						if (index_search == width_ and is_empty == true) {
+						if (index_search == width_ and is_empty_ == true) {
 							return tail;
 						}
-						index = (index + 1) % width_;
+						index_ = (index_ + 1) % width_;
 					}
 				}
 				else {
@@ -194,6 +194,9 @@ namespace lf::twodd {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
+		static thread_local bool has_contented_;
+		static thread_local int index_;
+		static thread_local bool is_empty_;
 		int depth_, width_;
 		std::vector<PaddedPtr> heads_;
 		std::vector<PaddedPtr> tails_;
@@ -201,6 +204,10 @@ namespace lf::twodd {
 		Window window_put;
 		EBR<Node> ebr_;
 	};
+
+	thread_local bool TwoDd::has_contented_{};
+	thread_local int TwoDd::index_{};
+	thread_local bool TwoDd::is_empty_{};
 }
 
 #endif

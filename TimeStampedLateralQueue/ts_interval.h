@@ -20,7 +20,7 @@ namespace lf::ts {
 		void Set(int delay) {
 			using namespace std::chrono;
 			t1_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
-			for (volatile int i = 0; i < delay; i += 1) {}
+			for (volatile int i = 0; i < delay; ++i) {}
 			t2_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
 		}
 

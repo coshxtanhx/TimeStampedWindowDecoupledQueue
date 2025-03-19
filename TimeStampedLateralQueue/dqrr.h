@@ -23,7 +23,7 @@ namespace lf::dqrr {
 		int v{};
 	};
 
-	class alignas(std::hardware_destructive_interference_size) PartialQueue {
+	class PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
 		~PartialQueue() {
@@ -95,8 +95,8 @@ namespace lf::dqrr {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
-		Node* volatile tail_;
-		Node* volatile head_;
+		alignas(std::hardware_destructive_interference_size) Node* volatile tail_;
+		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
 	class DQRR {

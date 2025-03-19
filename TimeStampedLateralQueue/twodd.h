@@ -20,34 +20,41 @@ namespace lf::twodd {
 		Node* volatile next{ nullptr };
 		uint64_t retire_epoch{};
 		std::chrono::steady_clock::time_point enq_time{};
-		uint64_t stamp{ std::numeric_limits<uint64_t>::max() };
+		uint64_t stamp{};
 		int v{};
 	};
 
-	struct Descriptor {
-		int item{};
-		uint64_t cnt_get{};
-		uint64_t cnt_put{};
+	class alignas(std::hardware_destructive_interference_size) PartialQueue {
+	public:
+		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
+
+	private:
+		Node* volatile head_;
+		Node* volatile tail_;
 	};
 
-	inline void PutWindow(size_t& index) {}
-	inline void GetWindow(size_t& index) {}
-
-	struct Window {
-		Window(bool puts, size_t& index, bool& has_contented, size_t queue_size) {
-			if (has_contented) {
-				index = rng.Get(size_t{}, queue_size - 1);
-				has_contented = false;
-			}
-			puts ? PutWindow(index) : GetWindow(index);
-		}
-
-		uint64_t max{};
-	};
+	inline thread_local bool has_contented;
 
 	class TwoDd {
 	public:
+		TwoDd(int num_queue, int num_thread, int depth)
+			: depth_{ depth }, queues_(num_queue), ebr_{ num_thread } {}
+
+		void Enq(int v) {
+			has_contented = false;
+			while (true) {
+
+			}
+		}
+
+		std::optional<int> Deq() {
+
+		}
+
 	private:
+		int depth_;
+		std::vector<PartialQueue> queues_;
+		EBR<Node> ebr_;
 	};
 }
 

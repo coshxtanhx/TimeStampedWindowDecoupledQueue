@@ -1,5 +1,5 @@
 contention
-0
+1
 
 num_op
 3600000

@@ -43,7 +43,6 @@ namespace lf::ts {
 		uint64_t retire_epoch{};
 		TimeStamp time_stamp{};
 		int v{};
-		int id{};
 	};
 
 	class PartialQueue {

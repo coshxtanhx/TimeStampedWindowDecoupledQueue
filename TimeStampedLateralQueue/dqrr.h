@@ -17,7 +17,6 @@ namespace lf::dqrr {
 		Node* volatile next{};
 		uint64_t retire_epoch{};
 		int v{};
-		int id{};
 	};
 
 	class PartialQueue {

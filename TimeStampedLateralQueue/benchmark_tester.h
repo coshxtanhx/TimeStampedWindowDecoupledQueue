@@ -17,7 +17,7 @@ namespace benchmark {
 	template<class BenchmarkSetting, class Subject>
 	using ThreadFunc = void(*)(BenchmarkSetting, int, int, Subject*);
 
-	class Tester{
+	class Tester {
 	public:
 		Tester() noexcept = default;
 
@@ -96,7 +96,7 @@ namespace benchmark {
 		template<class Subject>
 		void AddThread(ThreadFunc<MicrobenchmarkSetting, Subject> thread_func, int num_thread, Subject* subject) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
-				subject->CheckRelaxationDistance();
+				//subject->CheckRelaxationDistance();
 				threads_.emplace_back(thread_func, microbenchmark_setting_, thread_id, num_thread, subject);
 			}
 

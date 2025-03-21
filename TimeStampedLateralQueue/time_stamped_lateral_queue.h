@@ -10,6 +10,8 @@
 #include "ebr.h"
 #include "relaxation_distance.h"
 
+#include <format>
+
 namespace lf::tsl {
 	struct Node {
 		Node() = default;
@@ -19,7 +21,6 @@ namespace lf::tsl {
 		uint64_t retire_epoch{};
 		uint64_t time_stamp{};
 		int v{};
-		int id{};
 	};
 
 	class alignas(std::hardware_destructive_interference_size) LateralQueue {
@@ -34,7 +35,7 @@ namespace lf::tsl {
 			delete head_;
 		}
 
-		bool TryEnq(Node* node, uint64_t lq_ts, int depth) {
+		bool TryEnq(Node* node, uint64_t lq_ts, int depth, benchmark::RelaxationDistanceManager& rdm) {
 			node->time_stamp = lq_ts + depth;
 			auto loc_tail = tail_;
 			auto next = loc_tail->next;
@@ -44,8 +45,13 @@ namespace lf::tsl {
 			if (tail_->time_stamp != lq_ts) {
 				return false;
 			}
+
 			if (nullptr == next) {
 				if (true == CAS(loc_tail->next, nullptr, node)) {
+
+					//benchmark::out << std::format("eL {} {}\n", (uint64_t)(node), node->time_stamp);
+
+					rdm.Enq(reinterpret_cast<void*>(reinterpret_cast<uint64_t>(node) + 1));
 					CAS(tail_, loc_tail, node);
 					return true;
 				}
@@ -55,7 +61,7 @@ namespace lf::tsl {
 			return false;
 		}
 
-		std::pair<std::optional<int>, bool> TryDeq(EBR<Node>& ebr, uint64_t lq_ts) {
+		std::pair<std::optional<int>, bool> TryDeq(EBR<Node>& ebr, uint64_t lq_ts, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_head = head_;
 				auto first = loc_head->next;
@@ -70,18 +76,33 @@ namespace lf::tsl {
 				if (first->time_stamp > lq_ts) {
 					return std::make_pair(std::nullopt, false); // retry required
 				}
+
 				auto value = first->v;
+				rdm.LockDeq();
 				if (true == CAS(head_, loc_head, first)) {
+
+					//benchmark::out << std::format("dL {} {}\n", (uint64_t)(first), first->time_stamp);
+
+					rdm.Deq(reinterpret_cast<void*>(reinterpret_cast<uint64_t>(first) + 1));
+					rdm.UnlockDeq();
 					ebr.Retire(loc_head);
 					return std::make_pair(value, false);
 				}
+				rdm.UnlockDeq();
 				return std::make_pair(std::nullopt, (nullptr == first->next));
 			}
 		}
 
-		auto GetFirstTimeStamp() const {
-			auto first = head_->next;
-			return (nullptr == first) ? std::numeric_limits<uint64_t>::max() : first->time_stamp;
+		auto GetHeadAndFirstTimeStamp() const {
+			auto loc_head = head_;
+			auto first = loc_head->next;
+			auto first_time_stamp = (nullptr == first) ? std::numeric_limits<uint64_t>::max() : first->time_stamp;
+
+			return std::make_pair(loc_head->time_stamp, first_time_stamp);
+		}
+
+		auto GetHeadTimeStamp() const {
+			return head_->time_stamp;
 		}
 
 		auto GetTailTimeStamp() const {
@@ -111,29 +132,41 @@ namespace lf::tsl {
 			delete head_;
 		}
 
-		void Enq(Node* node, uint64_t lq_ts) {
+		void Enq(Node* node, uint64_t lq_ts, benchmark::RelaxationDistanceManager& rdm) {
 			auto tail_ts = tail_->time_stamp;
 			node->time_stamp = (tail_ts <= lq_ts) ? (lq_ts + 1) : (tail_ts + 1);
 
+			//benchmark::out << std::format("e{} {} {}\n", thread::ID(), (uint64_t)(node), node->time_stamp);
+
 			tail_->next = node;
+			rdm.Enq(node);
 			tail_ = node;
+
 		}
 
-		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, uint64_t lq_ts) {
+		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, /*uint64_t lq_head_ts,*/
+			uint64_t lq_first_ts, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_head = head_;
 				auto first = loc_head->next;
 				if (nullptr == first) {
 					return std::make_pair(std::nullopt, loc_head); // pq is empty
 				}
-				if (first->time_stamp > lq_ts) {
+				if (first->time_stamp > lq_first_ts) {
 					return std::make_pair(std::nullopt, nullptr); // retry required
 				}
 				auto value = first->v;
+				rdm.LockDeq();
 				if (true == CAS(head_, loc_head, first)) {
+
+					//benchmark::out << std::format("d{} {} {}\n", thread::ID(), (uint64_t)(first), first->time_stamp);
+
+					rdm.Deq(first);
+					rdm.UnlockDeq();
 					ebr.Retire(loc_head);
 					return std::make_pair(value, nullptr); 
 				}
+				rdm.UnlockDeq();
 			}
 		}
 
@@ -173,15 +206,17 @@ namespace lf::tsl {
 		void Enq(int v) {
 			ebr_.StartOp();
 			auto node = new Node{ v };
+			rdm_.LockEnq();
 			auto lq_ts = lateral_queue_.GetTailTimeStamp();
 			auto& pq = queues_[thread::ID()];
 
 			if (pq.GetTailTimeStamp() < lq_ts + depth_) {
-				pq.Enq(node, lq_ts);
+				pq.Enq(node, lq_ts, rdm_);
 			}
-			else if (lateral_queue_.TryEnq(node, lq_ts, depth_) == false) {
-				pq.Enq(node, lq_ts);
+			else if (lateral_queue_.TryEnq(node, lq_ts, depth_, rdm_) == false) {
+				pq.Enq(node, lq_ts, rdm_);
 			}
+			rdm_.UnlockEnq();
 			ebr_.EndOp();
 		}
 
@@ -191,13 +226,14 @@ namespace lf::tsl {
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
-				auto lq_ts = lateral_queue_.GetFirstTimeStamp();
+				auto lq_ts = lateral_queue_.GetHeadTimeStamp() + depth_;
+				//auto [lq_head_ts, lq_first_ts] = lateral_queue_.GetHeadAndFirstTimeStamp();
 
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
-					auto ts = pq.GetFirstTimeStamp();
-					if (ts <= lq_ts) {
-						auto [value, old_head] = pq.TryDeq(ebr_, lq_ts);
+					if (1) {
+						//auto [value, old_head] = pq.TryDeq(ebr_, lq_head_ts, lq_first_ts, rdm_);
+						auto [value, old_head] = pq.TryDeq(ebr_, lq_ts, rdm_);
 						if (nullptr != old_head) {
 							old_heads[id] = old_head;
 							cnt_empty += 1;
@@ -209,7 +245,8 @@ namespace lf::tsl {
 					}
 					id = (id + 1) % queues_.size();
 				}
-				auto [value, is_lq_empty] = lateral_queue_.TryDeq(ebr_, lq_ts);
+				//auto [value, is_lq_empty] = lateral_queue_.TryDeq(ebr_, lq_first_ts, rdm_);
+				auto [value, is_lq_empty] = lateral_queue_.TryDeq(ebr_, lq_ts, rdm_);
 				if (is_lq_empty) {
 					if (queues_.size() == cnt_empty) {
 						for (size_t i = 1; i < queues_.size(); ++i) {

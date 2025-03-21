@@ -18,7 +18,6 @@ namespace lf::twodd {
 		uint64_t retire_epoch{};
 		uint64_t cnt{};
 		int v{};
-		int id{};
 	};
 
 	struct alignas(std::hardware_destructive_interference_size) PaddedPtr {

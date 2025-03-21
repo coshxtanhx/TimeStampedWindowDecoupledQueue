@@ -19,7 +19,6 @@ namespace lf::dqlru {
 		uint64_t retire_epoch{};
 		uint64_t stamp{};
 		int v{};
-		int id{};
 	};
 
 	class PartialQueue {

@@ -6,7 +6,11 @@
 #include <utility>
 #include <memory>
 
+#include <fstream>
+
 namespace benchmark {
+	inline std::ofstream out{ "log.txt" };
+
 	class RelaxationDistanceManager {
 	public:
 		RelaxationDistanceManager() = default;
@@ -39,15 +43,13 @@ namespace benchmark {
 			}
 		}
 
-		template<class NodeT>
-		void Enq(NodeT* node) {
+		void Enq(void* node) {
 			if (checks_relaxation_distance_) {
 				enq_elements_.push_back(node);
 			}
 		}
 
-		template<class NodeT>
-		void Deq(NodeT* node) {
+		void Deq(void* node) {
 			if (checks_relaxation_distance_) {
 				deq_elements_.push_back(node);
 			}

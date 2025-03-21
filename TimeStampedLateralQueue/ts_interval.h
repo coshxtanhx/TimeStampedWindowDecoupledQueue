@@ -7,6 +7,7 @@
 #include <chrono>
 #include <limits>
 #include "ebr.h"
+#include "relaxation_distance.h"
 
 namespace lf::ts {
 	class TimeStamp {
@@ -38,15 +39,11 @@ namespace lf::ts {
 		Node() = default;
 		Node(int v, int delay) : v{ v }, time_stamp{ delay } {}
 
-		void SetEnqTime() {
-			enq_time = std::chrono::steady_clock::now();
-		}
-
 		Node* volatile next{};
 		uint64_t retire_epoch{};
-		std::chrono::steady_clock::time_point enq_time{};
 		TimeStamp time_stamp{};
 		int v{};
+		int id{};
 	};
 
 	class PartialQueue {
@@ -63,7 +60,6 @@ namespace lf::ts {
 
 		void Enq(int v, int delay) {
 			auto node = new Node{ v, delay };
-			node->SetEnqTime();
 			tail_->next = node;
 			tail_ = node;
 		}
@@ -99,6 +95,14 @@ namespace lf::ts {
 	class TSInterval {
 	public:
 		TSInterval(int num_thread, int delay) : delay_{ delay }, queues_(num_thread) , ebr_{ num_thread } {}
+
+		void CheckRelaxationDistance() {
+			rdm_.CheckRelaxationDistance();
+		}
+
+		auto GetRelaxationDistance() {
+			return rdm_.GetRelaxationDistance();
+		}
 
 		void Enq(int v) {
 			ebr_.StartOp();
@@ -156,6 +160,7 @@ namespace lf::ts {
 		int delay_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
+		benchmark::RelaxationDistanceManager rdm_;
 	};
 }
 

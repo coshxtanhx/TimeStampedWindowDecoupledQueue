@@ -7,20 +7,17 @@
 #include <chrono>
 #include <limits>
 #include "ebr.h"
+#include "relaxation_distance.h"
 
 namespace lf::dqrr {
 	struct Node {
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		void SetEnqTime() {
-			enq_time = std::chrono::steady_clock::now();
-		}
-
 		Node* volatile next{};
 		uint64_t retire_epoch{};
-		std::chrono::steady_clock::time_point enq_time{};
 		int v{};
+		int id{};
 	};
 
 	class PartialQueue {
@@ -47,7 +44,6 @@ namespace lf::dqrr {
 				}
 
 				if (nullptr == next) {
-					node->SetEnqTime();
 					if (true == CAS(loc_tail->next, nullptr, node)) {
 						CAS(tail_, loc_tail, node);
 						return;
@@ -107,6 +103,14 @@ namespace lf::dqrr {
 		DQRR(int num_queue, int num_thread, int b)
 			: b_{ b }, queues_(num_queue), enq_rrs_(b), deq_rrs_(b), ebr_{ num_thread } {}
 
+		void CheckRelaxationDistance() {
+			rdm_.CheckRelaxationDistance();
+		}
+
+		auto GetRelaxationDistance() {
+			return rdm_.GetRelaxationDistance();
+		}
+
 		void Enq(int v) {
 			ebr_.StartOp();
 			queues_[GetEnqueuerIndex()].Enq(v);
@@ -162,6 +166,7 @@ namespace lf::dqrr {
 		std::vector<RRCounter> enq_rrs_;
 		std::vector<RRCounter> deq_rrs_;
 		EBR<Node> ebr_;
+		benchmark::RelaxationDistanceManager rdm_;
 	};
 }
 

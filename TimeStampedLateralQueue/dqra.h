@@ -9,21 +9,18 @@
 #include <chrono>
 #include "random.h"
 #include "ebr.h"
+#include "relaxation_distance.h"
 
 namespace lf::dqra {
 	struct Node {
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		void SetEnqTime() {
-			enq_time = std::chrono::steady_clock::now();
-		}
-
 		Node* volatile next{};
 		uint64_t retire_epoch{};
-		std::chrono::steady_clock::time_point enq_time{};
 		uint64_t stamp{};
 		int v{};
+		int id{};
 	};
 
 	class PartialQueue {
@@ -51,7 +48,6 @@ namespace lf::dqra {
 
 				if (nullptr == next) {
 					node->stamp = loc_tail->stamp + 1;
-					node->SetEnqTime();
 					if (true == CAS(loc_tail->next, nullptr, node)) {
 						CAS(tail_, loc_tail, node);
 						return;
@@ -115,6 +111,14 @@ namespace lf::dqra {
 				indices.resize(num_queue);
 				std::iota(indices.begin(), indices.end(), 0);
 			}
+		}
+
+		void CheckRelaxationDistance() {
+			rdm_.CheckRelaxationDistance();
+		}
+
+		auto GetRelaxationDistance() {
+			return rdm_.GetRelaxationDistance();
 		}
 
 		void Enq(int v) {
@@ -183,6 +187,7 @@ namespace lf::dqra {
 		std::vector<std::vector<size_t>> indices_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
+		benchmark::RelaxationDistanceManager rdm_;
 	};
 }
 

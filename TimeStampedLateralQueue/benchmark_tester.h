@@ -22,55 +22,51 @@ namespace benchmark {
 		Tester() noexcept = default;
 
 		void StartMicroBenchmark() {
-			const auto kMaxThread{ static_cast<int>(std::thread::hardware_concurrency()) };
+			constexpr auto kMaxThread{ 72 };
 			threads_.reserve(kMaxThread);
 
 			Stopwatch stopwatch;
 
-			for (int num_thread = kMaxThread / 8; num_thread <= kMaxThread; num_thread *= 2){
-				if (num_thread < 4) {
-					num_thread = kMaxThread / 2;
-				}
-				
+			for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2){
 				threads_.clear();
-
+				std::pair<uint64_t, double> rd_max_avg;
 				stopwatch.Start();
 
 				switch (microbenchmark_setting_.subject) {
 				case Subject::kLRU: {
-					auto subject = new lf::dqlru::DQLRU{ num_thread * parameter_ / 9, num_thread };
-					AddThread(MicrobenchmarkFunc, num_thread, subject);
-					delete subject;
+					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
+					AddThread(MicrobenchmarkFunc, num_thread, &subject);
+					rd_max_avg = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kRR: {
-					auto subject = new lf::dqrr::DQRR{ num_thread * parameter_ / 9, num_thread, num_thread };
-					AddThread(MicrobenchmarkFunc, num_thread, subject);
-					delete subject;
+					lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
+					AddThread(MicrobenchmarkFunc, num_thread, &subject);
+					rd_max_avg = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kRA: {
-					auto subject = new lf::dqra::DQRA{ num_thread, num_thread, parameter_ };
-					AddThread(MicrobenchmarkFunc, num_thread, subject);
-					delete subject;
+					lf::dqra::DQRA subject{ num_thread, num_thread, parameter_ };
+					AddThread(MicrobenchmarkFunc, num_thread, &subject);
+					rd_max_avg = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kTSInterval: {
-					auto subject = new lf::ts::TSInterval{ num_thread, parameter_ };
-					AddThread(MicrobenchmarkFunc, num_thread, subject);
-					delete subject;
+					lf::ts::TSInterval subject{ num_thread, parameter_ };
+					AddThread(MicrobenchmarkFunc, num_thread, &subject);
+					rd_max_avg = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::k2Dd: {
-					auto subject = new lf::twodd::TwoDd{ num_thread, num_thread, parameter_ };
-					AddThread(MicrobenchmarkFunc, num_thread, subject);
-					delete subject;
+					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+					AddThread(MicrobenchmarkFunc, num_thread, &subject);
+					rd_max_avg = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kTSL: {
-					auto subject = new lf::tsl::TimeStampedLateralQueue{ num_thread, parameter_ };
-					AddThread(MicrobenchmarkFunc, num_thread, subject);
-					delete subject;
+					lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
+					AddThread(MicrobenchmarkFunc, num_thread, &subject);
+					rd_max_avg = subject.GetRelaxationDistance();
 					break;
 				}
 				default:
@@ -82,9 +78,11 @@ namespace benchmark {
 				auto elapsed_sec = stopwatch.GetDuration();
 				auto throughput = microbenchmark_setting_.num_op / elapsed_sec;
 
-				printf("   threads: %d\n", num_thread);
-				printf("elapsedsec: %.2lf s\n", elapsed_sec);
-				printf("throughput: %.2lf MOp/s\n", throughput / 1e6);
+				printf("    threads: %d\n", num_thread);
+				printf("elapsed sec: %.2lf s\n", elapsed_sec);
+				printf(" throughput: %.2lf MOp/s\n", throughput / 1e6);
+				printf("   max dist: %zu\n", rd_max_avg.first);
+				printf("   avg dist: %.2lf\n", rd_max_avg.second);
 				printf("\n");
 			}
 		}
@@ -98,6 +96,7 @@ namespace benchmark {
 		template<class Subject>
 		void AddThread(ThreadFunc<MicrobenchmarkSetting, Subject> thread_func, int num_thread, Subject* subject) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
+				subject->CheckRelaxationDistance();
 				threads_.emplace_back(thread_func, microbenchmark_setting_, thread_id, num_thread, subject);
 			}
 

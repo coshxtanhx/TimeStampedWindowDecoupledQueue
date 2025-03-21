@@ -7,30 +7,23 @@
 #include <chrono>
 #include "ebr.h"
 #include "random.h"
+#include "relaxation_distance.h"
 
 namespace lf::twodd {
 	struct Node{
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		void SetEnqTime() {
-			enq_time = std::chrono::steady_clock::now();
-		}
-
 		Node* volatile next{ nullptr };
 		uint64_t retire_epoch{};
-		std::chrono::steady_clock::time_point enq_time{};
 		uint64_t cnt{};
 		int v{};
+		int id{};
 	};
 
 	struct alignas(std::hardware_destructive_interference_size) PaddedPtr {
 		Node* volatile ptr{};
 	};
-
-	inline thread_local bool has_contented;
-	inline thread_local int index;
-	inline thread_local bool is_empty{ true };
 
 	struct alignas(std::hardware_destructive_interference_size) Window {
 		Window() = default;
@@ -53,6 +46,14 @@ namespace lf::twodd {
 			}
 		}
 
+		void CheckRelaxationDistance() {
+			rdm_.CheckRelaxationDistance();
+		}
+		
+		auto GetRelaxationDistance() {
+			return rdm_.GetRelaxationDistance();
+		}
+
 		void Enq(int v) {
 			has_contented_ = false;
 			ebr_.StartOp();
@@ -62,17 +63,17 @@ namespace lf::twodd {
 				tail = GetTail();
 				node->cnt = tail->cnt + 1;
 				if (nullptr == tail->next) {
-					node->SetEnqTime();
 					if (CAS(tail->next, nullptr, node)) {
-						break;
+						if (false == CAS(tails_[index_].ptr, tail, node)) {
+							has_contented_ = true;
+						}
+						ebr_.EndOp();
+						return;
 					}
 					has_contented_ = true;
 				}
 			}
-			if (false == CAS(tails_[index_].ptr, tail, node)) {
-				has_contented_ = true;
-			}
-			ebr_.EndOp();
+			
 		}
 
 		std::optional<int> Deq() {
@@ -203,6 +204,7 @@ namespace lf::twodd {
 		Window window_get;
 		Window window_put;
 		EBR<Node> ebr_;
+		benchmark::RelaxationDistanceManager rdm_;
 	};
 
 	thread_local bool TwoDd::has_contented_{};

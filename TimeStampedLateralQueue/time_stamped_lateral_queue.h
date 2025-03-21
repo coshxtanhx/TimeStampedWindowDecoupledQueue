@@ -8,21 +8,18 @@
 #include <optional>
 #include "random.h"
 #include "ebr.h"
+#include "relaxation_distance.h"
 
 namespace lf::tsl {
 	struct Node {
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		void SetEnqTime() {
-			enq_time = std::chrono::steady_clock::now();
-		}
-
 		Node* volatile next{ nullptr };
 		uint64_t retire_epoch{};
-		std::chrono::steady_clock::time_point enq_time{};
 		uint64_t time_stamp{};
 		int v{};
+		int id{};
 	};
 
 	class alignas(std::hardware_destructive_interference_size) LateralQueue {
@@ -48,7 +45,6 @@ namespace lf::tsl {
 				return false;
 			}
 			if (nullptr == next) {
-				node->SetEnqTime();
 				if (true == CAS(loc_tail->next, nullptr, node)) {
 					CAS(tail_, loc_tail, node);
 					return true;
@@ -119,7 +115,6 @@ namespace lf::tsl {
 			auto tail_ts = tail_->time_stamp;
 			node->time_stamp = (tail_ts <= lq_ts) ? (lq_ts + 1) : (tail_ts + 1);
 
-			node->SetEnqTime();
 			tail_->next = node;
 			tail_ = node;
 		}
@@ -166,6 +161,14 @@ namespace lf::tsl {
 	public:
 		TimeStampedLateralQueue(int num_thread, int depth)
 			: depth_{ depth }, queues_(num_thread), ebr_ { num_thread } {}
+
+		void CheckRelaxationDistance() {
+			rdm_.CheckRelaxationDistance();
+		}
+
+		auto GetRelaxationDistance() {
+			return rdm_.GetRelaxationDistance();
+		}
 
 		void Enq(int v) {
 			ebr_.StartOp();
@@ -235,6 +238,7 @@ namespace lf::tsl {
 		LateralQueue lateral_queue_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
+		benchmark::RelaxationDistanceManager rdm_;
 	};
 }
 

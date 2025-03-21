@@ -8,21 +8,18 @@
 #include <optional>
 #include "random.h"
 #include "ebr.h"
+#include "relaxation_distance.h"
 
 namespace lf::dqlru {
 	struct Node {
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		void SetEnqTime() {
-			enq_time = std::chrono::steady_clock::now();
-		}
-
 		Node* volatile next{ nullptr };
 		uint64_t retire_epoch{};
-		std::chrono::steady_clock::time_point enq_time{};
 		uint64_t stamp{};
 		int v{};
+		int id{};
 	};
 
 	class PartialQueue {
@@ -37,7 +34,7 @@ namespace lf::dqlru {
 			delete head_;
 		}
 
-		bool TryEnq(Node* node, Node* expected_tail) {
+		bool TryEnq(Node* node, Node* expected_tail, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto next = expected_tail->next;
 
@@ -46,11 +43,14 @@ namespace lf::dqlru {
 				}
 
 				if (nullptr == next) {
-					node->SetEnqTime();
+					rdm.LockEnq();
 					if (true == CAS(expected_tail->next, nullptr, node)) {
+						rdm.Enq(node);
+						rdm.UnlockEnq();
 						CAS(tail_, expected_tail, node);
 						return true;
 					}
+					rdm.UnlockEnq();
 					return false;
 				}
 				else {
@@ -60,7 +60,7 @@ namespace lf::dqlru {
 			}
 		}
 
-		std::pair<int, Node*> TryDeq(EBR<Node>& ebr, Node* expected_head) {
+		std::pair<int, Node*> TryDeq(EBR<Node>& ebr, Node* expected_head, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_tail = tail_;
 				auto first = expected_head->next;
@@ -74,9 +74,13 @@ namespace lf::dqlru {
 					continue;
 				}
 				auto value = first->v;
+				rdm.LockDeq();
 				if (false == CAS(head_, expected_head, first)) {
+					rdm.UnlockDeq();
 					return std::make_pair(0, expected_head);
 				}
+				rdm.Deq(first);
+				rdm.UnlockDeq();
 				ebr.Retire(expected_head);
 				return std::make_pair(value, nullptr);
 			}
@@ -105,6 +109,14 @@ namespace lf::dqlru {
 	public:
 		DQLRU(int num_queue, int num_thread) : queues_(num_queue), ebr_{ num_thread } {}
 
+		void CheckRelaxationDistance() {
+			rdm_.CheckRelaxationDistance();
+		}
+
+		auto GetRelaxationDistance() {
+			return rdm_.GetRelaxationDistance();
+		}
+
 		void Enq(int v) {
 			auto node = new Node{ v };
 			auto start = rng.Get(0, queues_.size() - 1);
@@ -115,7 +127,7 @@ namespace lf::dqlru {
 					auto& queue = queues_[id];
 					auto tail = queue.GetTail();
 					node->stamp = stamp + 1;
-					if (tail->stamp == stamp and true == queue.TryEnq(node, tail)) {
+					if (tail->stamp == stamp and true == queue.TryEnq(node, tail, rdm_)) {
 						ebr_.EndOp();
 						return;
 					}
@@ -136,7 +148,7 @@ namespace lf::dqlru {
 					auto& queue = queues_[id];
 					auto head = queue.GetHead();
 					if (head->stamp == stamp) {
-						auto [value, old_tail] = queue.TryDeq(ebr_, head);
+						auto [value, old_tail] = queue.TryDeq(ebr_, head, rdm_);
 
 						if (nullptr != old_tail) {
 							if (queue.GetTail() == old_tail) {
@@ -203,6 +215,7 @@ namespace lf::dqlru {
 
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
+		benchmark::RelaxationDistanceManager rdm_;
 	};
 }
 

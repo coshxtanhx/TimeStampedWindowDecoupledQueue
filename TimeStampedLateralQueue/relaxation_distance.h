@@ -4,13 +4,11 @@
 #include <list>
 #include <mutex>
 #include <utility>
-#include <memory>
+#include <limits>
 
 #include <fstream>
 
 namespace benchmark {
-	inline std::ofstream out{ "log.txt" };
-
 	class RelaxationDistanceManager {
 	public:
 		RelaxationDistanceManager() = default;
@@ -55,9 +53,8 @@ namespace benchmark {
 			}
 		}
 
-		auto GetRelaxationDistance() {
+		double GetRelaxationDistance() {
 			uint64_t sum{};
-			uint64_t max{};
 			auto num_elements = deq_elements_.size();
 
 			for (auto i = deq_elements_.begin(); i != deq_elements_.end(); ++i) {
@@ -66,15 +63,12 @@ namespace benchmark {
 					if (*i == *j) {
 						enq_elements_.erase(j);
 						sum += cnt_skip;
-						if (max < cnt_skip) {
-							max = cnt_skip;
-						}
 						break;
 					}
 				}
 			}
 
-			return std::make_pair(max, sum / static_cast<double>(num_elements));
+			return sum / static_cast<double>(num_elements);
 		}
 
 	private:

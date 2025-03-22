@@ -62,17 +62,20 @@ namespace lf::twodd {
 				tail = GetTail();
 				node->cnt = tail->cnt + 1;
 				if (nullptr == tail->next) {
-					if (CAS(tail->next, nullptr, node)) {
+					rdm_.LockEnq();
+					if (true == CAS(tail->next, nullptr, node)) {
+						rdm_.Enq(node);
+						rdm_.UnlockEnq();
 						if (false == CAS(tails_[index_].ptr, tail, node)) {
 							has_contented_ = true;
 						}
 						ebr_.EndOp();
 						return;
 					}
+					rdm_.UnlockEnq();
 					has_contented_ = true;
 				}
 			}
-			
 		}
 
 		std::optional<int> Deq() {
@@ -94,11 +97,15 @@ namespace lf::twodd {
 					}
 				}
 				else {
+					rdm_.LockDeq();
 					if (true == CAS(heads_[index_].ptr, head, first)) {
+						rdm_.Deq(first);
+						rdm_.UnlockDeq();
 						ebr_.Retire(head);
 						ebr_.EndOp();
 						return first->v;
 					}
+					rdm_.UnlockDeq();
 					has_contented_ = true;
 				}
 			}

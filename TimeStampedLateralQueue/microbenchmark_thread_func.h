@@ -34,9 +34,8 @@ namespace benchmark {
 
 		for (int i = 0; i < num_op; ++i) {
 			auto op = rng.Get(0, 1);
-			//auto op = 0;
 
-			if (op == 0 or i < num_op / 10000) {
+			if (op == 0 or i < num_op / 1000) {
 				queue->Enq(rng.Get(0, 65535));
 			}
 			else {

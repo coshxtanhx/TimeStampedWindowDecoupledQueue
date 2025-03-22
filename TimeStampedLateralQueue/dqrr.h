@@ -31,7 +31,7 @@ namespace lf::dqrr {
 			delete head_;
 		}
 
-		void Enq(int v) {
+		void Enq(int v, benchmark::RelaxationDistanceManager& rdm) {
 			auto node = new Node{ v };
 
 			while (true) {
@@ -43,10 +43,14 @@ namespace lf::dqrr {
 				}
 
 				if (nullptr == next) {
+					rdm.LockEnq();
 					if (true == CAS(loc_tail->next, nullptr, node)) {
+						rdm.Enq(node);
+						rdm.UnlockEnq();
 						CAS(tail_, loc_tail, node);
 						return;
 					}
+					rdm.UnlockEnq();
 				}
 				else {
 					CAS(tail_, loc_tail, next);
@@ -54,7 +58,7 @@ namespace lf::dqrr {
 			}
 		}
 
-		std::pair<int, Node*> TryDeq(EBR<Node>& ebr) {
+		std::pair<int, Node*> TryDeq(EBR<Node>& ebr, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_head = head_;
 				auto loc_tail = tail_;
@@ -71,9 +75,13 @@ namespace lf::dqrr {
 					continue;
 				}
 				auto value = first->v;
+				rdm.LockDeq();
 				if (false == CAS(head_, loc_head, first)) {
+					rdm.UnlockDeq();
 					continue;
 				}
+				rdm.Deq(first);
+				rdm.UnlockDeq();
 				ebr.Retire(loc_head);
 				return std::make_pair(value, nullptr);
 			}
@@ -112,7 +120,7 @@ namespace lf::dqrr {
 
 		void Enq(int v) {
 			ebr_.StartOp();
-			queues_[GetEnqueuerIndex()].Enq(v);
+			queues_[GetEnqueuerIndex()].Enq(v, rdm_);
 			ebr_.EndOp();
 		}
 
@@ -124,7 +132,7 @@ namespace lf::dqrr {
 			while (true) {
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto id = (start + i) % queues_.size();
-					auto [value, old_tail] = queues_[id].TryDeq(ebr_);
+					auto [value, old_tail] = queues_[id].TryDeq(ebr_, rdm_);
 
 					if (nullptr == old_tail) {
 						ebr_.EndOp();

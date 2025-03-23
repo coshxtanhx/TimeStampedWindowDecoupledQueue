@@ -65,11 +65,11 @@ public:
 	}
 
 	template<class QueueT>
-	int BFS(int num_thread, QueueT* queue) {
-		int dst = num_vertex - 1;
+	int BFS(int num_thread, QueueT& queue) {
+		int dst = num_vertex_ - 1;
 
 		while (not has_ended_) {
-			std::optional<int> node = queue->Deq();
+			std::optional<int> node = queue.Deq();
 
 			if (not node.has_value()) {
 				if (1 == num_thread) {
@@ -91,7 +91,7 @@ public:
 
 					if (expected_cost > cost + 1) {
 						if (true == CAS(adj, expected_cost, cost + 1)) {
-							queue->Enq(adj);
+							queue.Enq(adj);
 							break;
 						}
 					}

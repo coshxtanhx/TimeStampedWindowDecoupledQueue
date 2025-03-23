@@ -26,7 +26,7 @@ namespace benchmark {
 	}
 
 	template<class QueueT>
-	void MicrobenchmarkFunc(MicrobenchmarkSetting setting, int thread_id, int num_thread, QueueT* queue)
+	void MicrobenchmarkFunc(MicrobenchmarkSetting setting, int thread_id, int num_thread, QueueT& queue)
 	{
 		thread::ID(thread_id);
 
@@ -36,10 +36,10 @@ namespace benchmark {
 			auto op = rng.Get(0, 1);
 
 			if (op == 0 or i < num_op / 1000) {
-				queue->Enq(rng.Get(0, 65535));
+				queue.Enq(rng.Get(0, 65535));
 			}
 			else {
-				auto v = queue->Deq();
+				auto v = queue.Deq();
 			}
 
 			Idle(setting.contention);

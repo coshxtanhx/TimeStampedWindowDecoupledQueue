@@ -10,6 +10,9 @@ namespace benchmark {
 		QueueT& queue, Graph& graph, int& result)
 	{
 		thread::ID(thread_id);
+		if (0 == thread_id) {
+			queue.Enq(0);
+		}
 
 		result = graph.BFS(num_thread, queue);
 	}

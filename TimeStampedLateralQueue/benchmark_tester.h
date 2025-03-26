@@ -24,6 +24,9 @@ namespace benchmark {
 		using MacrobenchmarkFuncT = void(*)(BenchmarkSetting, int, int, Subject&, Graph&, int&);
 
 		Tester() noexcept = default;
+		~Tester() noexcept {
+			delete graph_;
+		}
 
 		void StartMicroBenchmark() {
 			constexpr auto kMaxThread{ 72 };
@@ -154,8 +157,25 @@ namespace benchmark {
 		}
 
 		void SetParameter() {
-			std::cout << "input parameter: ";
+			std::cout << "Input parameter: ";
 			std::cin >> parameter_;
+		}
+
+		void GenerateGraph() {
+			if (nullptr != graph_) {
+				std::cout << "[Error] Graph has already been generated!\n";
+				return;
+			}
+			graph_ = new Graph{ 18'000'000 };
+			graph_->Save("graph.bin");
+		}
+
+		void LoadGraph() {
+			if (nullptr != graph_) {
+				std::cout << "[Error] Graph has already been generated!\n";
+				return;
+			}
+			graph_ = new Graph{ "graph.bin" };
 		}
 
 	private:
@@ -174,6 +194,8 @@ namespace benchmark {
 		template<class Subject>
 		void AddMacrobenchmarkThread(MacrobenchmarkFuncT<MicrobenchmarkSetting, Subject> thread_func,
 			int num_thread, Subject& subject, std::vector<int>& results) {
+			graph_->Reset();
+
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				threads_.emplace_back(thread_func, microbenchmark_setting_,
 					thread_id, num_thread, std::ref(subject), std::ref(*graph_), std::ref(results[thread_id]));
@@ -186,7 +208,7 @@ namespace benchmark {
 
 		std::vector<std::thread> threads_;
 		int parameter_{};
-		Graph* graph_;
+		Graph* graph_{};
 		benchmark::MicrobenchmarkSetting microbenchmark_setting_;
 	};
 }

@@ -155,9 +155,9 @@ private:
 			&expected_cost, desired_cost);
 	}
 
-	int num_vertex_{};
 	std::vector<std::vector<int>> adjs_;
 	std::vector<int> has_visited_;
+	int num_vertex_{};
 	volatile bool has_ended_;
 };
 

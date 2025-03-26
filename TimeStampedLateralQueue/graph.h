@@ -11,10 +11,14 @@
 class Graph {
 public:
 	Graph(int num_vertex) : has_ended_{ false } {
-		auto max_adj{ 72 };
+		int max_adj{};
 		if (std::thread::hardware_concurrency() <= 8) {
 			num_vertex_ = num_vertex / 4;
-			max_adj /= 6;
+			max_adj = 12;
+		}
+		else {
+			num_vertex_ = num_vertex;
+			max_adj = 72;
 		}
 
 		has_visited_.resize(num_vertex_, std::numeric_limits<int>::max());

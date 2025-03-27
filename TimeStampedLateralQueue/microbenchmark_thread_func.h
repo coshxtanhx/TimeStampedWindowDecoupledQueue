@@ -1,7 +1,6 @@
 #ifndef MICROBENCHMARK_THREAD_FUNC_H
 #define MICROBENCHMARK_THREAD_FUNC_H
 
-#include "benchmark_setting.h"
 #include "random.h"
 #include "thread.h"
 
@@ -25,12 +24,13 @@ namespace benchmark {
 		}
 	}
 
+	inline constexpr int kTotalNumOp{ 3600'0000 };
+
 	template<class QueueT>
-	void MicrobenchmarkFunc(MicrobenchmarkSetting setting, int thread_id, int num_thread, QueueT& queue)
+	void MicrobenchmarkFunc(int thread_id, int num_thread, int contention, QueueT& queue)
 	{
 		thread::ID(thread_id);
-
-		auto num_op = setting.num_op / num_thread;
+		auto num_op = kTotalNumOp / num_thread;
 
 		for (int i = 0; i < num_op; ++i) {
 			auto op = rng.Get(0, 1);
@@ -42,7 +42,7 @@ namespace benchmark {
 				auto v = queue.Deq();
 			}
 
-			Idle(setting.contention);
+			Idle(contention);
 		}
 	}
 }

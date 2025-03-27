@@ -4,7 +4,6 @@
 #include <vector>
 #include <thread>
 #include "stopwatch.h"
-#include "benchmark_setting.h"
 #include "microbenchmark_thread_func.h"
 #include "macrobenchmark_thread_func.h"
 #include "dqrr.h"
@@ -15,13 +14,17 @@
 #include "time_stamped_lateral_queue.h"
 
 namespace benchmark {
+	enum class Subject {
+		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL
+	};
+
 	class Tester {
 	public:
-		template<class BenchmarkSetting, class Subject>
-		using MicrobenchmarkFuncT = void(*)(BenchmarkSetting, int, int, Subject&);
+		template<class Subject>
+		using MicrobenchmarkFuncT = void(*)(int, int, int, Subject&);
 
-		template<class BenchmarkSetting, class Subject>
-		using MacrobenchmarkFuncT = void(*)(BenchmarkSetting, int, int, Subject&, Graph&, int&);
+		template<class Subject>
+		using MacrobenchmarkFuncT = void(*)(int, int, Subject&, Graph&, int&);
 
 		Tester() noexcept = default;
 		~Tester() noexcept {
@@ -40,7 +43,7 @@ namespace benchmark {
 				double elapsed_sec{};
 				stopwatch.Start();
 
-				switch (microbenchmark_setting_.subject) {
+				switch (subject_) {
 				case Subject::kLRU: {
 					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
 					AddMicrobenchmarkThread(MicrobenchmarkFunc, num_thread, subject);
@@ -89,7 +92,7 @@ namespace benchmark {
 
 				//std::this_thread::sleep_for(std::chrono::seconds(1));
 
-				auto throughput = microbenchmark_setting_.num_op / elapsed_sec;
+				auto throughput = kTotalNumOp / elapsed_sec;
 
 				printf("    threads: %d\n", num_thread);
 				printf("elapsed sec: %.2lf s\n", elapsed_sec);
@@ -108,10 +111,11 @@ namespace benchmark {
 			for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
 				threads_.clear();
 				std::vector<int> results(num_thread);
+				graph_->Reset();
 
 				stopwatch.Start();
 
-				switch (microbenchmark_setting_.subject) {
+				switch (subject_) {
 				case Subject::kLRU: {
 					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
 					AddMacrobenchmarkThread(MacrobenchmarkFunc, num_thread, subject, results);
@@ -161,12 +165,17 @@ namespace benchmark {
 			std::cout << "Input subject: ";
 			int subject_id;
 			std::cin >> subject_id;
-			microbenchmark_setting_.subject = static_cast<Subject>(subject_id);
+			subject_ = static_cast<Subject>(subject_id);
 		}
 
 		void SetParameter() {
 			std::cout << "Input parameter: ";
 			std::cin >> parameter_;
+		}
+
+		void SetContention() {
+			std::cout << "Input contention (1: high, 8: low): ";
+			std::cin >> contention_;
 		}
 
 		void GenerateGraph() {
@@ -188,10 +197,10 @@ namespace benchmark {
 
 	private:
 		template<class Subject>
-		void AddMicrobenchmarkThread(MicrobenchmarkFuncT<MicrobenchmarkSetting, Subject> thread_func, int num_thread, Subject& subject) {
+		void AddMicrobenchmarkThread(MicrobenchmarkFuncT<Subject> thread_func, int num_thread, Subject& subject) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				subject.CheckRelaxationDistance();
-				threads_.emplace_back(thread_func, microbenchmark_setting_, thread_id, num_thread, std::ref(subject));
+				threads_.emplace_back(thread_func, thread_id, num_thread, contention_, std::ref(subject));
 			}
 
 			for (auto& t : threads_) {
@@ -200,13 +209,11 @@ namespace benchmark {
 		}
 
 		template<class Subject>
-		void AddMacrobenchmarkThread(MacrobenchmarkFuncT<MicrobenchmarkSetting, Subject> thread_func,
+		void AddMacrobenchmarkThread(MacrobenchmarkFuncT<Subject> thread_func,
 			int num_thread, Subject& subject, std::vector<int>& results) {
-			graph_->Reset();
-
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
-				threads_.emplace_back(thread_func, microbenchmark_setting_,
-					thread_id, num_thread, std::ref(subject), std::ref(*graph_), std::ref(results[thread_id]));
+				threads_.emplace_back(thread_func, thread_id, num_thread,
+					std::ref(subject), std::ref(*graph_), std::ref(results[thread_id]));
 			}
 
 			for (auto& t : threads_) {
@@ -215,9 +222,10 @@ namespace benchmark {
 		}
 
 		std::vector<std::thread> threads_;
-		int parameter_{};
 		Graph* graph_{};
-		benchmark::MicrobenchmarkSetting microbenchmark_setting_;
+		int parameter_{};
+		Subject subject_{};
+		int contention_{ 1 };
 	};
 }
 

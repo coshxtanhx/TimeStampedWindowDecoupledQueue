@@ -6,8 +6,7 @@ int main()
 {
 	benchmark::Tester tester;
 
-	bool has_terminated{};
-	while (not has_terminated) {
+	while (true) {
 		std::cout << "Input command: ";
 		char cmd;
 		std::cin >> cmd;
@@ -15,6 +14,9 @@ int main()
 
 		switch (cmd)
 		{
+		case 'c':
+			tester.SetContention();
+			break;
 		case 's':
 			tester.SetSubject();
 			break;
@@ -30,7 +32,7 @@ int main()
 			std::cin >> num_repeat;
 
 			for (int i = 1; i <= num_repeat; ++i) {
-				std::cout << std::format("--- {}/{} ---\n", i, num_repeat);
+				std::cout << std::format("------ {}/{} ------\n", i, num_repeat);
 				tester.StartMacroBenchmark();
 			}
 			break;
@@ -42,8 +44,7 @@ int main()
 			tester.LoadGraph();
 			break;
 		case 'q':
-			has_terminated = true;
-			break;
+			return 0;
 		default:
 			break;
 		}

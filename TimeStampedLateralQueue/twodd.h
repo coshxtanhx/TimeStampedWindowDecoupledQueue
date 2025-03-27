@@ -26,6 +26,8 @@ namespace lf::twodd {
 
 	struct alignas(std::hardware_destructive_interference_size) Window {
 		Window() = default;
+		Window(int depth) : max{ static_cast<uint64_t>(depth) } {}
+
 		bool CAS(uint64_t expected, uint64_t desired) {
 			return std::atomic_compare_exchange_strong(
 				reinterpret_cast<volatile std::atomic<uint64_t>*>(&max),
@@ -38,7 +40,8 @@ namespace lf::twodd {
 	class TwoDd {
 	public:
 		TwoDd(int num_queue, int num_thread, int depth)
-			: depth_{ depth }, width_{ num_queue }, heads_(num_queue), tails_(num_queue), ebr_{ num_thread } {
+			: depth_{ depth }, width_{ num_queue }, heads_(num_queue), tails_(num_queue)
+			, ebr_{ num_thread }, window_get{ depth }, window_put{ depth } {
 			for (int i = 0; i < num_queue; ++i) {
 				tails_[i].ptr = new Node;
 				heads_[i].ptr = tails_[i].ptr;
@@ -70,6 +73,9 @@ namespace lf::twodd {
 							has_contented_ = true;
 						}
 						ebr_.EndOp();
+
+						//std::cout << index_ << ' ' << window_put.max << '\n';
+
 						return;
 					}
 					rdm_.UnlockEnq();
@@ -83,6 +89,8 @@ namespace lf::twodd {
 			ebr_.StartOp();
 			while (true) {
 				auto head = GetHead();
+				//std::cout << index_ << ' ' << window_get.max << '\n';
+
 				auto tail = tails_[index_].ptr;
 				auto first = head->next;
 				if (head == tail) {
@@ -113,84 +121,101 @@ namespace lf::twodd {
 
 	private:
 		Node* GetHead() {
-			is_empty_ = true;
-			int random{};
-			int index_search{};
-			auto loc_get_max = window_get.max;
+			bool is_empty{ true };
+			uint64_t hops{}, random{}, put_cnt{};
+
+			uint64_t loc_max_get{};
+			max_get_ = window_get.max;
+
+			if (has_contented_) {
+				index_ = rng.Get(0, width_ - 1);
+				has_contented_ = false;
+			}
+			if (max_get_ != window_get.max) {
+				max_get_ = window_get.max;
+				is_empty = true;
+			}
 
 			while (true) {
-				if (index_search == width_) {
-					if (loc_get_max == window_get.max) {
-						window_get.CAS(loc_get_max, loc_get_max + depth_);
-					}
-					loc_get_max = window_get.max;
-					is_empty_ = true;
-					index_search = 0;
-				}
 				auto head = heads_[index_].ptr;
-				if (head != nullptr and head->cnt < window_get.max) {
+				put_cnt = tails_[index_].ptr->cnt;
+
+				loc_max_get = window_get.max;
+				if (loc_max_get != max_get_) {
+					max_get_ = loc_max_get;
+					hops = 0;
+					is_empty = true;
+				}
+				else if (head->cnt < loc_max_get and put_cnt != head->cnt) {
 					return head;
 				}
-				else if (loc_get_max == window_get.max) {
-					if (head != nullptr) {
-						is_empty_ = false;
+				else if (hops != width_) {
+					if (is_empty and (put_cnt != head->cnt)) {
+						is_empty = false;
 					}
-					// HOP
-					if (random < 2) {
-						index_ = rng.Get(0, width_ - 1);
-						random += 1;
+					Hop(random, hops);
+				}
+				else if (not is_empty) {
+					if (max_get_ == window_get.max) {
+						window_get.CAS(max_get_, max_get_ + depth_);
 					}
-					else {
-						index_search += 1;
-						if (index_search == width_ and is_empty_ == true) {
-							return head;
-						}
-						index_ = (index_ + 1) % width_;
-					}
+
+					max_get_ = window_get.max;
+					hops = 0;
+					is_empty = true;
 				}
 				else {
-					loc_get_max = window_get.max;
-					index_search = 0;
-					is_empty_ = true;
+					return head;
 				}
 			}
 		}
 
 		Node* GetTail() {
-			int random{};
-			int index_search{};
-			auto loc_put_max = window_put.max;
+			uint64_t hops{}, random{};
+			uint64_t loc_max_put{};
+
+			if (has_contented_) {
+				index_ = rng.Get(0, width_ - 1);
+				has_contented_ = false;
+			}
+
+			if (max_put_ != window_put.max) {
+				max_put_ = window_put.max;
+			}
 
 			while (true) {
-				if (index_search == width_) {
-					if (loc_put_max == window_put.max) {
-						window_put.CAS(loc_put_max, loc_put_max + depth_);
-					}
-					loc_put_max = window_put.max;
-					index_search = 0;
-				}
 				auto tail = tails_[index_].ptr;
-				if (tail->cnt < window_put.max) {
+				loc_max_put = window_put.max;
+				if (loc_max_put != max_put_) {
+					max_put_ = loc_max_put;
+					hops = 0;
+				}
+				else if (tail->cnt < loc_max_put) {
 					return tail;
 				}
-				else if (loc_put_max == window_put.max) {
-					// HOP
-					if (random < 2) {
-						index_ = rng.Get(0, width_ - 1);
-						random += 1;
-					}
-					else {
-						index_search += 1;
-						if (index_search == width_ and is_empty_ == true) {
-							return tail;
-						}
-						index_ = (index_ + 1) % width_;
-					}
+				else if (hops != width_) {
+					Hop(random, hops);
 				}
 				else {
-					loc_put_max = window_put.max;
-					index_search = 0;
+					if (max_put_ == window_put.max) {
+						window_put.CAS(max_put_, max_put_ + depth_);
+					}
+
+					max_put_ = window_put.max;
+					hops = 0;
 				}
+			}
+		}
+
+		void Hop(uint64_t& random, uint64_t& hops) const {
+			if (random < 2) {
+				random += 1;
+				index_ = rng.Get(0, width_ - 1);
+			}
+			else
+			{
+				hops += 1;
+				index_ = (index_ + 1) % width_;
 			}
 		}
 
@@ -203,7 +228,8 @@ namespace lf::twodd {
 
 		static thread_local bool has_contented_;
 		static thread_local int index_;
-		static thread_local bool is_empty_;
+		static thread_local uint64_t max_get_;
+		static thread_local uint64_t max_put_;
 		int depth_, width_;
 		std::vector<PaddedPtr> heads_;
 		std::vector<PaddedPtr> tails_;
@@ -215,7 +241,8 @@ namespace lf::twodd {
 
 	thread_local bool TwoDd::has_contented_{};
 	thread_local int TwoDd::index_{};
-	thread_local bool TwoDd::is_empty_{};
+	thread_local uint64_t TwoDd::max_get_{};
+	thread_local uint64_t TwoDd::max_put_{};
 }
 
 #endif

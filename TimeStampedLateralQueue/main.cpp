@@ -1,13 +1,14 @@
 #include <iostream>
+#include <format>
 #include "benchmark_tester.h"
 
 int main()
 {
 	benchmark::Tester tester;
 
-	bool is_terminated{};
-	while (not is_terminated) {
-		std::cout << "Input Command: ";
+	bool has_terminated{};
+	while (not has_terminated) {
+		std::cout << "Input command: ";
 		char cmd;
 		std::cin >> cmd;
 		std::cin.ignore();
@@ -28,7 +29,8 @@ int main()
 			int num_repeat;
 			std::cin >> num_repeat;
 
-			while (num_repeat--) {
+			for (int i = 1; i <= num_repeat; ++i) {
+				std::cout << std::format("--- {}/{} ---\n", i, num_repeat);
 				tester.StartMacroBenchmark();
 			}
 			break;
@@ -40,7 +42,7 @@ int main()
 			tester.LoadGraph();
 			break;
 		case 'q':
-			is_terminated = true;
+			has_terminated = true;
 			break;
 		default:
 			break;

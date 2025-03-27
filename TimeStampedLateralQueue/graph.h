@@ -89,11 +89,14 @@ public:
 			std::optional<int> prev = queue.Deq();
 
 			if (not prev.has_value()) {
+				//std::cout << std::format("?\n");
 				if (1 == num_thread) {
 					return has_visited_[dst];
 				}
 				continue;
 			}
+
+			//if (thread::ID() == 0) { std::cout << std::format("{}\n", prev.value()); }
 
 			auto cost = has_visited_[prev.value()];
 

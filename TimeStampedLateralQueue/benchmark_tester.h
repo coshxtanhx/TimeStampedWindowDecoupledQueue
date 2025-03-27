@@ -209,7 +209,9 @@ namespace benchmark {
 		template<class Subject>
 		void AddMicrobenchmarkThread(MicrobenchmarkFuncT<Subject> thread_func, int num_thread, Subject& subject) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
-				subject.CheckRelaxationDistance();
+				if (checks_relaxation_distance_) {
+					subject.CheckRelaxationDistance();
+				}
 				threads_.emplace_back(thread_func, thread_id, num_thread, contention_, std::ref(subject));
 			}
 

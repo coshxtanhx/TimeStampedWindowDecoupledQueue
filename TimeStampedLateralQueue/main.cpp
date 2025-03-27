@@ -17,6 +17,9 @@ int main()
 		case 'c':
 			tester.SetContention();
 			break;
+		case 'r':
+			tester.CheckRelaxationDistance();
+			break;
 		case 's':
 			tester.SetSubject();
 			break;
@@ -24,13 +27,18 @@ int main()
 			tester.SetParameter();
 			break;
 		case 'i':
-			tester.StartMicroBenchmark();
+			std::cout << "Input the number of times to repeat: ";
+			int num_repeat;
+			std::cin >> num_repeat;
+			for (int i = 1; i <= num_repeat; ++i) {
+				std::cout << std::format("------ {}/{} ------\n", i, num_repeat);
+				tester.StartMicroBenchmark();
+			}
 			break;
 		case 'a': {
 			std::cout << "Input the number of times to repeat: ";
 			int num_repeat;
 			std::cin >> num_repeat;
-
 			for (int i = 1; i <= num_repeat; ++i) {
 				std::cout << std::format("------ {}/{} ------\n", i, num_repeat);
 				tester.StartMacroBenchmark();

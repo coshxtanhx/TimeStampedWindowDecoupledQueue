@@ -178,6 +178,16 @@ namespace benchmark {
 			std::cin >> contention_;
 		}
 
+		void CheckRelaxationDistance() {
+			checks_relaxation_distance_ ^= true;
+			if (checks_relaxation_distance_) {
+				std::cout << "Checks relaxation distance.\n";
+			}
+			else {
+				std::cout << "Does not check relaxation distance.\n";
+			}
+		}
+
 		void GenerateGraph() {
 			if (nullptr != graph_) {
 				std::cout << "[Error] Graph has already been generated!\n";
@@ -226,6 +236,7 @@ namespace benchmark {
 		int parameter_{};
 		Subject subject_{};
 		int contention_{ 1 };
+		bool checks_relaxation_distance_{};
 	};
 }
 

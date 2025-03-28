@@ -14,7 +14,7 @@
 #include "time_stamped_lateral_queue.h"
 
 namespace benchmark {
-	enum class Subject {
+	enum class Subject : uint8_t {
 		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL
 	};
 
@@ -46,42 +46,42 @@ namespace benchmark {
 				switch (subject_) {
 				case Subject::kLRU: {
 					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
-					AddMicrobenchmarkThread(MicrobenchmarkFunc, num_thread, subject);
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					average_relaxation_distance = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kRR: {
 					lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
-					AddMicrobenchmarkThread(MicrobenchmarkFunc, num_thread, subject);
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					average_relaxation_distance = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kRA: {
 					lf::dqra::DQRA subject{ num_thread, num_thread, parameter_ };
-					AddMicrobenchmarkThread(MicrobenchmarkFunc, num_thread, subject);
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					average_relaxation_distance = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kTSInterval: {
 					lf::ts::TSInterval subject{ num_thread, parameter_ };
-					AddMicrobenchmarkThread(MicrobenchmarkFunc, num_thread, subject);
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					average_relaxation_distance = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::k2Dd: {
 					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
-					AddMicrobenchmarkThread(MicrobenchmarkFunc, num_thread, subject);
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					average_relaxation_distance = subject.GetRelaxationDistance();
 					break;
 				}
 				case Subject::kTSL: {
 					lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
-					AddMicrobenchmarkThread(MicrobenchmarkFunc, num_thread, subject);
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					average_relaxation_distance = subject.GetRelaxationDistance();
 					break;
@@ -118,32 +118,32 @@ namespace benchmark {
 				switch (subject_) {
 				case Subject::kLRU: {
 					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
-					AddMacrobenchmarkThread(MacrobenchmarkFunc, num_thread, subject, results);
+					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
 				case Subject::kRR: {
 					lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
-					AddMacrobenchmarkThread(MacrobenchmarkFunc, num_thread, subject, results);
+					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
 				case Subject::kRA: {
 					lf::dqra::DQRA subject{ num_thread, num_thread, parameter_ };
-					AddMacrobenchmarkThread(MacrobenchmarkFunc, num_thread, subject, results);
+					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
 				case Subject::kTSInterval: {
 					lf::ts::TSInterval subject{ num_thread, parameter_ };
-					AddMacrobenchmarkThread(MacrobenchmarkFunc, num_thread, subject, results);
+					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
 				case Subject::k2Dd: {
 					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
-					AddMacrobenchmarkThread(MacrobenchmarkFunc, num_thread, subject, results);
+					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
 				case Subject::kTSL: {
 					lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
-					AddMacrobenchmarkThread(MacrobenchmarkFunc, num_thread, subject, results);
+					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
 				default:
@@ -178,6 +178,11 @@ namespace benchmark {
 			std::cin >> contention_;
 		}
 
+		void SetEnqRate() {
+			std::cout << "Input enq rate(%): ";
+			std::cin >> enq_rate_;
+		}
+
 		void CheckRelaxationDistance() {
 			checks_relaxation_distance_ ^= true;
 			if (checks_relaxation_distance_) {
@@ -207,7 +212,7 @@ namespace benchmark {
 
 	private:
 		template<class Subject>
-		void AddMicrobenchmarkThread(MicrobenchmarkFuncT<Subject> thread_func, int num_thread, Subject& subject) {
+		void RunMicrobenchmark(MicrobenchmarkFuncT<Subject> thread_func, int num_thread, Subject& subject) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				if (checks_relaxation_distance_) {
 					subject.CheckRelaxationDistance();
@@ -221,7 +226,7 @@ namespace benchmark {
 		}
 
 		template<class Subject>
-		void AddMacrobenchmarkThread(MacrobenchmarkFuncT<Subject> thread_func,
+		void RunMacrobenchmark(MacrobenchmarkFuncT<Subject> thread_func,
 			int num_thread, Subject& subject, std::vector<int>& results) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				threads_.emplace_back(thread_func, thread_id, num_thread,
@@ -236,9 +241,10 @@ namespace benchmark {
 		std::vector<std::thread> threads_;
 		Graph* graph_{};
 		int parameter_{};
-		Subject subject_{};
 		int contention_{ 1 };
+		Subject subject_{};
 		bool checks_relaxation_distance_{};
+		int enq_rate_{ 50 };
 	};
 }
 

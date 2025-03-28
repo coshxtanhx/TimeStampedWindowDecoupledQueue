@@ -57,22 +57,30 @@ namespace lf::ts {
 			delete head_;
 		}
 
-		void Enq(int v, int delay) {
+		void Enq(int v, int delay, benchmark::RelaxationDistanceManager& rdm) {
 			auto node = new Node{ v, delay };
+
+			rdm.LockEnq();
 			tail_->next = node;
+			rdm.Enq(node);
+			rdm.UnlockEnq();
 			tail_ = node;
 		}
 
-		std::optional<int> TryDeq(EBR<Node>& ebr, Node* expected) {
+		std::optional<int> TryDeq(EBR<Node>& ebr, Node* first, benchmark::RelaxationDistanceManager& rdm) {
 			auto loc_head = head_;
-			if (loc_head->next != expected) {
+			if (loc_head->next != first) {
 				return std::nullopt;
 			}
-			if (false == CAS(head_, loc_head, expected)) {
+			rdm.LockDeq();
+			if (false == CAS(head_, loc_head, first)) {
+				rdm.UnlockDeq();
 				return std::nullopt;
 			}
+			rdm.Deq(first);
+			rdm.UnlockDeq();
 			ebr.Retire(loc_head);
-			return expected->v;
+			return first->v;
 		}
 
 		const auto GetHead() const {
@@ -105,7 +113,7 @@ namespace lf::ts {
 
 		void Enq(int v) {
 			ebr_.StartOp();
-			queues_[thread::ID()].Enq(v, delay_);
+			queues_[thread::ID()].Enq(v, delay_, rdm_);
 			ebr_.EndOp();
 		}
 
@@ -147,7 +155,7 @@ namespace lf::ts {
 					}
 				}
 				else {
-					auto value = trg->TryDeq(ebr_, youngest);
+					auto value = trg->TryDeq(ebr_, youngest, rdm_);
 					if (value.has_value()) {
 						ebr_.EndOp();
 						return value;

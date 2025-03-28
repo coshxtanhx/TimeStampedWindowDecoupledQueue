@@ -37,7 +37,7 @@ namespace benchmark {
 
 			if (op == 0 or i < num_op / 1000) {
 				queue.Enq(rng.Get(0, 65535));
-			}
+			} 
 			else {
 				auto v = queue.Deq();
 			}

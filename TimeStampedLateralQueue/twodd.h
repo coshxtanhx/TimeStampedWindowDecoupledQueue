@@ -57,12 +57,12 @@ namespace lf::twodd {
 		}
 
 		void Enq(int v) {
-			has_contented_ = false;
+			bool has_contented{ false };
 			ebr_.StartOp();
 			auto node = new Node{ v };
 			Node* tail;
 			while (true) {
-				tail = GetTail();
+				tail = GetTail(has_contented);
 				node->cnt = tail->cnt + 1;
 				if (nullptr == tail->next) {
 					rdm_.LockEnq();
@@ -70,7 +70,7 @@ namespace lf::twodd {
 						rdm_.Enq(node);
 						rdm_.UnlockEnq();
 						if (false == CAS(tails_[index_].ptr, tail, node)) {
-							has_contented_ = true;
+							has_contented = true;
 						}
 						ebr_.EndOp();
 
@@ -79,17 +79,16 @@ namespace lf::twodd {
 						return;
 					}
 					rdm_.UnlockEnq();
-					has_contented_ = true;
+					has_contented = true;
 				}
 			}
 		}
 
 		std::optional<int> Deq() {
-			has_contented_ = false;
+			bool has_contented{ false };
 			ebr_.StartOp();
 			while (true) {
-				auto head = GetHead();
-				//std::cout << index_ << ' ' << window_get.max << '\n';
+				auto head = GetHead(has_contented);
 
 				auto tail = tails_[index_].ptr;
 				auto first = head->next;
@@ -100,7 +99,7 @@ namespace lf::twodd {
 					}
 					else {
 						if (false == CAS(tails_[index_].ptr, head, first)) {
-							has_contented_ = true;
+							has_contented = true;
 						}
 					}
 				}
@@ -114,22 +113,22 @@ namespace lf::twodd {
 						return first->v;
 					}
 					rdm_.UnlockDeq();
-					has_contented_ = true;
+					has_contented = true;
 				}
 			}
 		}
 
 	private:
-		Node* GetHead() {
+		Node* GetHead(bool& has_contented) {
 			bool is_empty{ true };
 			uint64_t hops{}, random{}, put_cnt{};
 
 			uint64_t loc_max_get{};
 			max_get_ = window_get.max;
 
-			if (has_contented_) {
+			if (has_contented) {
 				index_ = rng.Get(0, width_ - 1);
-				has_contented_ = false;
+				has_contented = false;
 			}
 			if (max_get_ != window_get.max) {
 				max_get_ = window_get.max;
@@ -170,13 +169,13 @@ namespace lf::twodd {
 			}
 		}
 
-		Node* GetTail() {
+		Node* GetTail(bool& has_contented) {
 			uint64_t hops{}, random{};
 			uint64_t loc_max_put{};
 
-			if (has_contented_) {
+			if (has_contented) {
 				index_ = rng.Get(0, width_ - 1);
-				has_contented_ = false;
+				has_contented = false;
 			}
 
 			if (max_put_ != window_put.max) {
@@ -212,8 +211,7 @@ namespace lf::twodd {
 				random += 1;
 				index_ = rng.Get(0, width_ - 1);
 			}
-			else
-			{
+			else {
 				hops += 1;
 				index_ = (index_ + 1) % width_;
 			}
@@ -226,7 +224,6 @@ namespace lf::twodd {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
-		static thread_local bool has_contented_;
 		static thread_local int index_;
 		static thread_local uint64_t max_get_;
 		static thread_local uint64_t max_put_;
@@ -239,7 +236,6 @@ namespace lf::twodd {
 		benchmark::RelaxationDistanceManager rdm_;
 	};
 
-	thread_local bool TwoDd::has_contented_{};
 	thread_local int TwoDd::index_{};
 	thread_local uint64_t TwoDd::max_get_{};
 	thread_local uint64_t TwoDd::max_put_{};

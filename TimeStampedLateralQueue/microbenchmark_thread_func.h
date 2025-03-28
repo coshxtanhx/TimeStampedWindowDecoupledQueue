@@ -27,15 +27,15 @@ namespace benchmark {
 	inline constexpr int kTotalNumOp{ 3600'0000 };
 
 	template<class QueueT>
-	void MicrobenchmarkFunc(int thread_id, int num_thread, int contention, QueueT& queue)
+	void MicrobenchmarkFunc(int thread_id, int num_thread, int contention, int enq_rate, QueueT& queue)
 	{
 		thread::ID(thread_id);
 		auto num_op = kTotalNumOp / num_thread;
 
 		for (int i = 0; i < num_op; ++i) {
-			auto op = rng.Get(0, 1);
+			auto op = rng.Get(1, 100);
 
-			if (op == 0 or i < num_op / 1000) {
+			if (op <= enq_rate or i < num_op / 1000) {
 				queue.Enq(rng.Get(0, 65535));
 			} 
 			else {

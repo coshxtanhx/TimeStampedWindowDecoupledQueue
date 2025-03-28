@@ -21,7 +21,7 @@ namespace benchmark {
 	class Tester {
 	public:
 		template<class Subject>
-		using MicrobenchmarkFuncT = void(*)(int, int, int, Subject&);
+		using MicrobenchmarkFuncT = void(*)(int, int, int, int, Subject&);
 
 		template<class Subject>
 		using MacrobenchmarkFuncT = void(*)(int, int, Subject&, Graph&, int&);
@@ -217,7 +217,7 @@ namespace benchmark {
 				if (checks_relaxation_distance_) {
 					subject.CheckRelaxationDistance();
 				}
-				threads_.emplace_back(thread_func, thread_id, num_thread, contention_, std::ref(subject));
+				threads_.emplace_back(thread_func, thread_id, num_thread, contention_, enq_rate_, std::ref(subject));
 			}
 
 			for (auto& t : threads_) {

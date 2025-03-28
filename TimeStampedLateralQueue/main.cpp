@@ -17,6 +17,9 @@ int main()
 		case 'c':
 			tester.SetContention();
 			break;
+		case 'e':
+			tester.SetEnqRate();
+			break;
 		case 'r':
 			tester.CheckRelaxationDistance();
 			break;

@@ -29,7 +29,7 @@ namespace benchmark {
 	template<class QueueT>
 	void MicrobenchmarkFunc(int thread_id, int num_thread, int contention, int enq_rate, QueueT& queue)
 	{
-		thread::ID(thread_id);
+		MyThread::SetID(thread_id);
 		auto num_op = kTotalNumOp / num_thread;
 
 		for (int i = 0; i < num_op; ++i) {

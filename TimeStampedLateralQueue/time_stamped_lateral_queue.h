@@ -19,6 +19,7 @@ namespace lf::tsl {
 		uint64_t retire_epoch{};
 		uint64_t time_stamp{};
 		int v{};
+		int thread_id{ MyThread::GetID() };
 	};
 
 	class alignas(std::hardware_destructive_interference_size) LateralQueue {
@@ -47,7 +48,7 @@ namespace lf::tsl {
 			if (nullptr == next) {
 				rdm.LockEnq();
 				if (true == CAS(loc_tail->next, nullptr, node)) {
-					rdm.Enq(node);
+					rdm.Enq(node, node->thread_id);
 					
 					rdm.UnlockEnq();
 					CAS(tail_, loc_tail, node);
@@ -79,7 +80,7 @@ namespace lf::tsl {
 				auto value = first->v;
 				rdm.LockDeq();
 				if (true == CAS(head_, loc_head, first)) {
-					rdm.Deq(first);
+					rdm.Deq(first, first->thread_id);
 					rdm.UnlockDeq();
 					ebr.Retire(loc_head);
 					return std::make_pair(value, false);
@@ -93,8 +94,8 @@ namespace lf::tsl {
 			return head_->time_stamp;
 		}
 
-		auto GetTailTimeStamp() const {
-			return tail_->time_stamp;
+		auto GetTail() const {
+			return tail_;
 		}
 	private:
 		bool CAS(Node* volatile& trg, Node* expected, Node* desired) {
@@ -126,10 +127,9 @@ namespace lf::tsl {
 
 			rdm.LockEnq();
 			tail_->next = node;
-			rdm.Enq(node);
+			rdm.Enq(node, node->thread_id);
 			rdm.UnlockEnq();
 			tail_ = node;
-
 		}
 
 		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, int depth,
@@ -146,7 +146,7 @@ namespace lf::tsl {
 				auto value = first->v;
 				rdm.LockDeq();
 				if (true == CAS(head_, loc_head, first)) {
-					rdm.Deq(first);
+					rdm.Deq(first, first->thread_id);
 					rdm.UnlockDeq();
 					ebr.Retire(loc_head);
 					return std::make_pair(value, nullptr); 
@@ -186,8 +186,9 @@ namespace lf::tsl {
 		void Enq(int v) {
 			ebr_.StartOp();
 			auto node = new Node{ v };
-			auto lq_ts = lateral_queue_.GetTailTimeStamp();
-			auto& pq = queues_[thread::ID()];
+			auto lq_tail = lateral_queue_.GetTail();
+			auto lq_ts = lq_tail->time_stamp;
+			auto& pq = queues_[MyThread::GetID()];
 
 
 			if (pq.GetTailTimeStamp() < lq_ts + depth_) {
@@ -202,7 +203,7 @@ namespace lf::tsl {
 
 		std::optional<int> Deq() {
 			std::vector<Node*> old_heads(queues_.size());
-			size_t id = thread::ID();
+			size_t id = MyThread::GetID();
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
@@ -225,7 +226,7 @@ namespace lf::tsl {
 					if (queues_.size() == cnt_empty) {
 						bool is_empty{ true };
 						for (size_t i = 1; i < queues_.size(); ++i) {
-							id = (i + thread::ID()) % queues_.size();
+							id = (i + MyThread::GetID()) % queues_.size();
 							if (nullptr != old_heads[id]->next) {
 								is_empty = false;
 								break;
@@ -242,7 +243,7 @@ namespace lf::tsl {
 					return value;
 				}
 				else {
-					id = thread::ID();
+					id = MyThread::GetID();
 				}
 			}
 		}

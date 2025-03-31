@@ -17,6 +17,7 @@ namespace lf::dqrr {
 		Node* volatile next{};
 		uint64_t retire_epoch{};
 		int v{};
+		int thread_id{ MyThread::GetID() };
 	};
 
 	class PartialQueue {
@@ -45,7 +46,7 @@ namespace lf::dqrr {
 				if (nullptr == next) {
 					rdm.LockEnq();
 					if (true == CAS(loc_tail->next, nullptr, node)) {
-						rdm.Enq(node);
+						rdm.Enq(node, node->thread_id);
 						rdm.UnlockEnq();
 						CAS(tail_, loc_tail, node);
 						return;
@@ -80,7 +81,7 @@ namespace lf::dqrr {
 					rdm.UnlockDeq();
 					continue;
 				}
-				rdm.Deq(first);
+				rdm.Deq(first, first->thread_id);
 				rdm.UnlockDeq();
 				ebr.Retire(loc_head);
 				return std::make_pair(value, nullptr);
@@ -157,13 +158,13 @@ namespace lf::dqrr {
 
 	private:
 		size_t GetEnqueuerIndex() {
-			int rr_id = thread::ID() % b_;
+			int rr_id = MyThread::GetID() % b_;
 			auto enq_rr = enq_rrs_[rr_id].fetch_add(1);
 			return enq_rr % queues_.size();
 		}
 
 		size_t GetDequeuerIndex() {
-			int rr_id = thread::ID() % b_;
+			int rr_id = MyThread::GetID() % b_;
 			auto deq_rr = deq_rrs_[rr_id].fetch_add(1);
 			return deq_rr % queues_.size();
 		}

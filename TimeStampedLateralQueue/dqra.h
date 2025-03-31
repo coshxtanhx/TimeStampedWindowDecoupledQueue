@@ -20,6 +20,7 @@ namespace lf::dqra {
 		uint64_t retire_epoch{};
 		uint64_t stamp{};
 		int v{};
+		int thread_id{ MyThread::GetID() };
 	};
 
 	class PartialQueue {
@@ -49,7 +50,7 @@ namespace lf::dqra {
 					node->stamp = loc_tail->stamp + 1;
 					rdm.LockEnq();
 					if (true == CAS(loc_tail->next, nullptr, node)) {
-						rdm.Enq(node);
+						rdm.Enq(node, node->thread_id);
 						rdm.UnlockEnq();
 						CAS(tail_, loc_tail, node);
 						return;
@@ -85,7 +86,7 @@ namespace lf::dqra {
 					rdm.UnlockDeq();
 					continue;
 				}
-				rdm.Deq(first);
+				rdm.Deq(first, first->thread_id);
 				rdm.UnlockDeq();
 				ebr.Retire(loc_head);
 				return std::make_pair(value, nullptr);
@@ -169,7 +170,7 @@ namespace lf::dqra {
 	private:
 		size_t GetEnqueuerIndex() {
 			ShuffleIndex();
-			auto& indices = indices_[thread::ID()];
+			auto& indices = indices_[MyThread::GetID()];
 			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetSize() < queues_[b].GetSize();
 				});
@@ -177,14 +178,14 @@ namespace lf::dqra {
 
 		size_t GetDequeuerIndex() {
 			ShuffleIndex();
-			auto& indices = indices_[thread::ID()];
+			auto& indices = indices_[MyThread::GetID()];
 			return *std::max_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetSize() < queues_[b].GetSize();
 				});
 		}
 
 		void ShuffleIndex() {
-			auto& indices = indices_[thread::ID()];
+			auto& indices = indices_[MyThread::GetID()];
 			for (int i = 0; i < d_; ++i) {
 				auto r = rng.Get(i, indices.size() - 1);
 				std::swap(indices[i], indices[r]);

@@ -4,6 +4,8 @@
 
 int main()
 {
+	MyThread::SetID(-1);
+
 	benchmark::Tester tester;
 
 	while (true) {

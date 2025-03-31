@@ -43,6 +43,7 @@ namespace lf::ts {
 		uint64_t retire_epoch{};
 		TimeStamp time_stamp{};
 		int v{};
+		int thread_id{ MyThread::GetID() };
 	};
 
 	class PartialQueue {
@@ -62,7 +63,7 @@ namespace lf::ts {
 
 			rdm.LockEnq();
 			tail_->next = node;
-			rdm.Enq(node);
+			rdm.Enq(node, node->thread_id);
 			rdm.UnlockEnq();
 			tail_ = node;
 		}
@@ -77,7 +78,7 @@ namespace lf::ts {
 				rdm.UnlockDeq();
 				return std::nullopt;
 			}
-			rdm.Deq(first);
+			rdm.Deq(first, first->thread_id);
 			rdm.UnlockDeq();
 			ebr.Retire(loc_head);
 			return first->v;
@@ -113,13 +114,13 @@ namespace lf::ts {
 
 		void Enq(int v) {
 			ebr_.StartOp();
-			queues_[thread::ID()].Enq(v, delay_, rdm_);
+			queues_[MyThread::GetID()].Enq(v, delay_, rdm_);
 			ebr_.EndOp();
 		}
 
 		std::optional<int> Deq() {
 			ebr_.StartOp();
-			size_t id = thread::ID();
+			size_t id = MyThread::GetID();
 			while (true) {
 				TimeStamp min_time_stamp{ std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max() };
 				Node* youngest{};

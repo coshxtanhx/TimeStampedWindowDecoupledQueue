@@ -19,6 +19,7 @@ namespace lf::dqlru {
 		uint64_t retire_epoch{};
 		uint64_t stamp{};
 		int v{};
+		int thread_id{ MyThread::GetID() };
 	};
 
 	class PartialQueue {
@@ -44,7 +45,7 @@ namespace lf::dqlru {
 				if (nullptr == next) {
 					rdm.LockEnq();
 					if (true == CAS(expected_tail->next, nullptr, node)) {
-						rdm.Enq(node);
+						rdm.Enq(node, node->thread_id);
 						rdm.UnlockEnq();
 						CAS(tail_, expected_tail, node);
 						return true;
@@ -78,7 +79,7 @@ namespace lf::dqlru {
 					rdm.UnlockDeq();
 					return std::make_pair(0, expected_head);
 				}
-				rdm.Deq(first);
+				rdm.Deq(first, first->thread_id);
 				rdm.UnlockDeq();
 				ebr.Retire(expected_head);
 				return std::make_pair(value, nullptr);

@@ -115,12 +115,11 @@ namespace lf::tswd {
 			auto put_max = window_put_.max;
 			auto& pq = queues_[MyThread::GetID()];
 
-
 			if (pq.GetTailTimeStamp() < put_max + depth_) {
 				pq.Enq(node, put_max, rdm_);
 			}
 			else {
-				window_put_.CAS(put_max, depth_);
+				window_put_.CAS(put_max, put_max + depth_);
 				pq.Enq(node, put_max, rdm_);
 			}
 

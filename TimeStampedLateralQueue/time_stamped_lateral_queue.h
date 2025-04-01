@@ -1,4 +1,4 @@
-#ifndef TIME_STAMPED_LATERAL_QUEUE_H
+#ifdef TIME_STAMPED_LATERAL_QUEUE_H
 #define TIME_STAMPED_LATERAL_QUEUE_H
 
 #include <utility>
@@ -6,6 +6,7 @@
 #include <chrono>
 #include <limits>
 #include <optional>
+#include <byte>
 #include "random.h"
 #include "ebr.h"
 #include "relaxation_distance.h"
@@ -109,7 +110,7 @@ namespace lf::tsl {
 		Node* volatile head_;
 	};
 
-	class PartialQueue {
+	class alignas(std::hardware_destructive_interference_size) PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
 		~PartialQueue() {
@@ -166,8 +167,11 @@ namespace lf::tsl {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
-		alignas(std::hardware_destructive_interference_size) Node* volatile tail_;
-		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
+		Node* volatile head2_;
+		Node* volatile tail1_;
+		Node* volatile tail2_;
+		const std::byte padding_[std::hardware_destructive_interference_size - sizeof(Node*) * 3]{};
+		Node* volatile head1_;
 	};
 
 	class TimeStampedLateralQueue {

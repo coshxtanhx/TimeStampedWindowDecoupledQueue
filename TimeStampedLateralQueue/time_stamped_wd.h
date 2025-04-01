@@ -91,7 +91,7 @@ namespace lf::tswd {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
-		alignas(std::hardware_destructive_interference_size) Node* volatile tail_;
+		Node* tail_;
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 

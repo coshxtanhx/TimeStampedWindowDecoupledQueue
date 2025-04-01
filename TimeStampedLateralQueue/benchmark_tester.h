@@ -16,7 +16,7 @@
 
 namespace benchmark {
 	enum class Subject : uint8_t {
-		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL, kTSWd, kCBO
+		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL, kTSWd
 	};
 
 	class Tester {
@@ -81,10 +81,10 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSL: {
-					lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
+					/*lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
 					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
+					avg_rd = subject.GetRelaxationDistance();*/
 					break;
 				}
 				case Subject::kTSWd: {
@@ -150,11 +150,11 @@ namespace benchmark {
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
-				case Subject::kTSL: {
+				/*case Subject::kTSL: {
 					lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
-				}
+				}*/
 				case Subject::kTSWd: {
 					lf::tswd::TimeStampedWd subject{ num_thread, parameter_ };
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);

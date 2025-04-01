@@ -148,6 +148,8 @@ namespace lf::tswd {
 					id = (id + 1) % queues_.size();
 				}
 
+				window_get_.CAS(get_max, get_max + depth_);
+
 				if (queues_.size() == cnt_empty) {
 					bool is_empty{ true };
 					for (size_t i = 1; i < queues_.size(); ++i) {

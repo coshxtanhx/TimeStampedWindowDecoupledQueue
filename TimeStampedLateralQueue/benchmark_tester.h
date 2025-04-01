@@ -13,7 +13,6 @@
 #include "twodd.h"
 #include "time_stamped_lateral_queue.h"
 #include "time_stamped_wd.h"
-#include "cbo.h"
 
 namespace benchmark {
 	enum class Subject : uint8_t {
@@ -95,13 +94,6 @@ namespace benchmark {
 					avg_rd = subject.GetRelaxationDistance();
 					break;
 				}
-				case Subject::kCBO: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
 				default:
 					break;
 				}
@@ -144,7 +136,7 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kRA: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+					lf::dqra::DQRA subject{ num_thread, num_thread, parameter_ };
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}

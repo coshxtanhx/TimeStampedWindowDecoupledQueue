@@ -2,7 +2,7 @@
 #define MICROBENCHMARK_THREAD_FUNC_H
 
 #include "random.h"
-#include "thread.h"
+#include "my_thread.h"
 
 namespace benchmark {
 	double ComputePi(int n)

@@ -12,10 +12,11 @@
 #include "ts_interval.h"
 #include "twodd.h"
 #include "time_stamped_lateral_queue.h"
+#include "time_stamped_wd.h"
 
 namespace benchmark {
 	enum class Subject : uint8_t {
-		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL
+		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL, kTSWd
 	};
 
 	class Tester {
@@ -86,6 +87,13 @@ namespace benchmark {
 					avg_rd = subject.GetRelaxationDistance();
 					break;
 				}
+				case Subject::kTSWd: {
+					lf::tswd::TimeStampedWd subject{ num_thread, parameter_ };
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
+					elapsed_sec = stopwatch.GetDuration();
+					avg_rd = subject.GetRelaxationDistance();
+					break;
+				}
 				default:
 					break;
 				}
@@ -144,6 +152,11 @@ namespace benchmark {
 				}
 				case Subject::kTSL: {
 					lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
+					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
+					break;
+				}
+				case Subject::kTSWd: {
+					lf::tswd::TimeStampedWd subject{ num_thread, parameter_ };
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}

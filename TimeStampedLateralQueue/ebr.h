@@ -6,7 +6,7 @@
 #include <atomic>
 #include <iostream>
 #include <limits>
-#include "thread.h"
+#include "my_thread.h"
 
 namespace lf {
 	template<class T>

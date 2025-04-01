@@ -42,7 +42,7 @@ namespace lf::twodd {
 	public:
 		TwoDd(int num_queue, int num_thread, int depth)
 			: depth_{ depth }, width_{ num_queue }, heads_(num_queue), tails_(num_queue)
-			, ebr_{ num_thread }, window_get{ depth }, window_put{ depth } {
+			, ebr_{ num_thread }, window_get_{ depth }, window_put_{ depth } {
 			for (int i = 0; i < num_queue; ++i) {
 				tails_[i].ptr = new Node;
 				heads_[i].ptr = tails_[i].ptr;
@@ -125,14 +125,14 @@ namespace lf::twodd {
 			uint64_t hops{}, random{}, put_cnt{};
 
 			uint64_t loc_max_get{};
-			max_get_ = window_get.max;
+			max_get_ = window_get_.max;
 
 			if (has_contented) {
 				index_ = rng.Get(0, width_ - 1);
 				has_contented = false;
 			}
-			if (max_get_ != window_get.max) {
-				max_get_ = window_get.max;
+			if (max_get_ != window_get_.max) {
+				max_get_ = window_get_.max;
 				is_empty = true;
 			}
 
@@ -140,7 +140,7 @@ namespace lf::twodd {
 				auto head = heads_[index_].ptr;
 				put_cnt = tails_[index_].ptr->cnt;
 
-				loc_max_get = window_get.max;
+				loc_max_get = window_get_.max;
 				if (loc_max_get != max_get_) {
 					max_get_ = loc_max_get;
 					hops = 0;
@@ -156,11 +156,11 @@ namespace lf::twodd {
 					Hop(random, hops);
 				}
 				else if (not is_empty) {
-					if (max_get_ == window_get.max) {
-						window_get.CAS(max_get_, max_get_ + depth_);
+					if (max_get_ == window_get_.max) {
+						window_get_.CAS(max_get_, max_get_ + depth_);
 					}
 
-					max_get_ = window_get.max;
+					max_get_ = window_get_.max;
 					hops = 0;
 					is_empty = true;
 				}
@@ -179,13 +179,13 @@ namespace lf::twodd {
 				has_contented = false;
 			}
 
-			if (max_put_ != window_put.max) {
-				max_put_ = window_put.max;
+			if (max_put_ != window_put_.max) {
+				max_put_ = window_put_.max;
 			}
 
 			while (true) {
 				auto tail = tails_[index_].ptr;
-				loc_max_put = window_put.max;
+				loc_max_put = window_put_.max;
 				if (loc_max_put != max_put_) {
 					max_put_ = loc_max_put;
 					hops = 0;
@@ -197,11 +197,11 @@ namespace lf::twodd {
 					Hop(random, hops);
 				}
 				else {
-					if (max_put_ == window_put.max) {
-						window_put.CAS(max_put_, max_put_ + depth_);
+					if (max_put_ == window_put_.max) {
+						window_put_.CAS(max_put_, max_put_ + depth_);
 					}
 
-					max_put_ = window_put.max;
+					max_put_ = window_put_.max;
 					hops = 0;
 				}
 			}
@@ -231,8 +231,8 @@ namespace lf::twodd {
 		int depth_, width_;
 		std::vector<PaddedPtr> heads_;
 		std::vector<PaddedPtr> tails_;
-		Window window_get;
-		Window window_put;
+		Window window_get_;
+		Window window_put_;
 		EBR<Node> ebr_;
 		benchmark::RelaxationDistanceManager rdm_;
 	};

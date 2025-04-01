@@ -1,5 +1,5 @@
-#ifndef TIME_STAMPED_LATERAL_QUEUE
-#define TIME_STAMPED_LATERAL_QUEUE
+#ifndef TIME_STAMPED_LATERAL_QUEUE_H
+#define TIME_STAMPED_LATERAL_QUEUE_H
 
 #include <utility>
 #include <vector>

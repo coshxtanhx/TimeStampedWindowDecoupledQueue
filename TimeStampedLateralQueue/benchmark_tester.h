@@ -162,7 +162,7 @@ namespace benchmark {
 		}
 
 		void SetSubject() {
-			std::cout << "1: LRU, 2: RR, 3: RA, 4: TS-interval, 5: 2Dd, 6: TSWd\n";
+			std::cout << "1: LRU, 2: RR, 3: CBO, 4: TS-interval, 5: 2Dd, 6: TSWd\n";
 			std::cout << "Input subject: ";
 			int subject_id;
 			std::cin >> subject_id;

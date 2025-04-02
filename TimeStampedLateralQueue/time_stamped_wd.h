@@ -27,11 +27,11 @@ namespace lf::tswd {
 
 		bool CAS(uint64_t expected, uint64_t desired) {
 			return std::atomic_compare_exchange_strong(
-				reinterpret_cast<volatile std::atomic<uint64_t>*>(&max),
+				reinterpret_cast<volatile std::atomic<uint64_t>*>(&time_stamp),
 				&expected, desired);
 		}
 
-		volatile uint64_t max{};
+		volatile uint64_t time_stamp{};
 	};
 
 	class PartialQueue {
@@ -91,7 +91,7 @@ namespace lf::tswd {
 				reinterpret_cast<uint64_t>(desired));
 		}
 
-		Node* tail_;
+		alignas(std::hardware_destructive_interference_size) Node* tail_;
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
@@ -112,15 +112,15 @@ namespace lf::tswd {
 		void Enq(int v) {
 			ebr_.StartOp();
 			auto node = new Node{ v };
-			auto put_max = window_put_.max;
+			auto put_ts = window_put_.time_stamp;
 			auto& pq = queues_[MyThread::GetID()];
 
-			if (pq.GetTailTimeStamp() < put_max + depth_) {
-				pq.Enq(node, put_max, rdm_);
+			if (pq.GetTailTimeStamp() < put_ts + depth_) {
+				pq.Enq(node, put_ts, rdm_);
 			}
 			else {
-				window_put_.CAS(put_max, put_max + depth_);
-				pq.Enq(node, put_max, rdm_);
+				window_put_.CAS(put_ts, put_ts + depth_);
+				pq.Enq(node, put_ts, rdm_);
 			}
 
 			ebr_.EndOp();
@@ -132,10 +132,10 @@ namespace lf::tswd {
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
-				auto get_max = window_get_.max;
+				auto get_ts = window_get_.time_stamp;
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
-					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_max, rdm_);
+					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
 					if (nullptr != old_head) {
 						old_heads[id] = old_head;
 						cnt_empty += 1;
@@ -147,9 +147,9 @@ namespace lf::tswd {
 					id = (id + 1) % queues_.size();
 				}
 
-				auto put_max = window_put_.max;
-				if (get_max < put_max) {
-					window_get_.CAS(get_max, get_max + depth_);
+				auto put_ts = window_put_.time_stamp;
+				if (get_ts < put_ts) {
+					window_get_.CAS(get_ts, get_ts + depth_);
 				}
 
 				if (queues_.size() == cnt_empty) {

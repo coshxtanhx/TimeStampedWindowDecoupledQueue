@@ -7,16 +7,15 @@
 #include "microbenchmark_thread_func.h"
 #include "macrobenchmark_thread_func.h"
 #include "dqrr.h"
-#include "dqra.h"
+#include "cbo.h"
 #include "dqlru.h"
 #include "ts_interval.h"
 #include "twodd.h"
-#include "time_stamped_lateral_queue.h"
 #include "time_stamped_wd.h"
 
 namespace benchmark {
 	enum class Subject : uint8_t {
-		kNone, kLRU, kRR, kRA, kTSInterval, k2Dd, kTSL, kTSWd
+		kNone, kLRU, kRR, kCBO, kTSInterval, k2Dd, kTSWd
 	};
 
 	class Tester {
@@ -59,8 +58,8 @@ namespace benchmark {
 					avg_rd = subject.GetRelaxationDistance();
 					break;
 				}
-				case Subject::kRA: {
-					lf::dqra::DQRA subject{ num_thread, num_thread, parameter_ };
+				case Subject::kCBO: {
+					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
 					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					avg_rd = subject.GetRelaxationDistance();
@@ -78,13 +77,6 @@ namespace benchmark {
 					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kTSL: {
-					/*lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();*/
 					break;
 				}
 				case Subject::kTSWd: {
@@ -135,8 +127,8 @@ namespace benchmark {
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
-				case Subject::kRA: {
-					lf::dqra::DQRA subject{ num_thread, num_thread, parameter_ };
+				case Subject::kCBO: {
+					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
@@ -150,11 +142,6 @@ namespace benchmark {
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
 					break;
 				}
-				/*case Subject::kTSL: {
-					lf::tsl::TimeStampedLateralQueue subject{ num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
-					break;
-				}*/
 				case Subject::kTSWd: {
 					lf::tswd::TimeStampedWd subject{ num_thread, parameter_ };
 					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
@@ -175,7 +162,7 @@ namespace benchmark {
 		}
 
 		void SetSubject() {
-			std::cout << "1: LRU, 2: RR, 3: RA, 4: TS-interval, 5: 2Dd, 6: TSL\n";
+			std::cout << "1: LRU, 2: RR, 3: RA, 4: TS-interval, 5: 2Dd, 6: TSWd\n";
 			std::cout << "Input subject: ";
 			int subject_id;
 			std::cin >> subject_id;

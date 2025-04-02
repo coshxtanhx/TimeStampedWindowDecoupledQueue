@@ -24,7 +24,7 @@ namespace benchmark {
 		}
 	}
 
-	inline constexpr int kTotalNumOp{ 3600'0000 };
+	inline const int kTotalNumOp{ (std::thread::hardware_concurrency() <= 8) ? 3600'0000 / 10 : 3600'0000 };
 
 	template<class QueueT>
 	void MicrobenchmarkFunc(int thread_id, int num_thread, int contention, int enq_rate, QueueT& queue)

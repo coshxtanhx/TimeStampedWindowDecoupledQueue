@@ -1,5 +1,5 @@
-#ifndef DQRA_H
-#define DQRA_H
+#ifndef CBO_H
+#define CBO_H
 
 #include <utility>
 #include <optional>
@@ -11,7 +11,7 @@
 #include "ebr.h"
 #include "relaxation_distance.h"
 
-namespace lf::dqra {
+namespace lf::cbo {
 	struct Node {
 		Node() = default;
 		Node(int v) : v{ v } {}
@@ -63,7 +63,7 @@ namespace lf::dqra {
 			}
 		}
 
-		std::pair<int, Node*> TryDeq(EBR<Node>& ebr, benchmark::RelaxationDistanceManager& rdm) {
+		std::optional<int> TryDeq(EBR<Node>& ebr, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_head = head_;
 				auto loc_tail = tail_;
@@ -73,7 +73,7 @@ namespace lf::dqra {
 				}
 				if (nullptr == first) {
 					ebr.EndOp();
-					return std::make_pair(0, loc_tail);
+					return std::nullopt;
 				}
 				if (loc_head == loc_tail) {
 					CAS(tail_, loc_tail, first);
@@ -89,7 +89,7 @@ namespace lf::dqra {
 				rdm.Deq(first, first->thread_id);
 				rdm.UnlockDeq();
 				ebr.Retire(loc_head);
-				return std::make_pair(value, nullptr);
+				return value;
 			}
 		}
 
@@ -97,8 +97,8 @@ namespace lf::dqra {
 			return tail_;
 		}
 
-		auto GetSize() const {
-			return tail_->stamp - head_->stamp;
+		auto GetHead() const {
+			return head_;
 		}
 	private:
 		bool CAS(Node* volatile& trg, Node* expected, Node* desired) {
@@ -112,9 +112,9 @@ namespace lf::dqra {
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
-	class DQRA {
+	class CBO {
 	public:
-		DQRA(int num_queue, int num_thread, int d) : d_{ d }, indices_(num_thread)
+		CBO(int num_queue, int num_thread, int d) : d_{ d }, indices_(num_thread)
 			, queues_(num_queue), ebr_{ num_thread } {
 			for (auto& indices : indices_) {
 				indices.resize(num_queue);
@@ -140,30 +140,15 @@ namespace lf::dqra {
 			std::vector<Node*> old_tails(queues_.size());
 			ebr_.StartOp();
 
-			auto start = GetDequeuerIndex();
-			while (true) {
-				for (size_t i = 0; i < queues_.size(); ++i) {
-					auto id = (start + i) % queues_.size();
-					auto [value, old_tail] = queues_[id].TryDeq(ebr_, rdm_);
+			auto optimal = GetDequeuerIndex();
+			auto value = queues_[optimal].TryDeq(ebr_, rdm_);
 
-					if (nullptr == old_tail) {
-						ebr_.EndOp();
-						return value;
-					}
-
-					old_tails[id] = old_tail;
-				}
-
-				for (size_t i = 0; i < old_tails.size(); ++i) {
-					if (old_tails[i] != queues_[i].GetTail()) {
-						start = i;
-						break;
-					}
-					if (i == old_tails.size() - 1) {
-						ebr_.EndOp();
-						return std::nullopt;
-					}
-				}
+			if (value.has_value()) {
+				ebr_.EndOp();
+				return value;
+			}
+			else {
+				return DoubleCollect(optimal);
 			}
 		}
 
@@ -172,16 +157,44 @@ namespace lf::dqra {
 			ShuffleIndex();
 			auto& indices = indices_[MyThread::GetID()];
 			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
-				return queues_[a].GetSize() < queues_[b].GetSize();
+				return queues_[a].GetTail()->stamp < queues_[b].GetTail()->stamp;
 				});
 		}
 
 		size_t GetDequeuerIndex() {
 			ShuffleIndex();
 			auto& indices = indices_[MyThread::GetID()];
-			return *std::max_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
-				return queues_[a].GetSize() < queues_[b].GetSize();
+			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
+				return queues_[a].GetHead()->stamp < queues_[b].GetHead()->stamp;
 				});
+		}
+
+		std::optional<int> DoubleCollect(size_t start) {
+			std::vector<Node*> versions(queues_.size());
+			while (true) {
+				for (size_t i = 0; i < queues_.size(); ++i) {
+					auto id = (start + i) % queues_.size();
+					versions[i] = queues_[i].GetTail();
+					auto value = queues_[i].TryDeq(ebr_, rdm_);
+					if (value.has_value()) {
+						return value;
+					}
+				}
+
+				bool is_empty{ true };
+				for (size_t i = 0; i < queues_.size(); ++i) {
+					auto id = (start + i) % queues_.size();
+					if (versions[id] != queues_[id].GetTail()) {
+						is_empty = false;
+						start = id;
+						break;
+					}
+				}
+
+				if (is_empty) {
+					return std::nullopt;
+				}
+			}
 		}
 
 		void ShuffleIndex() {

@@ -5,29 +5,10 @@
 #include "my_thread.h"
 
 namespace benchmark {
-	double ComputePi(int n)
-	{
-		double pi{};
-		int sign = +1;
-		for (int i = 0; i < n; ++i) {
-			pi += sign * 1.0 / (i * 2 + 1) * 4;
-			sign *= -1;
-		}
-		return pi;
-	}
-
-	void Idle(int contention)
-	{
-		volatile double pi;
-		for (int i = 0; i < contention; ++i) {
-			pi = ComputePi(560);
-		}
-	}
-
-	inline const int kTotalNumOp{ (std::thread::hardware_concurrency() <= 8) ? 3600'0000 / 10 : 3600'0000 };
+	inline const int kTotalNumOp{ (std::thread::hardware_concurrency() <= 8) ? 360'000 : 3600'0000 };
 
 	template<class QueueT>
-	void MicrobenchmarkFunc(int thread_id, int num_thread, int contention, int enq_rate, QueueT& queue)
+	void MicrobenchmarkFunc(int thread_id, int num_thread, int enq_rate, QueueT& queue)
 	{
 		MyThread::SetID(thread_id);
 		auto num_op = kTotalNumOp / num_thread;
@@ -41,8 +22,6 @@ namespace benchmark {
 			else {
 				auto v = queue.Deq();
 			}
-
-			Idle(contention);
 		}
 	}
 }

@@ -16,9 +16,6 @@ int main()
 
 		switch (cmd)
 		{
-		case 'c':
-			tester.SetContention();
-			break;
 		case 'e':
 			tester.SetEnqRate();
 			break;

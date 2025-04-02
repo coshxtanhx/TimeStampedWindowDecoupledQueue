@@ -21,7 +21,7 @@ namespace benchmark {
 	class Tester {
 	public:
 		template<class Subject>
-		using MicrobenchmarkFuncT = void(*)(int, int, int, int, Subject&);
+		using MicrobenchmarkFuncT = void(*)(int, int, int, Subject&);
 
 		template<class Subject>
 		using MacrobenchmarkFuncT = void(*)(int, int, Subject&, Graph&, int&);
@@ -174,11 +174,6 @@ namespace benchmark {
 			std::cin >> parameter_;
 		}
 
-		void SetContention() {
-			std::cout << "Input contention (1: high, 8: low): ";
-			std::cin >> contention_;
-		}
-
 		void SetEnqRate() {
 			std::cout << "Input enq rate(%): ";
 			std::cin >> enq_rate_;
@@ -218,7 +213,7 @@ namespace benchmark {
 				if (checks_relaxation_distance_) {
 					subject.CheckRelaxationDistance();
 				}
-				threads_.emplace_back(thread_func, thread_id, num_thread, contention_, enq_rate_, std::ref(subject));
+				threads_.emplace_back(thread_func, thread_id, num_thread, enq_rate_, std::ref(subject));
 			}
 
 			for (auto& t : threads_) {
@@ -242,7 +237,6 @@ namespace benchmark {
 		std::vector<std::thread> threads_;
 		Graph* graph_{};
 		int parameter_{};
-		int contention_{ 1 };
 		Subject subject_{};
 		bool checks_relaxation_distance_{};
 		int enq_rate_{ 50 };

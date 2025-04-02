@@ -157,42 +157,18 @@ namespace lf::cbo {
 			ShuffleIndex();
 			auto& indices = indices_[MyThread::GetID()];
 			
-			auto min_head_stamp{ queues_[indices[0]].GetHead()->stamp };
-			size_t id{ indices[0] };
-
-			for (int i = 1; i < d_; ++i) {
-				auto head_stamp = queues_[indices[i]].GetHead()->stamp;
-				if (min_head_stamp > head_stamp) {
-					min_head_stamp = head_stamp;
-					id = indices[i];
-				}
-			}
-			return id;
-			
-			/*return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
+			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetTail()->stamp < queues_[b].GetTail()->stamp;
-				});*/
+				});
 		}
 
 		size_t GetDequeuerIndex() {
 			ShuffleIndex();
 			auto& indices = indices_[MyThread::GetID()];
 
-			auto min_tail_stamp{ queues_[indices[0]].GetTail()->stamp };
-			size_t id{ indices[0] };
-
-			for (int i = 1; i < d_; ++i) {
-				auto tail_stamp = queues_[indices[i]].GetTail()->stamp;
-				if (min_tail_stamp > tail_stamp) {
-					min_tail_stamp = tail_stamp;
-					id = indices[i];
-				}
-			}
-			return id;
-
-			/*return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
+			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetHead()->stamp < queues_[b].GetHead()->stamp;
-				});*/
+				});
 		}
 
 		std::optional<int> DoubleCollect(size_t start) {

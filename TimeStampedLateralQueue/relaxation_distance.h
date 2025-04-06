@@ -53,27 +53,20 @@ namespace benchmark {
 
 		auto GetRelaxationDistance() {
 			uint64_t sum_rd{};
-			uint64_t sum_rd_threadlocal{};
 			auto num_elements = deq_elements_.size();
 
 			for (auto i = deq_elements_.begin(); i != deq_elements_.end(); ++i) {
 				uint64_t cnt_skip{};
-				uint64_t cnt_skip_thread{};
 				for (auto j = enq_elements_.begin(); j != enq_elements_.end(); ++j, ++cnt_skip) {
 					if (i->first == j->first) {
 						enq_elements_.erase(j);
 						sum_rd += cnt_skip;
-						sum_rd_threadlocal += cnt_skip_thread;
 						break;
-					}
-					else if (i->second == j->second) {
-						cnt_skip_thread += 1;
 					}
 				}
 			}
 
-			return std::make_pair(sum_rd / static_cast<double>(num_elements),
-				sum_rd_threadlocal / static_cast<double>(num_elements));
+			return sum_rd / static_cast<double>(num_elements);
 		}
 
 	private:

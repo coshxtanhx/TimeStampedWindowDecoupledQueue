@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <thread>
+#include <map>
 #include "stopwatch.h"
 #include "microbenchmark_thread_func.h"
 #include "macrobenchmark_thread_func.h"
@@ -15,7 +16,7 @@
 
 namespace benchmark {
 	enum class Subject : uint8_t {
-		kNone, kLRU, kRR, kCBO, kTSInterval, k2Dd, kTSWd
+		kNone, kLRU, kRR, kCBO, kTSInterval, k2Dd, kTSWD
 	};
 
 	class Tester {
@@ -34,72 +35,84 @@ namespace benchmark {
 		void StartMicroBenchmark() {
 			constexpr auto kMaxThread{ 72 };
 			threads_.reserve(kMaxThread);
-
 			Stopwatch stopwatch;
 
-			for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2){
-				threads_.clear();
-				std::pair<double, double> avg_rd{};
-				double elapsed_sec{};
-				stopwatch.Start();
+			std::map<int, double> results{};
 
-				switch (subject_) {
-				case Subject::kLRU: {
-					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kRR: {
-					lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, 1 };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kCBO: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kTSInterval: {
-					lf::ts::TSInterval subject{ num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::k2Dd: {
-					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kTSWd: {
-					lf::tswd::TimeStampedWd subject{ num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					avg_rd = subject.GetRelaxationDistance();
-					break;
-				}
-				default:
-					break;
-				}
+			std::cout << "Input the number of times to repeat: ";
+			int num_repeat;
+			std::cin >> num_repeat;
+			for (int i = 1; i <= num_repeat; ++i) {
+				printf("------ %d/%d ------\n", i, num_repeat);
+				for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
+					threads_.clear();
+					double avg_rd{};
+					double elapsed_sec{};
+					stopwatch.Start();
 
-				//std::this_thread::sleep_for(std::chrono::seconds(1));
+					switch (subject_) {
+					case Subject::kLRU: {
+						lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
+						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						avg_rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kRR: {
+						lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, 1 };
+						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						avg_rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kCBO: {
+						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						avg_rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kTSInterval: {
+						lf::ts::TSInterval subject{ num_thread, parameter_ };
+						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						avg_rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::k2Dd: {
+						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						avg_rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kTSWD: {
+						lf::tswd::TSWD subject{ num_thread, parameter_ };
+						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						avg_rd = subject.GetRelaxationDistance();
+						break;
+					}
+					default:
+						break;
+					}
 
-				auto throughput = kTotalNumOp / elapsed_sec;
+					//std::this_thread::sleep_for(std::chrono::seconds(1));
 
-				printf("              threads: %d\n", num_thread);
-				printf("          elapsed sec: %.2lf s\n", elapsed_sec);
-				printf("           throughput: %.2lf MOp/s\n", throughput / 1e6);
-				printf("             avg dist: %.2lf\n", avg_rd.first);
-				printf("thread local avg dist: %.2lf\n", avg_rd.second);
-				printf("\n");
+					auto throughput = kTotalNumOp / elapsed_sec / 1e6;
+
+					printf("    threads: %d\n", num_thread);
+					printf("elapsed sec: %.2lf s\n", elapsed_sec);
+					printf(" throughput: %.2lf MOp/s\n", throughput);
+					printf("   avg dist: %.2lf\n", avg_rd);
+					printf("\n");
+
+					results[num_thread] += checks_relaxation_distance_ ? avg_rd : throughput;
+				}
+			}
+
+			for (auto& [num_thread, sum] : results) {
+				printf("threads: %2d, avg: %.2lf\n\n", num_thread, sum / num_repeat);
 			}
 		}
 		
@@ -109,55 +122,70 @@ namespace benchmark {
 
 			Stopwatch stopwatch;
 
-			for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
-				threads_.clear();
-				std::vector<int> results(num_thread);
-				graph_->Reset();
+			std::map<int, double> results{};
 
-				stopwatch.Start();
+			std::cout << "Input the number of times to repeat: ";
+			int num_repeat;
+			std::cin >> num_repeat;
+			for (int i = 1; i <= num_repeat; ++i) {
+				printf("------ %d/%d ------\n", i, num_repeat);
 
-				switch (subject_) {
-				case Subject::kLRU: {
-					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
-					break;
-				}
-				case Subject::kRR: {
-					lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
-					break;
-				}
-				case Subject::kCBO: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
-					break;
-				}
-				case Subject::kTSInterval: {
-					lf::ts::TSInterval subject{ num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
-					break;
-				}
-				case Subject::k2Dd: {
-					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
-					break;
-				}
-				case Subject::kTSWd: {
-					lf::tswd::TimeStampedWd subject{ num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, results);
-					break;
-				}
-				default:
-					break;
-				}
+				for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
+					threads_.clear();
+					std::vector<int> shortest_dists(num_thread);
+					graph_->Reset();
 
-				double elapsed_sec{ stopwatch.GetDuration() };
-				auto shortest_distance = *std::min_element(results.begin(), results.end());
+					stopwatch.Start();
 
-				printf("          threads: %d\n", num_thread);
-				printf("      elapsed sec: %.2lf s\n", elapsed_sec);
-				printf("shortest distance: %d\n", shortest_distance);
-				printf("\n");
+					switch (subject_) {
+					case Subject::kLRU: {
+						lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
+						RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kRR: {
+						lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
+						RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kCBO: {
+						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+						RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSInterval: {
+						lf::ts::TSInterval subject{ num_thread, parameter_ };
+						RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::k2Dd: {
+						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+						RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSWD: {
+						lf::tswd::TSWD subject{ num_thread, parameter_ };
+						RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					default:
+						break;
+					}
+
+					double elapsed_sec{ stopwatch.GetDuration() };
+					auto shortest_distance = *std::min_element(shortest_dists.begin(), shortest_dists.end());
+
+					printf("          threads: %d\n", num_thread);
+					printf("      elapsed sec: %.2lf s\n", elapsed_sec);
+					printf("shortest distance: %d\n", shortest_distance);
+					printf("\n");
+
+					results[num_thread] += elapsed_sec;
+				}
+			}
+
+			for (auto& [num_thread, sum] : results) {
+				printf("threads: %2d, avg: %.2lf\n\n", num_thread, sum / num_repeat);
 			}
 		}
 
@@ -223,10 +251,10 @@ namespace benchmark {
 
 		template<class Subject>
 		void RunMacrobenchmark(MacrobenchmarkFuncT<Subject> thread_func,
-			int num_thread, Subject& subject, std::vector<int>& results) {
+			int num_thread, Subject& subject, std::vector<int>& shortest_dists) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				threads_.emplace_back(thread_func, thread_id, num_thread,
-					std::ref(subject), std::ref(*graph_), std::ref(results[thread_id]));
+					std::ref(subject), std::ref(*graph_), std::ref(shortest_dists[thread_id]));
 			}
 
 			for (auto& t : threads_) {

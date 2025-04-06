@@ -46,9 +46,9 @@ namespace lf::tswd {
 			delete head_;
 		}
 
-		void Enq(Node* node, uint64_t put_max, benchmark::RelaxationDistanceManager& rdm) {
+		void Enq(Node* node, uint64_t put_ts, benchmark::RelaxationDistanceManager& rdm) {
 			auto tail_ts = tail_->time_stamp;
-			node->time_stamp = (tail_ts <= put_max) ? (put_max + 1) : (tail_ts + 1);
+			node->time_stamp = std::max(put_ts, tail_ts) + 1;
 
 			rdm.LockEnq();
 			tail_->next = node;
@@ -58,14 +58,14 @@ namespace lf::tswd {
 		}
 
 		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, int depth,
-			uint64_t get_max, benchmark::RelaxationDistanceManager& rdm) {
+			uint64_t get_ts, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_head = head_;
 				auto first = loc_head->next;
 				if (nullptr == first) {
 					return std::make_pair(std::nullopt, loc_head); // pq is empty
 				}
-				if (first->time_stamp > get_max + depth) {
+				if (first->time_stamp > get_ts + depth) {
 					return std::make_pair(std::nullopt, nullptr); // retry required
 				}
 				auto value = first->v;
@@ -95,9 +95,9 @@ namespace lf::tswd {
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
-	class TimeStampedWd {
+	class TSWD {
 	public:
-		TimeStampedWd(int num_thread, int depth)
+		TSWD(int num_thread, int depth)
 			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread } {
 		}
 

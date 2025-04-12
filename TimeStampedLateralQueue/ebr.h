@@ -9,7 +9,7 @@
 #include "my_thread.h"
 
 namespace lf {
-	struct alignas(std::hardware_destructive_interference_size) Reservation {
+	struct Reservation {
 		Reservation() = default;
 
 		void StartOP(std::atomic<uint64_t>& base_epoch) {

@@ -114,7 +114,7 @@ namespace benchmark {
 			for (auto& [num_thread, sum] : results) {
 				printf("threads: %2d, avg: %.2lf\n", num_thread, sum / num_repeat);
 			}
-			printf('\n');
+			printf("\n");
 		}
 		
 		void StartMacroBenchmark() {

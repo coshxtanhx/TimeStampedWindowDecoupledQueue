@@ -54,6 +54,7 @@ namespace lf::tswd {
 			tail_->next = node;
 			rdm.Enq(node, node->thread_id);
 			rdm.UnlockEnq();
+
 			tail_ = node;
 		}
 
@@ -113,15 +114,14 @@ namespace lf::tswd {
 			ebr_.StartOp();
 			auto node = new Node{ v };
 			auto put_ts = window_put_.time_stamp;
+
 			auto& pq = queues_[MyThread::GetID()];
 
-			if (pq.GetTailTimeStamp() < put_ts + depth_) {
-				pq.Enq(node, put_ts, rdm_);
-			}
-			else {
+			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
 				window_put_.CAS(put_ts, put_ts + depth_);
-				pq.Enq(node, put_ts, rdm_);
+				put_ts += depth_;
 			}
+			pq.Enq(node, put_ts, rdm_);
 
 			ebr_.EndOp();
 		}

@@ -61,6 +61,8 @@ namespace lf {
 		}
 
 	private:
+		struct alignas(std::hardware_destructive_interference_size) RetiredPtrQueue : std::queue<T*> {};
+
 		uint64_t GetCapacity() const noexcept {
 			return static_cast<uint64_t>(num_thread_ * 60);
 		}
@@ -88,7 +90,7 @@ namespace lf {
 
 		int num_thread_;
 		std::vector<Reservation> reservations_;
-		std::vector<std::queue<T*>> retired_;
+		std::vector<RetiredPtrQueue> retired_;
 		std::atomic<uint64_t> epoch_;
 	};
 }

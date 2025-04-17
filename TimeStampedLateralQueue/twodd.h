@@ -14,11 +14,10 @@ namespace lf::twodd {
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		Node* volatile next{ nullptr };
+		Node* volatile next{};
 		uint64_t retire_epoch{};
 		uint64_t cnt{};
 		int v{};
-		int thread_id{ MyThread::GetID() };
 	};
 
 	struct alignas(std::hardware_destructive_interference_size) PaddedPtr {
@@ -68,7 +67,7 @@ namespace lf::twodd {
 				if (nullptr == tail->next) {
 					rdm_.LockEnq();
 					if (true == CAS(tail->next, nullptr, node)) {
-						rdm_.Enq(node, node->thread_id);
+						rdm_.Enq(node);
 						rdm_.UnlockEnq();
 						if (false == CAS(tails_[index_].ptr, tail, node)) {
 							has_contented = true;
@@ -107,7 +106,7 @@ namespace lf::twodd {
 				else {
 					rdm_.LockDeq();
 					if (true == CAS(heads_[index_].ptr, head, first)) {
-						rdm_.Deq(first, first->thread_id);
+						rdm_.Deq(first);
 						rdm_.UnlockDeq();
 						ebr_.Retire(head);
 						ebr_.EndOp();

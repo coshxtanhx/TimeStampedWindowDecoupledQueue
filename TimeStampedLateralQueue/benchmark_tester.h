@@ -46,7 +46,7 @@ namespace benchmark {
 				printf("------ %d/%d ------\n", i, num_repeat);
 				for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
 					threads_.clear();
-					double avg_rd{};
+					std::pair<double, uint64_t> rd{};
 					double elapsed_sec{};
 					stopwatch.Start();
 
@@ -55,42 +55,42 @@ namespace benchmark {
 						lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
 						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
-						avg_rd = subject.GetRelaxationDistance();
+						rd = subject.GetRelaxationDistance();
 						break;
 					}
 					case Subject::kRR: {
 						lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, 1 };
 						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
-						avg_rd = subject.GetRelaxationDistance();
+						rd = subject.GetRelaxationDistance();
 						break;
 					}
 					case Subject::kCBO: {
 						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
 						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
-						avg_rd = subject.GetRelaxationDistance();
+						rd = subject.GetRelaxationDistance();
 						break;
 					}
 					case Subject::kTSInterval: {
 						lf::ts::TSInterval subject{ num_thread, parameter_ };
 						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
-						avg_rd = subject.GetRelaxationDistance();
+						rd = subject.GetRelaxationDistance();
 						break;
 					}
 					case Subject::k2Dd: {
 						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
 						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
-						avg_rd = subject.GetRelaxationDistance();
+						rd = subject.GetRelaxationDistance();
 						break;
 					}
 					case Subject::kTSWD: {
 						lf::tswd::TSWD subject{ num_thread, parameter_ };
 						RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
-						avg_rd = subject.GetRelaxationDistance();
+						rd = subject.GetRelaxationDistance();
 						break;
 					}
 					default:
@@ -104,10 +104,11 @@ namespace benchmark {
 					printf("    threads: %d\n", num_thread);
 					printf("elapsed sec: %.2lf s\n", elapsed_sec);
 					printf(" throughput: %.2lf MOp/s\n", throughput);
-					printf("   avg dist: %.2lf\n", avg_rd);
+					printf("   avg dist: %.2lf\n", rd.first);
+					printf("   max dist: %zu\n", rd.second);
 					printf("\n");
 
-					results[num_thread] += checks_relaxation_distance_ ? avg_rd : throughput;
+					results[num_thread] += checks_relaxation_distance_ ? rd.first : throughput;
 				}
 			}
 
@@ -186,8 +187,9 @@ namespace benchmark {
 			}
 
 			for (auto& [num_thread, sum] : results) {
-				printf("threads: %2d, avg: %.2lf\n\n", num_thread, sum / num_repeat);
+				printf("threads: %2d, avg: %.2lf\n", num_thread, sum / num_repeat);
 			}
+			printf("\n");
 		}
 
 		void SetSubject() {

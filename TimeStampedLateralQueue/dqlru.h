@@ -19,7 +19,6 @@ namespace lf::dqlru {
 		uint64_t retire_epoch{};
 		uint64_t stamp{};
 		int v{};
-		int thread_id{ MyThread::GetID() };
 	};
 
 	class PartialQueue {
@@ -45,7 +44,7 @@ namespace lf::dqlru {
 				if (nullptr == next) {
 					rdm.LockEnq();
 					if (true == CAS(expected_tail->next, nullptr, node)) {
-						rdm.Enq(node, node->thread_id);
+						rdm.Enq(node);
 						rdm.UnlockEnq();
 						CAS(tail_, expected_tail, node);
 						return true;
@@ -60,14 +59,14 @@ namespace lf::dqlru {
 			}
 		}
 
-		std::pair<int, Node*> TryDeq(EBR<Node>& ebr, Node* expected_head, benchmark::RelaxationDistanceManager& rdm) {
+		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, Node* expected_head, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_tail = tail_;
 				auto first = expected_head->next;
 
 				if (nullptr == first) {
 					ebr.EndOp();
-					return std::make_pair(0, loc_tail);
+					return std::make_pair(std::nullopt, loc_tail);
 				}
 				if (expected_head == loc_tail) {
 					CAS(tail_, loc_tail, first);
@@ -77,9 +76,9 @@ namespace lf::dqlru {
 				rdm.LockDeq();
 				if (false == CAS(head_, expected_head, first)) {
 					rdm.UnlockDeq();
-					return std::make_pair(0, expected_head);
+					return std::make_pair(std::nullopt, expected_head);
 				}
-				rdm.Deq(first, first->thread_id);
+				rdm.Deq(first);
 				rdm.UnlockDeq();
 				ebr.Retire(expected_head);
 				return std::make_pair(value, nullptr);

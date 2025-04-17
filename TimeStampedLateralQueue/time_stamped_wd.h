@@ -15,11 +15,10 @@ namespace lf::tswd {
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		Node* volatile next{ nullptr };
+		Node* volatile next{};
 		uint64_t retire_epoch{};
 		uint64_t time_stamp{};
 		int v{};
-		int thread_id{ MyThread::GetID() };
 	};
 
 	struct alignas(std::hardware_destructive_interference_size) Window {
@@ -46,15 +45,10 @@ namespace lf::tswd {
 			delete head_;
 		}
 
-		void Enq(Node* node, uint64_t put_ts, benchmark::RelaxationDistanceManager& rdm) {
+		void Enq(Node* node, uint64_t put_ts) {
 			auto tail_ts = tail_->time_stamp;
 			node->time_stamp = std::max(put_ts, tail_ts) + 1;
-
-			rdm.LockEnq();
 			tail_->next = node;
-			rdm.Enq(node, node->thread_id);
-			rdm.UnlockEnq();
-
 			tail_ = node;
 		}
 
@@ -72,7 +66,7 @@ namespace lf::tswd {
 				auto value = first->v;
 				rdm.LockDeq();
 				if (true == CAS(head_, loc_head, first)) {
-					rdm.Deq(first, first->thread_id);
+					rdm.Deq(first);
 					rdm.UnlockDeq();
 					ebr.Retire(loc_head);
 					return std::make_pair(value, nullptr);
@@ -99,8 +93,7 @@ namespace lf::tswd {
 	class TSWD {
 	public:
 		TSWD(int num_thread, int depth)
-			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread } {
-		}
+			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread } {}
 
 		void CheckRelaxationDistance() {
 			rdm_.CheckRelaxationDistance();
@@ -113,7 +106,11 @@ namespace lf::tswd {
 		void Enq(int v) {
 			ebr_.StartOp();
 			auto node = new Node{ v };
+
+			rdm_.LockEnq();
 			auto put_ts = window_put_.time_stamp;
+			rdm_.Enq(node);
+			rdm_.UnlockEnq();
 
 			auto& pq = queues_[MyThread::GetID()];
 
@@ -121,7 +118,7 @@ namespace lf::tswd {
 				window_put_.CAS(put_ts, put_ts + depth_);
 				put_ts += depth_;
 			}
-			pq.Enq(node, put_ts, rdm_);
+			pq.Enq(node, put_ts);
 
 			ebr_.EndOp();
 		}

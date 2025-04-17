@@ -20,7 +20,6 @@ namespace lf::cbo {
 		uint64_t retire_epoch{};
 		uint64_t stamp{};
 		int v{};
-		int thread_id{ MyThread::GetID() };
 	};
 
 	class PartialQueue {
@@ -50,7 +49,7 @@ namespace lf::cbo {
 					node->stamp = loc_tail->stamp + 1;
 					rdm.LockEnq();
 					if (true == CAS(loc_tail->next, nullptr, node)) {
-						rdm.Enq(node, node->thread_id);
+						rdm.Enq(node);
 						rdm.UnlockEnq();
 						CAS(tail_, loc_tail, node);
 						return;
@@ -86,7 +85,7 @@ namespace lf::cbo {
 					rdm.UnlockDeq();
 					continue;
 				}
-				rdm.Deq(first, first->thread_id);
+				rdm.Deq(first);
 				rdm.UnlockDeq();
 				ebr.Retire(loc_head);
 				return value;

@@ -39,42 +39,47 @@ namespace benchmark {
 			}
 		}
 
-		void Enq(void* node, int thread_id) {
+		void Enq(void* node) {
 			if (checks_relaxation_distance_) {
-				enq_elements_.push_back(std::make_pair(node, thread_id));
+				enq_elements_.push_back(node);
 			}
 		}
 
-		void Deq(void* node, int thread_id) {
+		void Deq(void* node) {
 			if (checks_relaxation_distance_) {
-				deq_elements_.push_back(std::make_pair(node, thread_id));
+				deq_elements_.push_back(node);
 			}
 		}
 
 		auto GetRelaxationDistance() {
 			uint64_t sum_rd{};
+			uint64_t max_rd{};
 			auto num_elements = deq_elements_.size();
 
 			for (auto i = deq_elements_.begin(); i != deq_elements_.end(); ++i) {
 				uint64_t cnt_skip{};
 				for (auto j = enq_elements_.begin(); j != enq_elements_.end(); ++j, ++cnt_skip) {
-					if (i->first == j->first) {
+					if (*i == *j) {
 						enq_elements_.erase(j);
 						sum_rd += cnt_skip;
+						if (cnt_skip > max_rd) {
+							max_rd = cnt_skip;
+						}
 						break;
 					}
 				}
 			}
 
-			return sum_rd / static_cast<double>(num_elements);
+			return std::make_pair(sum_rd / static_cast<double>(num_elements), max_rd);
 		}
 
 	private:
+		using Container = std::list<void*>;
 		bool checks_relaxation_distance_{};
 		std::mutex mx_enq_;
 		std::mutex mx_deq_;
-		std::list<std::pair<void*, int>> deq_elements_;
-		std::list<std::pair<void*, int>> enq_elements_;
+		Container deq_elements_;
+		Container enq_elements_;
 	};
 }
 

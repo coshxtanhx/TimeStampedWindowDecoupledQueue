@@ -1,21 +1,23 @@
 #ifndef MY_THREAD_H
 #define MY_THREAD_H
 
-#include <iostream>
 #include <limits>
+#include "print.h"
 
 class MyThread {
 public:
+	static constexpr int kMainThreadID{ -1 };
+
 	static void SetID(int id) {
 		if (kUndefinedThreadID != id_) {
-			std::cout << "[Error] Thread ID has already been assigned.\n";
+			std::print("[Error] Thread ID has already been assigned.\n");
 			std::exit(getchar());
 		}
 		id_ = id;
 	}
 	static int GetID() {
 		if (kUndefinedThreadID == id_) {
-			std::cout << "[Error] Must register thread ID first.\n";
+			std::print("[Error] Must register thread ID first.\n");
 			exit(getchar());
 		}
 		return id_;

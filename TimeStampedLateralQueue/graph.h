@@ -76,9 +76,9 @@ public:
 			in.read(reinterpret_cast<char*>(adj.data()), num_adj * sizeof(*adj.data()));
 		}
 
-		std::cout << "Graph has been loaded." << '\n';
-		std::cout << "vertices: " << num_vertex_ << '\n';
-		std::cout << "   edges: " << num_edge << "\n\n";
+		std::print("Graph has been loaded.\n");
+		std::print("vertices: {}\n", num_vertex_);
+		std::print("   edges: {}\n\n", num_edge);
 	}
 
 	template<class QueueT>
@@ -146,9 +146,9 @@ public:
 			num_edge += size;
 		}
 
-		std::cout << "Graph has been generated." << '\n';
-		std::cout << "vertices: " << num_vertex_ << '\n';
-		std::cout << "   edges: " << num_edge << "\n\n";
+		std::print("Graph has been generated.\n");
+		std::print("vertices: {}\n", num_vertex_);
+		std::print("   edges: {}\n\n", num_edge);
 	}
 
 private:

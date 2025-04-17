@@ -1,14 +1,15 @@
 #include <iostream>
 #include "benchmark_tester.h"
+#include "print.h"
 
 int main()
 {
-	MyThread::SetID(-1);
+	MyThread::SetID(MyThread::kMainThreadID);
 
 	benchmark::Tester tester;
 
 	while (true) {
-		std::cout << "Input command: ";
+		std::print("Input command: ");
 		char cmd;
 		std::cin >> cmd;
 		std::cin.ignore();

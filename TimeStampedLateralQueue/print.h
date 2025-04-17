@@ -7,8 +7,7 @@
 #include <format>
 
 #ifndef __cpp_lib_print
-#define print(fmt, ...) cout << std::format(fmt, __VA_ARGS__)
-#define println(fmt, ...) cout << (std::format(fmt, __VA_ARGS__) + "\n")
+#define print cout << std::format
 #else
 #include <print>
 #endif

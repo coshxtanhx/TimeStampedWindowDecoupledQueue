@@ -1,5 +1,5 @@
-#ifndef TIME_STAMPED_WD_H
-#define TIME_STAMPED_WD_H
+#ifndef TSWD_H
+#define TSWD_H
 
 #include <utility>
 #include <vector>
@@ -144,17 +144,17 @@ namespace lf::tswd {
 					id = (id + 1) % queues_.size();
 				}
 
-				auto put_ts = window_put_.time_stamp;
-				if (get_ts < put_ts) {
-					window_get_.CAS(get_ts, get_ts + depth_);
-				}
-
 				if (queues_.size() == cnt_empty) {
 					bool is_empty{ true };
+					bool needs_cas{ true };
 					for (size_t i = 1; i < queues_.size(); ++i) {
 						id = (i + MyThread::GetID()) % queues_.size();
-						if (nullptr != old_heads[id]->next) {
+						auto next = old_heads[id]->next;
+						if (nullptr != next) {
 							is_empty = false;
+							if (next->time_stamp <= get_ts + depth_) {
+								needs_cas = false;
+							}
 							break;
 						}
 					}
@@ -162,9 +162,17 @@ namespace lf::tswd {
 						ebr_.EndOp();
 						return std::nullopt;
 					}
+					if (not needs_cas) {
+						continue;
+					}
 				}
 				else {
 					id = MyThread::GetID();
+				}
+
+				auto put_ts = window_put_.time_stamp;
+				if (get_ts < put_ts) {
+					window_get_.CAS(get_ts, get_ts + depth_);
 				}
 			}
 		}

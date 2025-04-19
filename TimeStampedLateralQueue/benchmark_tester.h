@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <thread>
+#include <memory>
 #include <map>
 #include "stopwatch.h"
 #include "microbenchmark_thread_func.h"
@@ -12,7 +13,7 @@
 #include "dqlru.h"
 #include "ts_interval.h"
 #include "twodd.h"
-#include "time_stamped_wd.h"
+#include "tswd.h"
 
 namespace benchmark {
 	enum class Subject : uint8_t {
@@ -28,9 +29,6 @@ namespace benchmark {
 		using MacrobenchmarkFuncT = void(*)(int, int, Subject&, Graph&, int&);
 
 		Tester() noexcept = default;
-		~Tester() noexcept {
-			delete graph_;
-		}
 
 		void StartMicroBenchmark() {
 			constexpr auto kMaxThread{ 72 };
@@ -225,7 +223,7 @@ namespace benchmark {
 				std::print("[Error] Graph has already been generated!\n");
 				return;
 			}
-			graph_ = new Graph{ 18'000'000 };
+			graph_ = std::make_unique<Graph>(18'000'000);
 			graph_->Save("graph.bin");
 		}
 
@@ -234,7 +232,7 @@ namespace benchmark {
 				std::print("[Error] Graph has already been generated!\n");
 				return;
 			}
-			graph_ = new Graph{ "graph.bin" };
+			graph_ = std::make_unique<Graph>("graph.bin");
 		}
 
 	private:
@@ -266,7 +264,7 @@ namespace benchmark {
 		}
 
 		std::vector<std::thread> threads_;
-		Graph* graph_{};
+		std::unique_ptr<Graph> graph_{};
 		int parameter_{};
 		Subject subject_{};
 		bool checks_relaxation_distance_{};

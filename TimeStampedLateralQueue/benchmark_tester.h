@@ -1,6 +1,7 @@
 #ifndef BENCHMARK_TESTER_H
 #define BENCHMARK_TESTER_H
 
+#include <array>
 #include <vector>
 #include <thread>
 #include <memory>
@@ -22,7 +23,7 @@ namespace benchmark {
 		void StartMacroBenchmark();
 	private:
 		template<class Subject>
-		using MicrobenchmarkFuncT = void(*)(int, int, int, Subject&);
+		using MicrobenchmarkFuncT = void(*)(int, int, float, Subject&);
 
 		template<class Subject>
 		using MacrobenchmarkFuncT = void(*)(int, int, Subject&, Graph&, int&);
@@ -61,12 +62,14 @@ namespace benchmark {
 			}
 		}
 
+		static constexpr std::array<int, 4> kNumThreads{ 8, 18, 36, 72 };
+
 		std::vector<std::thread> threads_;
 		std::unique_ptr<Graph> graph_{};
 		int parameter_{};
 		Subject subject_{};
 		bool checks_relaxation_distance_{};
-		int enq_rate_{ 50 };
+		float enq_rate_{ 50 };
 	};
 }
 

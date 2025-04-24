@@ -201,7 +201,7 @@ namespace lf::cbo {
 		void ShuffleIndex() {
 			auto& indices = indices_[MyThread::GetID()];
 			for (int i = 0; i < d_; ++i) {
-				auto r = rng.Get(i, indices.size() - 1);
+				auto r = Random::Get(i, indices.size() - 1);
 				std::swap(indices[i], indices[r]);
 			}
 		}

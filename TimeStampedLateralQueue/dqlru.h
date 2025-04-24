@@ -118,7 +118,7 @@ namespace lf::dqlru {
 
 		void Enq(int v) {
 			auto node = new Node{ v };
-			auto start = rng.Get(0, queues_.size() - 1);
+			auto start = Random::Get(0, queues_.size() - 1);
 			ebr_.StartOp();
 			while (true) {
 				auto [id, stamp] = GetLowestTail(start);
@@ -136,7 +136,7 @@ namespace lf::dqlru {
 		}
 
 		std::optional<int> Deq() {
-			auto start = rng.Get(0, queues_.size() - 1);
+			auto start = Random::Get(0, queues_.size() - 1);
 			std::vector<Node*> old_tails(queues_.size());
 
 			while (true) {

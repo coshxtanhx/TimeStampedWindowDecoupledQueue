@@ -1,3 +1,4 @@
+#include <sstream>
 #include "benchmark_tester.h"
 #include "microbenchmark_thread_func.h"
 #include "macrobenchmark_thread_func.h"
@@ -15,8 +16,14 @@ namespace benchmark {
 		while (true) {
 			std::print("Input command: ");
 			std::string cmd;
-			std::cin >> cmd;
-			std::cin.ignore();
+			std::getline(std::cin, cmd);
+
+			if (cmd.size() > 1) {
+				continue;
+			}
+			if (std::cin.eof()) {
+				return;
+			}
 
 			switch (cmd.front())
 			{
@@ -63,6 +70,14 @@ namespace benchmark {
 		std::print("Input the number of times to repeat: ");
 		int num_repeat;
 		std::cin >> num_repeat;
+		if (std::cin.fail()) {
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+		else {
+			std::cin.ignore();
+		}
+
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
 			for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
@@ -74,6 +89,7 @@ namespace benchmark {
 				switch (subject_) {
 				case Subject::kLRU: {
 					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
+					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
 					elapsed_sec = stopwatch.GetDuration();
 					rd = subject.GetRelaxationDistance();
@@ -151,6 +167,14 @@ namespace benchmark {
 		std::print("Input the number of times to repeat: ");
 		int num_repeat;
 		std::cin >> num_repeat;
+		if (std::cin.fail()) {
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+		else {
+			std::cin.ignore();
+		}
+
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
 
@@ -220,16 +244,32 @@ namespace benchmark {
 		int subject_id;
 		std::cin >> subject_id;
 		subject_ = static_cast<Subject>(subject_id);
+		std::cin.ignore();
 	}
 
 	void Tester::SetParameter() {
 		std::print("Input parameter: ");
 		std::cin >> parameter_;
+
+		if (std::cin.fail()) {
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+		else {
+			std::cin.ignore();
+		}
 	}
 
 	void Tester::SetEnqRate() {
 		std::print("Input enq rate(%): ");
 		std::cin >> enq_rate_;
+		if (std::cin.fail()) {
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+		else {
+			std::cin.ignore();
+		}
 	}
 
 	void Tester::CheckRelaxationDistance() {

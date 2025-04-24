@@ -127,7 +127,7 @@ namespace lf::twodd {
 			max_get_ = window_get_.max;
 
 			if (has_contented) {
-				index_ = rng.Get(0, width_ - 1);
+				index_ = Random::Get(0, width_ - 1);
 				has_contented = false;
 			}
 			if (max_get_ != window_get_.max) {
@@ -174,7 +174,7 @@ namespace lf::twodd {
 			uint64_t loc_max_put{};
 
 			if (has_contented) {
-				index_ = rng.Get(0, width_ - 1);
+				index_ = Random::Get(0, width_ - 1);
 				has_contented = false;
 			}
 
@@ -209,7 +209,7 @@ namespace lf::twodd {
 		void Hop(uint64_t& random, uint64_t& hops) const {
 			if (random < 2) {
 				random += 1;
-				index_ = rng.Get(0, width_ - 1);
+				index_ = Random::Get(0, width_ - 1);
 			}
 			else {
 				hops += 1;

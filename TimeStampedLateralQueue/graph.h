@@ -1,4 +1,5 @@
 #ifndef GRAPH_H
+#define GRAPH_H
 
 #include <atomic>
 #include <fstream>
@@ -6,7 +7,7 @@
 #include <random>
 #include <optional>
 #include <thread>
-#include <stdio.h>
+#include "print.h"
 
 class Graph {
 public:

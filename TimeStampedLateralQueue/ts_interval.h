@@ -23,6 +23,7 @@ namespace lf::ts {
 			t1_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
 			for (volatile int i = 0; i < delay; ++i) {}
 			t2_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
+
 		}
 
 		bool operator<(const TimeStamp& rhs) const {
@@ -33,6 +34,7 @@ namespace lf::ts {
 		uint64_t t1_;
 		uint64_t t2_;
 	};
+
 	std::chrono::steady_clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
 
 	struct Node {
@@ -59,7 +61,6 @@ namespace lf::ts {
 
 		void Enq(int v, int delay, benchmark::RelaxationDistanceManager& rdm) {
 			auto node = new Node{ v, delay };
-
 			rdm.LockEnq();
 			tail_->next = node;
 			rdm.Enq(node);
@@ -112,9 +113,7 @@ namespace lf::ts {
 		}
 
 		void Enq(int v) {
-			ebr_.StartOp();
 			queues_[MyThread::GetID()].Enq(v, delay_, rdm_);
-			ebr_.EndOp();
 		}
 
 		std::optional<int> Deq() {

@@ -52,6 +52,10 @@ namespace benchmark {
 		}
 
 		auto GetRelaxationDistance() {
+			if (not checks_relaxation_distance_) {
+				return std::make_pair<double, uint64_t>(0.0, 0);
+			}
+
 			uint64_t sum_rd{};
 			uint64_t max_rd{};
 			auto num_elements = deq_elements_.size();

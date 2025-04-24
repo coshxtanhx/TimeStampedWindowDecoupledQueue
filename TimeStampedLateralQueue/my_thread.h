@@ -27,6 +27,6 @@ private:
 	static thread_local int id_;
 };
 
-thread_local int MyThread::id_{ MyThread::kUndefinedThreadID };
+inline thread_local int MyThread::id_{ MyThread::kUndefinedThreadID };
 
 #endif

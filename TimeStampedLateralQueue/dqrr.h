@@ -51,8 +51,7 @@ namespace lf::dqrr {
 						return;
 					}
 					rdm.UnlockEnq();
-				}
-				else {
+				} else {
 					CAS(tail_, loc_tail, next);
 				}
 			}

@@ -55,8 +55,7 @@ namespace lf::cbo {
 						return;
 					}
 					rdm.UnlockEnq();
-				}
-				else {
+				} else {
 					CAS(tail_, loc_tail, next);
 				}
 			}
@@ -145,8 +144,7 @@ namespace lf::cbo {
 			if (value.has_value()) {
 				ebr_.EndOp();
 				return value;
-			}
-			else {
+			} else {
 				return DoubleCollect(optimal);
 			}
 		}

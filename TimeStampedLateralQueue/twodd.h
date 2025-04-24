@@ -4,6 +4,7 @@
 #include <utility>
 #include <optional>
 #include <vector>
+#include <array>
 #include <chrono>
 #include "ebr.h"
 #include "random.h"
@@ -96,14 +97,12 @@ namespace lf::twodd {
 					if (nullptr == first) {
 						ebr_.EndOp();
 						return std::nullopt;
-					}
-					else {
+					} else {
 						if (false == CAS(tails_[index_].ptr, head, first)) {
 							has_contented = true;
 						}
 					}
-				}
-				else {
+				} else {
 					rdm_.LockDeq();
 					if (true == CAS(heads_[index_].ptr, head, first)) {
 						rdm_.Deq(first);
@@ -123,47 +122,38 @@ namespace lf::twodd {
 			bool is_empty{ true };
 			uint64_t hops{}, random{}, put_cnt{};
 
-			uint64_t loc_max_get{};
-			max_get_ = window_get_.max;
+			std::array<uint64_t, 2> loc_max_get{ window_get_.max };
 
 			if (has_contented) {
 				index_ = Random::Get(0, width_ - 1);
 				has_contented = false;
-			}
-			if (max_get_ != window_get_.max) {
-				max_get_ = window_get_.max;
-				is_empty = true;
 			}
 
 			while (true) {
 				auto head = heads_[index_].ptr;
 				put_cnt = tails_[index_].ptr->cnt;
 
-				loc_max_get = window_get_.max;
-				if (loc_max_get != max_get_) {
-					max_get_ = loc_max_get;
+				loc_max_get[1] = window_get_.max;
+				if (loc_max_get[0] != loc_max_get[1]) {
+					loc_max_get[0] = loc_max_get[1];
 					hops = 0;
 					is_empty = true;
-				}
-				else if (head->cnt < loc_max_get and put_cnt != head->cnt) {
+				} else if (head->cnt < loc_max_get[1] and put_cnt != head->cnt) {
 					return head;
-				}
-				else if (hops != width_) {
+				} else if (hops != width_) {
 					if (is_empty and (put_cnt != head->cnt)) {
 						is_empty = false;
 					}
 					Hop(random, hops);
-				}
-				else if (not is_empty) {
-					if (max_get_ == window_get_.max) {
-						window_get_.CAS(max_get_, max_get_ + depth_);
+				} else if (not is_empty) {
+					if (loc_max_get[0] == window_get_.max) {
+						window_get_.CAS(loc_max_get[0], loc_max_get[0] + depth_);
 					}
 
-					max_get_ = window_get_.max;
+					loc_max_get[0] = window_get_.max;
 					hops = 0;
 					is_empty = true;
-				}
-				else {
+				} else {
 					return head;
 				}
 			}
@@ -171,36 +161,29 @@ namespace lf::twodd {
 
 		Node* GetTail(bool& has_contented) {
 			uint64_t hops{}, random{};
-			uint64_t loc_max_put{};
+			std::array<uint64_t, 2> loc_max_put{ window_put_.max };
 
 			if (has_contented) {
 				index_ = Random::Get(0, width_ - 1);
 				has_contented = false;
 			}
 
-			if (max_put_ != window_put_.max) {
-				max_put_ = window_put_.max;
-			}
-
 			while (true) {
 				auto tail = tails_[index_].ptr;
-				loc_max_put = window_put_.max;
-				if (loc_max_put != max_put_) {
-					max_put_ = loc_max_put;
+				loc_max_put[1] = window_put_.max;
+				if (loc_max_put[0] != loc_max_put[1]) {
+					loc_max_put[0] = loc_max_put[1];
 					hops = 0;
-				}
-				else if (tail->cnt < loc_max_put) {
+				} else if (tail->cnt < loc_max_put[1]) {
 					return tail;
-				}
-				else if (hops != width_) {
+				} else if (hops != width_) {
 					Hop(random, hops);
-				}
-				else {
-					if (max_put_ == window_put_.max) {
-						window_put_.CAS(max_put_, max_put_ + depth_);
+				} else {
+					if (loc_max_put[0] == window_put_.max) {
+						window_put_.CAS(loc_max_put[0], loc_max_put[0] + depth_);
 					}
 
-					max_put_ = window_put_.max;
+					loc_max_put[0] = window_put_.max;
 					hops = 0;
 				}
 			}
@@ -210,8 +193,7 @@ namespace lf::twodd {
 			if (random < 2) {
 				random += 1;
 				index_ = Random::Get(0, width_ - 1);
-			}
-			else {
+			} else {
 				hops += 1;
 				index_ = (index_ + 1) % width_;
 			}
@@ -225,8 +207,6 @@ namespace lf::twodd {
 		}
 
 		static thread_local int index_;
-		static thread_local uint64_t max_get_;
-		static thread_local uint64_t max_put_;
 		int depth_, width_;
 		std::vector<PaddedPtr> heads_;
 		std::vector<PaddedPtr> tails_;
@@ -236,9 +216,7 @@ namespace lf::twodd {
 		benchmark::RelaxationDistanceManager rdm_;
 	};
 
-	thread_local int TwoDd::index_{};
-	thread_local uint64_t TwoDd::max_get_{};
-	thread_local uint64_t TwoDd::max_put_{};
+	inline thread_local int TwoDd::index_{};
 }
 
 #endif

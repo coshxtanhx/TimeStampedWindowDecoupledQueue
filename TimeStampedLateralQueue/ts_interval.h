@@ -130,13 +130,10 @@ namespace lf::ts {
 					auto first = head->next;
 					if (nullptr == first) {
 						old_heads[id] = head;
-					}
-					else {
-						if (first->time_stamp < min_time_stamp) {
-							min_time_stamp = first->time_stamp;
-							youngest = first;
-							trg = &queues_[id];
-						}
+					} else if (first->time_stamp < min_time_stamp) {
+						min_time_stamp = first->time_stamp;
+						youngest = first;
+						trg = &queues_[id];
 					}
 					id = (id + 1) % queues_.size();
 				}
@@ -152,8 +149,7 @@ namespace lf::ts {
 							return std::nullopt;
 						}
 					}
-				}
-				else {
+				} else {
 					auto value = trg->TryDeq(ebr_, youngest, rdm_);
 					if (value.has_value()) {
 						ebr_.EndOp();

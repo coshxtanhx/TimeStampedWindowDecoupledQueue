@@ -36,7 +36,7 @@ namespace benchmark {
 		void LoadGraph();
 
 		template<class Subject>
-		void RunMicrobenchmark(MicrobenchmarkFuncT<Subject> thread_func, int num_thread, Subject& subject) {
+		void CreateThreads(MicrobenchmarkFuncT<Subject> thread_func, int num_thread, Subject& subject) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				if (checks_relaxation_distance_) {
 					subject.CheckRelaxationDistance();
@@ -50,7 +50,7 @@ namespace benchmark {
 		}
 
 		template<class Subject>
-		void RunMacrobenchmark(MacrobenchmarkFuncT<Subject> thread_func,
+		void CreateThreads(MacrobenchmarkFuncT<Subject> thread_func,
 			int num_thread, Subject& subject, std::vector<int>& shortest_dists) {
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				threads_.emplace_back(thread_func, thread_id, num_thread,
@@ -69,7 +69,7 @@ namespace benchmark {
 		int parameter_{};
 		Subject subject_{};
 		bool checks_relaxation_distance_{};
-		float enq_rate_{ 50 };
+		float enq_rate_{ 50.0f };
 	};
 }
 

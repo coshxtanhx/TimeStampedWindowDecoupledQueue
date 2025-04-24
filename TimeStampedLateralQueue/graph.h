@@ -16,8 +16,7 @@ public:
 		if (std::thread::hardware_concurrency() <= 8) {
 			num_vertex_ = num_vertex / 4;
 			max_adj = 12;
-		}
-		else {
+		} else {
 			num_vertex_ = num_vertex;
 			max_adj = 72;
 		}
@@ -115,8 +114,7 @@ public:
 							queue.Enq(adj);
 							break;
 						}
-					}
-					else {
+					} else {
 						break;
 					}
 				}

@@ -25,36 +25,45 @@ namespace benchmark {
 				return;
 			}
 
-			switch (cmd.front())
-			{
-			case 'e':
-				SetEnqRate();
-				break;
-			case 'r':
-				CheckRelaxationDistance();
-				break;
-			case 's':
-				SetSubject();
-				break;
-			case 'p':
-				SetParameter();
-				break;
-			case 'i':
-				StartMicroBenchmark();
-				break;
-			case 'a':
-				StartMacroBenchmark();
-				break;
-			case 'g':
-				GenerateGraph();
-				break;
-			case 'l':
-				LoadGraph();
-				break;
-			case 'q':
-				return;
-			default:
-				break;
+			switch (cmd.front()) {
+				case 'e': {
+					SetEnqRate();
+					break;
+				}
+				case 'r': {
+					CheckRelaxationDistance();
+					break;
+				}
+				case 's': {
+					SetSubject();
+					break;
+				}
+				case 'p': {
+					SetParameter();
+					break;
+				}
+				case 'i': {
+					StartMicroBenchmark();
+					break;
+				}
+				case 'a': {
+					StartMacroBenchmark();
+					break;
+				}
+				case 'g': {
+					GenerateGraph();
+					break;
+				}
+				case 'l': {
+					LoadGraph();
+					break;
+				}
+				case 'q': {
+					return;
+				}
+				default: {
+					break;
+				}
 			}
 		}
 	}
@@ -73,8 +82,7 @@ namespace benchmark {
 		if (std::cin.fail()) {
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		}
-		else {
+		} else {
 			std::cin.ignore();
 		}
 
@@ -84,54 +92,60 @@ namespace benchmark {
 				threads_.clear();
 				std::pair<double, uint64_t> rd{};
 				double elapsed_sec{};
-				stopwatch.Start();
 
 				switch (subject_) {
-				case Subject::kLRU: {
-					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kRR: {
-					lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, 1 };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kCBO: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kTSInterval: {
-					lf::ts::TSInterval subject{ num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::k2Dd: {
-					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					rd = subject.GetRelaxationDistance();
-					break;
-				}
-				case Subject::kTSWD: {
-					lf::tswd::TSWD subject{ num_thread, parameter_ };
-					RunMicrobenchmark(MicrobenchmarkFunc, num_thread, subject);
-					elapsed_sec = stopwatch.GetDuration();
-					rd = subject.GetRelaxationDistance();
-					break;
-				}
-				default:
-					break;
+					case Subject::kLRU: {
+						lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kRR: {
+						lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, 1 };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kCBO: {
+						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kTSInterval: {
+						lf::ts::TSInterval subject{ num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::k2Dd: {
+						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kTSWD: {
+						lf::tswd::TSWD subject{ num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					default: {
+						break;
+					}
 				}
 
 				//std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -170,8 +184,7 @@ namespace benchmark {
 		if (std::cin.fail()) {
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		}
-		else {
+		} else {
 			std::cin.ignore();
 		}
 
@@ -186,38 +199,39 @@ namespace benchmark {
 				stopwatch.Start();
 
 				switch (subject_) {
-				case Subject::kLRU: {
-					lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-					break;
-				}
-				case Subject::kRR: {
-					lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-					break;
-				}
-				case Subject::kCBO: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-					break;
-				}
-				case Subject::kTSInterval: {
-					lf::ts::TSInterval subject{ num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-					break;
-				}
-				case Subject::k2Dd: {
-					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-					break;
-				}
-				case Subject::kTSWD: {
-					lf::tswd::TSWD subject{ num_thread, parameter_ };
-					RunMacrobenchmark(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-					break;
-				}
-				default:
-					break;
+					case Subject::kLRU: {
+						lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kRR: {
+						lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kCBO: {
+						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSInterval: {
+						lf::ts::TSInterval subject{ num_thread, parameter_ };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::k2Dd: {
+						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSWD: {
+						lf::tswd::TSWD subject{ num_thread, parameter_ };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					default: {
+						break;
+					}
 				}
 
 				double elapsed_sec{ stopwatch.GetDuration() };
@@ -254,8 +268,7 @@ namespace benchmark {
 		if (std::cin.fail()) {
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		}
-		else {
+		} else {
 			std::cin.ignore();
 		}
 	}
@@ -266,8 +279,7 @@ namespace benchmark {
 		if (std::cin.fail()) {
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		}
-		else {
+		} else {
 			std::cin.ignore();
 		}
 	}
@@ -276,8 +288,7 @@ namespace benchmark {
 		checks_relaxation_distance_ ^= true;
 		if (checks_relaxation_distance_) {
 			std::print("Checks relaxation distance.\n");
-		}
-		else {
+		} else {
 			std::print("Does not check relaxation distance.\n");
 		}
 	}

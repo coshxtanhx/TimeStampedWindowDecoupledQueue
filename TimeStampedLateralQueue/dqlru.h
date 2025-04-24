@@ -51,8 +51,7 @@ namespace lf::dqlru {
 					}
 					rdm.UnlockEnq();
 					return false;
-				}
-				else {
+				} else {
 					CAS(tail_, expected_tail, next);
 					return false;
 				}
@@ -185,8 +184,7 @@ namespace lf::dqlru {
 				auto other_tail_stamp = queues_[other_id].GetTail()->stamp;
 				if (tail_stamp > other_tail_stamp) {
 					return std::make_pair(other_id, other_tail_stamp);
-				}
-				else if (tail_stamp < other_tail_stamp) {
+				} else if (tail_stamp < other_tail_stamp) {
 					return std::make_pair(start, tail_stamp);
 				}
 			}
@@ -203,8 +201,7 @@ namespace lf::dqlru {
 
 				if (head_stamp > other_head_stamp) {
 					return std::make_pair(other_id, other_head_stamp);
-				}
-				else if (head_stamp < other_head_stamp) {
+				} else if (head_stamp < other_head_stamp) {
 					return std::make_pair(start, head_stamp);
 				}
 			}

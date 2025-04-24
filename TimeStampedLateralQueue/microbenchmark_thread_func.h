@@ -14,12 +14,11 @@ namespace benchmark {
 		auto num_op = kTotalNumOp / num_thread;
 
 		for (int i = 0; i < num_op; ++i) {
-			auto op = Random::Get(0.0f, 1.0f);
+			auto op = Random::Get(0.0f, 100.0f);
 
 			if (op <= enq_rate or i < num_op / 1000) {
 				queue.Enq(Random::Get(0, 65535));
-			}
-			else {
+			} else {
 				queue.Deq();
 			}
 		}

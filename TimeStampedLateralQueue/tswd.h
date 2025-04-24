@@ -104,7 +104,6 @@ namespace lf::tswd {
 		}
 
 		void Enq(int v) {
-			//ebr_.StartOp();
 			auto node = new Node{ v };
 
 			rdm_.LockEnq();
@@ -119,8 +118,6 @@ namespace lf::tswd {
 				put_ts += depth_;
 			}
 			pq.Enq(node, put_ts);
-
-			//ebr_.EndOp();
 		}
 
 		std::optional<int> Deq() {
@@ -136,8 +133,7 @@ namespace lf::tswd {
 					if (nullptr != old_head) {
 						old_heads[id] = old_head;
 						cnt_empty += 1;
-					}
-					else if (value.has_value()) {
+					} else if (value.has_value()) {
 						ebr_.EndOp();
 						return value;
 					}
@@ -165,8 +161,7 @@ namespace lf::tswd {
 					if (not needs_cas) {
 						continue;
 					}
-				}
-				else {
+				} else {
 					id = MyThread::GetID();
 				}
 

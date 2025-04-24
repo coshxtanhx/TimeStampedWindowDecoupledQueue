@@ -104,7 +104,7 @@ namespace lf::tswd {
 		}
 
 		void Enq(int v) {
-			ebr_.StartOp();
+			//ebr_.StartOp();
 			auto node = new Node{ v };
 
 			rdm_.LockEnq();
@@ -120,7 +120,7 @@ namespace lf::tswd {
 			}
 			pq.Enq(node, put_ts);
 
-			ebr_.EndOp();
+			//ebr_.EndOp();
 		}
 
 		std::optional<int> Deq() {

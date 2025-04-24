@@ -10,11 +10,11 @@ int main()
 
 	while (true) {
 		std::print("Input command: ");
-		char cmd;
+		std::string cmd;
 		std::cin >> cmd;
 		std::cin.ignore();
 
-		switch (cmd)
+		switch (cmd.front())
 		{
 		case 'e':
 			tester.SetEnqRate();

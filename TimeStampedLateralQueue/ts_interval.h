@@ -8,6 +8,7 @@
 #include <limits>
 #include "ebr.h"
 #include "relaxation_distance.h"
+#include "stopwatch.h"
 
 namespace lf::ts {
 	class TimeStamp {
@@ -35,7 +36,7 @@ namespace lf::ts {
 		uint64_t t2_;
 	};
 
-	std::chrono::steady_clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
+	auto TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
 
 	struct Node {
 		Node() = default;
@@ -59,8 +60,8 @@ namespace lf::ts {
 			delete head_;
 		}
 
-		void Enq(int v, int delay, benchmark::RelaxationDistanceManager& rdm) {
-			auto node = new Node{ v, delay };
+		void Enq(int v, int num_delay_op, benchmark::RelaxationDistanceManager& rdm) {
+			auto node = new Node{ v, num_delay_op };
 			rdm.LockEnq();
 			tail_->next = node;
 			rdm.Enq(node);
@@ -102,7 +103,8 @@ namespace lf::ts {
 
 	class TSInterval {
 	public:
-		TSInterval(int num_thread, int delay) : delay_{ delay }, queues_(num_thread) , ebr_{ num_thread } {}
+		TSInterval(int num_thread, int delay_us) : num_delay_op_{ delay_us * GetDelayOpPerUs() }
+			, queues_(num_thread) , ebr_{ num_thread } {}
 
 		void CheckRelaxationDistance() {
 			rdm_.CheckRelaxationDistance();
@@ -113,7 +115,7 @@ namespace lf::ts {
 		}
 
 		void Enq(int v) {
-			queues_[MyThread::GetID()].Enq(v, delay_, rdm_);
+			queues_[MyThread::GetID()].Enq(v, num_delay_op_, rdm_);
 		}
 
 		std::optional<int> Deq() {
@@ -159,11 +161,30 @@ namespace lf::ts {
 			}
 		}
 	private:
-		int delay_;
+		int GetDelayOpPerUs() {
+			if (kUndefinedDelay != delay_per_us_) {
+				return delay_per_us_;
+			}
+
+			Stopwatch sw;
+			sw.Start();
+			constexpr int kLoop = 1'000'000'000;
+			for (volatile int i = 0; i < kLoop; ++i) {}
+			auto us = sw.GetDuration() * 1.0e6;
+
+			delay_per_us_ = static_cast<int>(kLoop / us);
+			return delay_per_us_;
+		}
+
+		static constexpr int kUndefinedDelay{ -1 };
+		static int delay_per_us_;
+		int num_delay_op_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 		benchmark::RelaxationDistanceManager rdm_;
 	};
+
+	int TSInterval::delay_per_us_{ TSInterval::kUndefinedDelay };
 }
 
 #endif

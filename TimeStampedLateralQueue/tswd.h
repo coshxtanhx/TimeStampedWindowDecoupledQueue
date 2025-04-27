@@ -142,24 +142,17 @@ namespace lf::tswd {
 
 				if (queues_.size() == cnt_empty) {
 					bool is_empty{ true };
-					bool needs_cas{ true };
 					for (size_t i = 1; i < queues_.size(); ++i) {
 						id = (i + MyThread::GetID()) % queues_.size();
 						auto next = old_heads[id]->next;
 						if (nullptr != next) {
 							is_empty = false;
-							if (next->time_stamp <= get_ts + depth_) {
-								needs_cas = false;
-							}
 							break;
 						}
 					}
 					if (is_empty) {
 						ebr_.EndOp();
 						return std::nullopt;
-					}
-					if (not needs_cas) {
-						continue;
 					}
 				} else {
 					id = MyThread::GetID();

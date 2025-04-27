@@ -28,7 +28,7 @@ private:
 };
 
 inline thread_local std::random_device Random::rd_;
-inline thread_local std::default_random_engine Random::dre_(Random::rd_());
+inline thread_local std::default_random_engine Random::dre_{ Random::rd_() };
 inline thread_local std::uniform_int_distribution<long long> Random::uid_;
 
 #endif

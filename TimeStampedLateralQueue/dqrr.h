@@ -107,7 +107,12 @@ namespace lf::dqrr {
 	class DQRR {
 	public:
 		DQRR(int num_queue, int num_thread, int b)
-			: b_{ b }, queues_(num_queue), enq_rrs_(b), deq_rrs_(b), ebr_{ num_thread } {}
+			: b_{ b }, queues_(num_queue), enq_rrs_(b), deq_rrs_(b), ebr_{ num_thread } {
+			for (uint64_t i = 0; i < b; ++i) {
+				enq_rrs_[i].store(i * (num_queue / b));
+				deq_rrs_[i].store(i * (num_queue / b));
+			}
+		}
 
 		void CheckRelaxationDistance() {
 			rdm_.CheckRelaxationDistance();

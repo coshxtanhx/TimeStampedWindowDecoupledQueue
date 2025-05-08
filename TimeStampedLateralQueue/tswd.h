@@ -11,16 +11,6 @@
 #include "relaxation_distance.h"
 
 namespace lf::tswd {
-	struct Node {
-		Node() = default;
-		Node(int v) : v{ v } {}
-
-		Node* volatile next{};
-		uint64_t retire_epoch{};
-		uint64_t time_stamp{};
-		int v{};
-	};
-
 	struct alignas(std::hardware_destructive_interference_size) Window {
 		Window() = default;
 
@@ -31,6 +21,32 @@ namespace lf::tswd {
 		}
 
 		volatile uint64_t time_stamp{};
+	};
+
+	struct Node {
+		Node() = default;
+		Node(int v) : v{ v } {}
+		uint64_t InitTimeStamp(Window& window_put, int depth) {
+			auto put_ts = window_put.time_stamp;
+			auto desired{ std::max(put_ts, prev_time_stamp) + 1 };
+			decltype(desired) expected{};
+
+			if (prev_time_stamp >= put_ts + depth) {
+				window_put.CAS(put_ts, put_ts + depth);
+			}
+
+			std::atomic_compare_exchange_strong(
+				reinterpret_cast<volatile std::atomic<uint64_t>*>(&time_stamp),
+				&expected, desired);
+
+			return time_stamp;
+		}
+
+		Node* volatile next{};
+		uint64_t retire_epoch{};
+		volatile uint64_t time_stamp{};
+		uint64_t prev_time_stamp{};
+		int v{};
 	};
 
 	class PartialQueue {
@@ -45,22 +61,26 @@ namespace lf::tswd {
 			delete head_;
 		}
 
-		void Enq(Node* node, uint64_t put_ts) {
-			auto tail_ts = tail_->time_stamp;
-			node->time_stamp = std::max(put_ts, tail_ts) + 1;
+		void Enq(Node* node) {
 			tail_->next = node;
 			tail_ = node;
 		}
 
 		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, int depth,
-			uint64_t get_ts, benchmark::RelaxationDistanceManager& rdm) {
+			uint64_t get_ts, Window& window_put, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_head = head_;
 				auto first = loc_head->next;
 				if (nullptr == first) {
 					return std::make_pair(std::nullopt, loc_head); // pq is empty
 				}
-				if (first->time_stamp > get_ts + depth) {
+				auto first_time_stamp = first->time_stamp;
+
+				if (0 == first_time_stamp) {
+					first_time_stamp = first->InitTimeStamp(window_put, depth);
+				}
+
+				if (first_time_stamp > get_ts + depth) {
 					return std::make_pair(std::nullopt, nullptr); // retry required
 				}
 				auto value = first->v;
@@ -105,19 +125,15 @@ namespace lf::tswd {
 
 		void Enq(int v) {
 			auto node = new Node{ v };
+			auto& pq = queues_[MyThread::GetID()];
+			node->prev_time_stamp = pq.GetTailTimeStamp();
 
 			rdm_.LockEnq();
-			auto put_ts = window_put_.time_stamp;
+			pq.Enq(node);
 			rdm_.Enq(node);
 			rdm_.UnlockEnq();
 
-			auto& pq = queues_[MyThread::GetID()];
-
-			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
-				window_put_.CAS(put_ts, put_ts + depth_);
-				put_ts += depth_;
-			}
-			pq.Enq(node, put_ts);
+			node->InitTimeStamp(window_put_, depth_);
 		}
 
 		std::optional<int> Deq() {
@@ -127,9 +143,10 @@ namespace lf::tswd {
 			while (true) {
 				int cnt_empty{};
 				auto get_ts = window_get_.time_stamp;
+
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
-					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
+					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, window_put_, rdm_);
 					if (nullptr != old_head) {
 						old_heads[id] = old_head;
 						cnt_empty += 1;

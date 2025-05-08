@@ -36,7 +36,7 @@ namespace lf::ts {
 		uint64_t t2_;
 	};
 
-	auto TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
+	std::chrono::steady_clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
 
 	struct Node {
 		Node() = default;

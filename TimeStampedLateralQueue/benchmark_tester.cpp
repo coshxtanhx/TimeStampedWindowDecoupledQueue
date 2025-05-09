@@ -14,7 +14,7 @@ namespace benchmark {
 	void Tester::Run()
 	{
 		while (true) {
-			std::print("Input command: ");
+			std::print("Command ('h' for help): ");
 			std::string cmd;
 			std::getline(std::cin, cmd);
 
@@ -47,7 +47,11 @@ namespace benchmark {
 					break;
 				}
 				case 'a': {
-					StartMacroBenchmark();
+					if (graph_) {
+						StartMacroBenchmark();
+					} else {
+						std::print("[Error] Generate or load graph first.\n\n");
+					}
 					break;
 				}
 				case 'g': {
@@ -56,6 +60,20 @@ namespace benchmark {
 				}
 				case 'l': {
 					LoadGraph();
+					break;
+				}
+				case 'h': {
+					std::print("e: Set enq rate\n");
+					std::print("r: Check/Do not check relaxation distance\n");
+					std::print("s: Set subject\n");
+					std::print("p: Set parameter\n");
+					std::print("l: Load graph\n");
+					std::print("g: Generate graph\n");
+					std::print("i: Microbenchmark\n");
+					std::print("a: Macrobenchmark\n");
+					std::print("h: help\n");
+					std::print("q: quit\n");
+					std::print("\n");
 					break;
 				}
 				case 'q': {
@@ -144,7 +162,8 @@ namespace benchmark {
 						break;
 					}
 					default: {
-						break;
+						std::print("[Error] Invalid subject.\n\n");
+						return;
 					}
 				}
 
@@ -200,12 +219,12 @@ namespace benchmark {
 
 				switch (subject_) {
 					case Subject::kLRU: {
-						lf::dqlru::DQLRU subject{ num_thread * parameter_ / 9, num_thread };
+						lf::dqlru::DQLRU subject{ num_thread * parameter_, num_thread };
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::kRR: {
-						lf::dqrr::DQRR subject{ num_thread * parameter_ / 9, num_thread, num_thread };
+						lf::dqrr::DQRR subject{ num_thread * parameter_, num_thread, num_thread };
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
@@ -230,7 +249,8 @@ namespace benchmark {
 						break;
 					}
 					default: {
-						break;
+						std::print("[Error] Invalid subject.\n");
+						return;
 					}
 				}
 
@@ -253,8 +273,8 @@ namespace benchmark {
 	}
 
 	void Tester::SetSubject() {
-		std::print("1: LRU, 2: RR, 3: CBO, 4: TS-interval, 5: 2Dd, 6: TSWd\n");
-		std::print("Input subject: ");
+		std::print("1: LRU, 2: TL-RR, 3: d-CBO, 4: TS-interval, 5: 2Dd, 6: TSWd\n");
+		std::print("Subject: ");
 		int subject_id;
 		std::cin >> subject_id;
 		subject_ = static_cast<Subject>(subject_id);
@@ -262,7 +282,14 @@ namespace benchmark {
 	}
 
 	void Tester::SetParameter() {
-		std::print("Input parameter: ");
+		std::print("\n--- List ---\n");
+		std::print("        LRU: [parameter] = nbr_queue / nbr_thread\n");
+		std::print("      TL-RR: [parameter] = nbr_queue / nbr_thread\n");
+		std::print("      d-CBO: [parameter] = d\n");
+		std::print("TS-interval: [parameter] = delay\n");
+		std::print("        2Dd: [parameter] = depth\n");
+		std::print("       TSWD: [parameter] = depth\n");
+		std::print("Parameter: ");
 		std::cin >> parameter_;
 
 		if (std::cin.fail()) {
@@ -274,7 +301,7 @@ namespace benchmark {
 	}
 
 	void Tester::SetEnqRate() {
-		std::print("Input enq rate(%): ");
+		std::print("Enq rate(%): ");
 		std::cin >> enq_rate_;
 		if (std::cin.fail()) {
 			std::cin.clear();

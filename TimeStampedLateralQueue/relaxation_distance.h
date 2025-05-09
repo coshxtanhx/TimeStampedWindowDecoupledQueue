@@ -15,10 +15,6 @@ namespace benchmark {
 			checks_relaxation_distance_ = true;
 		}
 
-		bool ChecksRelaxationDistance() const {
-			return checks_relaxation_distance_;
-		}
-
 		void LockEnq() {
 			if (checks_relaxation_distance_) {
 				mx_enq_.lock();

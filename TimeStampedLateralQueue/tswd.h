@@ -27,11 +27,11 @@ namespace lf::tswd {
 		Node() = default;
 		Node(int v) : v{ v } {}
 
-		auto GetTimeStampHeuristic(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
+		auto GetHeuristicTimeStamp(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
 			rdm.LockEnq();
 
 			auto put_ts = window_put.time_stamp;
-			auto desired{ std::max(put_ts, prev_time_stamp) + 1 };
+			auto heuristic_ts{ std::max(put_ts, prev_time_stamp) + 1 };
 
 			if (prev_time_stamp >= put_ts + depth) {
 				window_put.CAS(put_ts, put_ts + depth);
@@ -44,11 +44,17 @@ namespace lf::tswd {
 
 			rdm.UnlockEnq();
 
-			return desired;
+			return heuristic_ts;
 		}
 
-		void InitTimeStamp(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
-			time_stamp = GetTimeStampHeuristic(window_put, depth, rdm);
+		auto InitTimeStamp(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
+			auto desired = GetHeuristicTimeStamp(window_put, depth, rdm);
+			decltype(desired) expected{};
+
+			std::atomic_compare_exchange_strong(
+				reinterpret_cast<volatile std::atomic<uint64_t>*>(&time_stamp),
+				&expected, desired);
+			return time_stamp;
 		}
 
 		Node* volatile next{};
@@ -87,7 +93,7 @@ namespace lf::tswd {
 				auto first_time_stamp = first->time_stamp;
 
 				if (0 == first_time_stamp) {
-					first_time_stamp = first->GetTimeStampHeuristic(window_put, depth, rdm);
+					first_time_stamp = first->InitTimeStamp(window_put, depth, rdm);
 				}
 
 				if (first_time_stamp > get_ts + depth) {

@@ -28,21 +28,23 @@ namespace lf::tswd {
 		Node(int v) : v{ v } {}
 
 		auto GetHeuristicTimeStamp(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
-			rdm.LockEnq();
-
+		retry:
 			auto put_ts = window_put.time_stamp;
 			auto heuristic_ts{ std::max(put_ts, prev_time_stamp) + 1 };
 
-			if (prev_time_stamp >= put_ts + depth) {
-				window_put.CAS(put_ts, put_ts + depth);
-			}
+			auto needs_cas{ static_cast<int>(prev_time_stamp >= put_ts + depth) };
 
-			if (not enqueued_to_rdm) {
-				enqueued_to_rdm = true;
-				rdm.Enq(this);
+			rdm.LockEnq();
+			if (window_put.CAS(put_ts, put_ts + depth * needs_cas)) {
+				if (not enqueued_to_rdm) {
+					enqueued_to_rdm = true;
+					rdm.Enq(this);
+				}
+				rdm.UnlockEnq();
+			} else {
+				rdm.UnlockEnq();
+				goto retry;
 			}
-
-			rdm.UnlockEnq();
 
 			return heuristic_ts;
 		}

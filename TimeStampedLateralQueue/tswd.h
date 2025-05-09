@@ -26,20 +26,29 @@ namespace lf::tswd {
 	struct Node {
 		Node() = default;
 		Node(int v) : v{ v } {}
-		uint64_t InitTimeStamp(Window& window_put, int depth) {
+
+		auto GetTimeStampHeuristic(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
+			rdm.LockEnq();
+
 			auto put_ts = window_put.time_stamp;
 			auto desired{ std::max(put_ts, prev_time_stamp) + 1 };
-			decltype(desired) expected{};
 
 			if (prev_time_stamp >= put_ts + depth) {
 				window_put.CAS(put_ts, put_ts + depth);
 			}
 
-			std::atomic_compare_exchange_strong(
-				reinterpret_cast<volatile std::atomic<uint64_t>*>(&time_stamp),
-				&expected, desired);
+			if (not enqueued_to_rdm) {
+				enqueued_to_rdm = true;
+				rdm.Enq(this);
+			}
 
-			return time_stamp;
+			rdm.UnlockEnq();
+
+			return desired;
+		}
+
+		void InitTimeStamp(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
+			time_stamp = GetTimeStampHeuristic(window_put, depth, rdm);
 		}
 
 		Node* volatile next{};
@@ -47,6 +56,7 @@ namespace lf::tswd {
 		volatile uint64_t time_stamp{};
 		uint64_t prev_time_stamp{};
 		int v{};
+		bool enqueued_to_rdm{};
 	};
 
 	class PartialQueue {
@@ -77,7 +87,7 @@ namespace lf::tswd {
 				auto first_time_stamp = first->time_stamp;
 
 				if (0 == first_time_stamp) {
-					first_time_stamp = first->InitTimeStamp(window_put, depth);
+					first_time_stamp = first->GetTimeStampHeuristic(window_put, depth, rdm);
 				}
 
 				if (first_time_stamp > get_ts + depth) {
@@ -128,12 +138,9 @@ namespace lf::tswd {
 			auto& pq = queues_[MyThread::GetID()];
 			node->prev_time_stamp = pq.GetTailTimeStamp();
 
-			rdm_.LockEnq();
 			pq.Enq(node);
-			rdm_.Enq(node);
-			rdm_.UnlockEnq();
 
-			node->InitTimeStamp(window_put_, depth_);
+			node->InitTimeStamp(window_put_, depth_, rdm_);
 		}
 
 		std::optional<int> Deq() {
@@ -143,6 +150,7 @@ namespace lf::tswd {
 			while (true) {
 				int cnt_empty{};
 				auto get_ts = window_get_.time_stamp;
+				auto put_ts = window_put_.time_stamp;
 
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
@@ -175,7 +183,6 @@ namespace lf::tswd {
 					id = MyThread::GetID();
 				}
 
-				auto put_ts = window_put_.time_stamp;
 				if (get_ts < put_ts) {
 					window_get_.CAS(get_ts, get_ts + depth_);
 				}

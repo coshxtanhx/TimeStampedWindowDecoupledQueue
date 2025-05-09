@@ -15,6 +15,10 @@ namespace benchmark {
 			checks_relaxation_distance_ = true;
 		}
 
+		bool ChecksRelaxationDistance() const {
+			return checks_relaxation_distance_;
+		}
+
 		void LockEnq() {
 			if (checks_relaxation_distance_) {
 				mx_enq_.lock();
@@ -60,9 +64,9 @@ namespace benchmark {
 			uint64_t max_rd{};
 			auto num_elements = deq_elements_.size();
 
-			for (auto i = deq_elements_.begin(); i != deq_elements_.end(); ++i) {
+			for (auto i = deq_elements_.cbegin(); i != deq_elements_.cend(); ++i) {
 				uint64_t cnt_skip{};
-				for (auto j = enq_elements_.begin(); j != enq_elements_.end(); ++j, ++cnt_skip) {
+				for (auto j = enq_elements_.cbegin(); j != enq_elements_.cend(); ++j, ++cnt_skip) {
 					if (*i == *j) {
 						enq_elements_.erase(j);
 						sum_rd += cnt_skip;

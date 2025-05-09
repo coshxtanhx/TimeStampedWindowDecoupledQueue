@@ -109,8 +109,8 @@ namespace lf::dqrr {
 		DQRR(int num_queue, int num_thread, int b)
 			: b_{ b }, queues_(num_queue), enq_rrs_(b), deq_rrs_(b), ebr_{ num_thread } {
 			for (uint64_t i = 0; i < b; ++i) {
-				enq_rrs_[i].store(i * (num_queue / b));
-				deq_rrs_[i].store(i * (num_queue / b));
+				enq_rrs_[i].store(i * num_queue / b);
+				deq_rrs_[i].store(i * num_queue / b);
 			}
 		}
 
@@ -161,13 +161,13 @@ namespace lf::dqrr {
 
 	private:
 		size_t GetEnqueuerIndex() {
-			int rr_id = MyThread::GetID() % b_;
+			auto rr_id = MyThread::GetID() % b_;
 			auto enq_rr = enq_rrs_[rr_id].fetch_add(1);
 			return enq_rr % queues_.size();
 		}
 
 		size_t GetDequeuerIndex() {
-			int rr_id = MyThread::GetID() % b_;
+			auto rr_id = MyThread::GetID() % b_;
 			auto deq_rr = deq_rrs_[rr_id].fetch_add(1);
 			return deq_rr % queues_.size();
 		}

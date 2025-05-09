@@ -20,10 +20,9 @@ namespace lf::ts {
 		}
 
 		void Set(int delay) {
-			using namespace std::chrono;
-			t1_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
+			t1_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
 			for (volatile int i = 0; i < delay; ++i) {}
-			t2_ = duration_cast<microseconds>(steady_clock::now() - tp_base_).count();
+			t2_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
 
 		}
 
@@ -31,12 +30,15 @@ namespace lf::ts {
 			return t2_ < rhs.t1_;
 		}
 	private:
-		static std::chrono::steady_clock::time_point tp_base_;
+		using Clock = std::chrono::steady_clock;
+		using Resolution = std::chrono::microseconds;
+
+		static Clock::time_point tp_base_;
 		uint64_t t1_;
 		uint64_t t2_;
 	};
 
-	std::chrono::steady_clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
+	TimeStamp::Clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
 
 	struct Node {
 		Node() = default;

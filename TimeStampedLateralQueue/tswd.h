@@ -11,6 +11,16 @@
 #include "relaxation_distance.h"
 
 namespace lf::tswd {
+	struct Node {
+		Node() = default;
+		Node(int v) : v{ v } {}
+
+		Node* volatile next{};
+		uint64_t retire_epoch{};
+		uint64_t time_stamp{};
+		int v{};
+	};
+
 	struct alignas(std::hardware_destructive_interference_size) Window {
 		Window() = default;
 
@@ -21,50 +31,6 @@ namespace lf::tswd {
 		}
 
 		volatile uint64_t time_stamp{};
-	};
-
-	struct Node {
-		Node() = default;
-		Node(int v) : v{ v } {}
-
-		auto GetHeuristicTimeStamp(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
-		retry:
-			auto put_ts = window_put.time_stamp;
-			auto heuristic_ts{ std::max(put_ts, prev_time_stamp) + 1 };
-
-			auto needs_cas{ static_cast<int>(prev_time_stamp >= put_ts + depth) };
-
-			rdm.LockEnq();
-			if (window_put.CAS(put_ts, put_ts + depth * needs_cas)) {
-				if (not enqueued_to_rdm) {
-					enqueued_to_rdm = true;
-					rdm.Enq(this);
-				}
-				rdm.UnlockEnq();
-			} else {
-				rdm.UnlockEnq();
-				goto retry;
-			}
-
-			return heuristic_ts;
-		}
-
-		auto InitTimeStamp(Window& window_put, int depth, benchmark::RelaxationDistanceManager& rdm) {
-			auto desired = GetHeuristicTimeStamp(window_put, depth, rdm);
-			decltype(desired) expected{};
-
-			std::atomic_compare_exchange_strong(
-				reinterpret_cast<volatile std::atomic<uint64_t>*>(&time_stamp),
-				&expected, desired);
-			return time_stamp;
-		}
-
-		Node* volatile next{};
-		uint64_t retire_epoch{};
-		volatile uint64_t time_stamp{};
-		uint64_t prev_time_stamp{};
-		int v{};
-		bool enqueued_to_rdm{};
 	};
 
 	class PartialQueue {
@@ -79,26 +45,22 @@ namespace lf::tswd {
 			delete head_;
 		}
 
-		void Enq(Node* node) {
+		void Enq(Node* node, uint64_t put_ts) {
+			auto tail_ts = tail_->time_stamp;
+			node->time_stamp = std::max(put_ts, tail_ts) + 1;
 			tail_->next = node;
 			tail_ = node;
 		}
 
 		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, int depth,
-			uint64_t get_ts, Window& window_put, benchmark::RelaxationDistanceManager& rdm) {
+			uint64_t get_ts, benchmark::RelaxationDistanceManager& rdm) {
 			while (true) {
 				auto loc_head = head_;
 				auto first = loc_head->next;
 				if (nullptr == first) {
 					return std::make_pair(std::nullopt, loc_head); // pq is empty
 				}
-				auto first_time_stamp = first->time_stamp;
-
-				if (0 == first_time_stamp) {
-					first_time_stamp = first->InitTimeStamp(window_put, depth, rdm);
-				}
-
-				if (first_time_stamp > get_ts + depth) {
+				if (first->time_stamp > get_ts + depth) {
 					return std::make_pair(std::nullopt, nullptr); // retry required
 				}
 				auto value = first->v;
@@ -131,7 +93,8 @@ namespace lf::tswd {
 	class TSWD {
 	public:
 		TSWD(int num_thread, int depth)
-			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread } {}
+			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread } {
+		}
 
 		void CheckRelaxationDistance() {
 			rdm_.CheckRelaxationDistance();
@@ -143,12 +106,19 @@ namespace lf::tswd {
 
 		void Enq(int v) {
 			auto node = new Node{ v };
+
+			rdm_.LockEnq();
+			auto put_ts = window_put_.time_stamp;
+			rdm_.Enq(node);
+			rdm_.UnlockEnq();
+
 			auto& pq = queues_[MyThread::GetID()];
-			node->prev_time_stamp = pq.GetTailTimeStamp();
 
-			pq.Enq(node);
-
-			node->InitTimeStamp(window_put_, depth_, rdm_);
+			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
+				window_put_.CAS(put_ts, put_ts + depth_);
+				put_ts += depth_;
+			}
+			pq.Enq(node, put_ts);
 		}
 
 		std::optional<int> Deq() {
@@ -158,11 +128,9 @@ namespace lf::tswd {
 			while (true) {
 				int cnt_empty{};
 				auto get_ts = window_get_.time_stamp;
-				auto put_ts = window_put_.time_stamp;
-
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
-					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, window_put_, rdm_);
+					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
 					if (nullptr != old_head) {
 						old_heads[id] = old_head;
 						cnt_empty += 1;
@@ -191,6 +159,7 @@ namespace lf::tswd {
 					id = MyThread::GetID();
 				}
 
+				auto put_ts = window_put_.time_stamp;
 				if (get_ts < put_ts) {
 					window_get_.CAS(get_ts, get_ts + depth_);
 				}

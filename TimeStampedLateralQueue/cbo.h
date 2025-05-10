@@ -70,7 +70,6 @@ namespace lf::cbo {
 					continue;
 				}
 				if (nullptr == first) {
-					ebr.EndOp();
 					return std::nullopt;
 				}
 				if (loc_head == loc_tail) {
@@ -141,12 +140,11 @@ namespace lf::cbo {
 			auto optimal = GetDequeuerIndex();
 			auto value = queues_[optimal].TryDeq(ebr_, rdm_);
 
-			if (value.has_value()) {
-				ebr_.EndOp();
-				return value;
-			} else {
-				return DoubleCollect(optimal);
+			if (not value.has_value()) {
+				value = DoubleCollect(optimal);
 			}
+			ebr_.EndOp();
+			return value;
 		}
 
 	private:

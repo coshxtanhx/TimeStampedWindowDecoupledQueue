@@ -284,8 +284,8 @@ namespace benchmark {
 	void Tester::SetParameter()
 	{
 		std::print("\n--- List ---\n");
-		std::print("        LRU: [parameter] = nbr_queue / nbr_thread\n");
-		std::print("      TL-RR: [parameter] = nbr_queue / nbr_thread\n");
+		std::print("        LRU: [parameter] = nbr queue per thread\n");
+		std::print("      TL-RR: [parameter] = nbr queue per thread\n");
 		std::print("      d-CBO: [parameter] = d\n");
 		std::print("TS-interval: [parameter] = delay (us)\n");
 		std::print("        2Dd: [parameter] = depth\n");

@@ -7,8 +7,14 @@
 namespace benchmark {
 	inline const int kTotalNumOp{ (std::thread::hardware_concurrency() <= 8) ? 360'000 : 3600'0000 };
 
+	void Idle()
+	{
+		for (volatile int i = 0; i < 20; ++i) {}
+	}
+
 	template<class QueueT>
-	void MicrobenchmarkFunc(int thread_id, int num_thread, float enq_rate, QueueT& queue)
+	void MicrobenchmarkFunc(int thread_id, int num_thread, float enq_rate, 
+		bool checks_relaxation_distance, QueueT& queue)
 	{
 		MyThread::SetID(thread_id);
 		auto num_op = kTotalNumOp / num_thread;
@@ -20,6 +26,10 @@ namespace benchmark {
 				queue.Enq(Random::Get(0, 65535));
 			} else {
 				queue.Deq();
+			}
+
+			if (not checks_relaxation_distance) {
+				Idle();
 			}
 		}
 	}

@@ -9,7 +9,6 @@
 #include "ts_interval.h"
 #include "twodd.h"
 #include "tswd.h"
-#include "tswd2.h"
 
 namespace benchmark {
 	void Tester::Run()
@@ -114,8 +113,7 @@ namespace benchmark {
 
 				switch (subject_) {
 					case Subject::kLRU: {
-						//lf::dqlru::DQLRU subject{ num_thread * parameter_, num_thread };
-						lf::tswd2::TSWD subject{ num_thread, parameter_ };
+						lf::dqlru::DQLRU subject{ num_thread * parameter_, num_thread };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();

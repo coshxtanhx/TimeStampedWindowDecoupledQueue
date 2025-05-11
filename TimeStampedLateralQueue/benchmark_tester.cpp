@@ -47,11 +47,7 @@ namespace benchmark {
 					break;
 				}
 				case 'a': {
-					if (graph_) {
-						StartMacroBenchmark();
-					} else {
-						std::print("[Error] Generate or load graph first.\n\n");
-					}
+					StartMacroBenchmark();
 					break;
 				}
 				case 'g': {
@@ -189,6 +185,10 @@ namespace benchmark {
 
 	void Tester::StartMacroBenchmark()
 	{
+		if (nullptr == graph_) {
+			std::print("[Error] Generate or load graph first.\n\n");
+		}
+
 		constexpr auto kMaxThread{ 72 };
 		threads_.reserve(kMaxThread);
 
@@ -271,7 +271,8 @@ namespace benchmark {
 		std::print("\n");
 	}
 
-	void Tester::SetSubject() {
+	void Tester::SetSubject()
+	{
 		std::print("1: LRU, 2: TL-RR, 3: d-CBO, 4: TS-interval, 5: 2Dd, 6: TSWd\n");
 		std::print("Subject: ");
 		int subject_id;
@@ -280,12 +281,13 @@ namespace benchmark {
 		std::cin.ignore();
 	}
 
-	void Tester::SetParameter() {
+	void Tester::SetParameter()
+	{
 		std::print("\n--- List ---\n");
 		std::print("        LRU: [parameter] = nbr_queue / nbr_thread\n");
 		std::print("      TL-RR: [parameter] = nbr_queue / nbr_thread\n");
 		std::print("      d-CBO: [parameter] = d\n");
-		std::print("TS-interval: [parameter] = delay\n");
+		std::print("TS-interval: [parameter] = delay (us)\n");
 		std::print("        2Dd: [parameter] = depth\n");
 		std::print("       TSWD: [parameter] = depth\n");
 		std::print("Parameter: ");
@@ -299,7 +301,8 @@ namespace benchmark {
 		}
 	}
 
-	void Tester::SetEnqRate() {
+	void Tester::SetEnqRate()
+	{
 		std::print("Enq rate(%): ");
 		std::cin >> enq_rate_;
 		if (std::cin.fail()) {
@@ -310,7 +313,8 @@ namespace benchmark {
 		}
 	}
 
-	void Tester::CheckRelaxationDistance() {
+	void Tester::CheckRelaxationDistance()
+	{
 		checks_relaxation_distance_ ^= true;
 		if (checks_relaxation_distance_) {
 			std::print("Checks relaxation distance.\n");
@@ -319,8 +323,9 @@ namespace benchmark {
 		}
 	}
 
-	void Tester::GenerateGraph() {
-		if (nullptr != graph_) {
+	void Tester::GenerateGraph()
+	{
+		if (graph_) {
 			std::print("[Error] Graph has already been generated!\n");
 			return;
 		}
@@ -328,8 +333,9 @@ namespace benchmark {
 		graph_->Save("graph.bin");
 	}
 
-	void Tester::LoadGraph() {
-		if (nullptr != graph_) {
+	void Tester::LoadGraph()
+	{
+		if (graph_) {
 			std::print("[Error] Graph has already been generated!\n");
 			return;
 		}

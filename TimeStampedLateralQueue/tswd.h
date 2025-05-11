@@ -127,6 +127,7 @@ namespace lf::tswd {
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
+				auto put_ts = window_put_.time_stamp;
 				auto get_ts = window_get_.time_stamp;
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
@@ -159,7 +160,6 @@ namespace lf::tswd {
 					id = MyThread::GetID();
 				}
 
-				auto put_ts = window_put_.time_stamp;
 				if (get_ts < put_ts) {
 					window_get_.CAS(get_ts, get_ts + depth_);
 				}

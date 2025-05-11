@@ -195,7 +195,7 @@ namespace benchmark {
 			return;
 		}
 		if (0 == parameter_) {
-			std::print("[Error] Set parameter first.");
+			std::print("[Error] Set parameter first.\n\n");
 			return;
 		}
 

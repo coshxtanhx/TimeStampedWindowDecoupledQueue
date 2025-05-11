@@ -145,6 +145,9 @@ namespace lf::tswd {
 			std::vector<Node*> old_heads(queues_.size());
 			size_t id = MyThread::GetID();
 
+			constexpr std::array<int, 16> coprimes{ 1, 5, 7, 11, 13, 17, 19, 23, 25, 29, 31, 35, 37, 41, 43, 47 };
+			auto dir = coprimes[Random::Get(0, coprimes.size() - 1)];
+
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
@@ -173,13 +176,13 @@ namespace lf::tswd {
 						break;
 					}
 
-					id = (id + 1) % queues_.size();
+					id = (id + dir) % queues_.size();
 				}
 
 				if (queues_.size() == cnt_empty) {
 					bool is_empty{ true };
 					for (size_t i = 1; i < queues_.size(); ++i) {
-						id = (i + MyThread::GetID()) % queues_.size();
+						id = (i * dir + MyThread::GetID()) % queues_.size();
 						auto next = old_heads[id]->next;
 						if (nullptr != next) {
 							is_empty = false;

@@ -131,7 +131,7 @@ namespace lf::tswd {
 				int cnt_empty{};
 				auto put_ts = window_put_.time_stamp;
 				auto get_ts = window_get_.time_stamp;
-				for (size_t i = 0; i < queues_.size(); i += dir) {
+				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
 					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
 					if (nullptr != old_head) {
@@ -146,8 +146,8 @@ namespace lf::tswd {
 
 				if (queues_.size() == cnt_empty) {
 					bool is_empty{ true };
-					for (size_t i = 1; i < queues_.size(); i += dir) {
-						id = (i + MyThread::GetID() + queues_.size()) % queues_.size();
+					for (size_t i = 1; i < queues_.size(); ++i) {
+						id = (i * dir + MyThread::GetID() + queues_.size()) % queues_.size();
 						auto next = old_heads[id]->next;
 						if (nullptr != next) {
 							is_empty = false;

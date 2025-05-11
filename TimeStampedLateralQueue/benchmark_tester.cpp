@@ -84,6 +84,11 @@ namespace benchmark {
 
 	void Tester::StartMicroBenchmark()
 	{
+		if (0 == parameter_) {
+			std::print("[Error] Set parameter first.");
+			return;
+		}
+
 		constexpr auto kMaxThread{ kNumThreads.back() };
 		threads_.reserve(kMaxThread);
 		Stopwatch stopwatch;
@@ -187,6 +192,10 @@ namespace benchmark {
 	{
 		if (nullptr == graph_) {
 			std::print("[Error] Generate or load graph first.\n\n");
+			return;
+		}
+		if (0 == parameter_) {
+			std::print("[Error] Set parameter first.");
 			return;
 		}
 

@@ -62,7 +62,7 @@ namespace benchmark {
 			}
 		}
 
-		static constexpr std::array<int, 4> kNumThreads{ 3, 8, 24, 72 };
+		static constexpr std::array<int, 4> kNumThreads{ 9, 18, 36, 72 };
 
 		std::vector<std::thread> threads_;
 		std::unique_ptr<Graph> graph_{};

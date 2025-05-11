@@ -84,7 +84,7 @@ namespace benchmark {
 
 	void Tester::StartMicroBenchmark()
 	{
-		constexpr auto kMaxThread{ 72 };
+		constexpr auto kMaxThread{ kNumThreads.back() };
 		threads_.reserve(kMaxThread);
 		Stopwatch stopwatch;
 
@@ -187,9 +187,10 @@ namespace benchmark {
 	{
 		if (nullptr == graph_) {
 			std::print("[Error] Generate or load graph first.\n\n");
+			return;
 		}
 
-		constexpr auto kMaxThread{ 72 };
+		constexpr auto kMaxThread{ kNumThreads.back() };
 		threads_.reserve(kMaxThread);
 
 		Stopwatch stopwatch;

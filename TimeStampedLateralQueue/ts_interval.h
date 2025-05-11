@@ -175,6 +175,9 @@ namespace lf::ts {
 			auto us = sw.GetDuration() * 1.0e6;
 
 			delay_per_us_ = static_cast<int>(kLoop / us);
+
+			std::cout << delay_per_us_ << '\n';
+
 			return delay_per_us_;
 		}
 

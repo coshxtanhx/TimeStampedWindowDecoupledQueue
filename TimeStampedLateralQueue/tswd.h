@@ -33,6 +33,21 @@ namespace lf::tswd {
 		volatile uint64_t time_stamp{};
 	};
 
+	struct DeqResult {
+		enum class Status {
+			kFail, kSucc, kNeedsAdvance, kEmpty
+		};
+
+		DeqResult() = default;
+		DeqResult(Status status, int value) : status{ status }, value{ value } {}
+		DeqResult(Status status, Node* old_head) : status{ status }, old_head{ old_head } {}
+		DeqResult(Status status) : status{ status } {}
+
+		Status status{};
+		int value{};
+		Node* old_head{};
+	};
+
 	class PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
@@ -52,16 +67,20 @@ namespace lf::tswd {
 			tail_ = node;
 		}
 
-		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, int depth,
+		DeqResult TryDeq(EBR<Node>& ebr, int depth,
 			uint64_t get_ts, benchmark::RelaxationDistanceManager& rdm) {
+			bool has_failed{};
 			while (true) {
 				auto loc_head = head_;
 				auto first = loc_head->next;
 				if (nullptr == first) {
-					return std::make_pair(std::nullopt, loc_head); // pq is empty
+					return { DeqResult::Status::kEmpty, loc_head };
 				}
 				if (first->time_stamp > get_ts + depth) {
-					return std::make_pair(std::nullopt, nullptr); // retry required
+					return { DeqResult::Status::kNeedsAdvance };
+				}
+				if (has_failed) {
+					return { DeqResult::Status::kFail };
 				}
 				auto value = first->v;
 				rdm.LockDeq();
@@ -69,9 +88,10 @@ namespace lf::tswd {
 					rdm.Deq(first);
 					rdm.UnlockDeq();
 					ebr.Retire(loc_head);
-					return std::make_pair(value, nullptr);
+					return { DeqResult::Status::kSucc, value };
 				}
 				rdm.UnlockDeq();
+				has_failed = true;
 			}
 		}
 
@@ -128,18 +148,31 @@ namespace lf::tswd {
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
+				int cnt_needs_advance{};
+
 				auto put_ts = window_put_.time_stamp;
 				auto get_ts = window_get_.time_stamp;
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
-					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
-					if (nullptr != old_head) {
-						old_heads[id] = old_head;
-						cnt_empty += 1;
-					} else if (value.has_value()) {
-						ebr_.EndOp();
-						return value;
+					auto result = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
+
+					switch (result.status) {
+						case DeqResult::Status::kSucc: {
+							ebr_.EndOp();
+							return result.value;
+						}
+						break;
+						case DeqResult::Status::kNeedsAdvance: {
+							cnt_needs_advance += 1;
+						}
+						break;
+						case DeqResult::Status::kEmpty: {
+							old_heads[id] = result.old_head;
+							cnt_empty += 1;
+						}
+						break;
 					}
+
 					id = (id + 1) % queues_.size();
 				}
 
@@ -161,7 +194,7 @@ namespace lf::tswd {
 					id = MyThread::GetID();
 				}
 
-				if (get_ts < put_ts) {
+				if (queues_.size() == cnt_needs_advance + cnt_empty) {
 					window_get_.CAS(get_ts, get_ts + depth_);
 				}
 			}

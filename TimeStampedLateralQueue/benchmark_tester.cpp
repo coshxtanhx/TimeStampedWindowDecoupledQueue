@@ -149,7 +149,7 @@ namespace benchmark {
 						break;
 					}
 					case Subject::kTSWD: {
-						lf::tswd::TSWD subject{ num_thread, kNumThreads.back() / num_thread, parameter_};
+						lf::tswd::TSWD subject{ num_thread, parameter_ };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
@@ -243,7 +243,7 @@ namespace benchmark {
 						break;
 					}
 					case Subject::kTSWD: {
-						lf::tswd::TSWD subject{ num_thread, kNumThreads.back() / num_thread, parameter_};
+						lf::tswd::TSWD subject{ num_thread, parameter_ };
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}

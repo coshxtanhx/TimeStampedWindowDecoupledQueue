@@ -92,9 +92,8 @@ namespace lf::tswd {
 
 	class TSWD {
 	public:
-		TSWD(int num_thread, int num_queue_per_thread, int depth)
-			: depth_{ depth }, num_thread_{ num_thread }, num_queue_per_thread_{ num_queue_per_thread }
-			, queues_(num_thread * num_queue_per_thread), ebr_{ num_thread } {
+		TSWD(int num_thread, int depth)
+			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread } {
 		}
 
 		void CheckRelaxationDistance() {
@@ -106,9 +105,6 @@ namespace lf::tswd {
 		}
 
 		void Enq(int v) {
-			static thread_local unsigned round_robin;
-			size_t id = MyThread::GetID() + num_thread_ * (round_robin++ % num_queue_per_thread_);
-
 			auto node = new Node{ v };
 
 			rdm_.LockEnq();
@@ -116,7 +112,7 @@ namespace lf::tswd {
 			rdm_.Enq(node);
 			rdm_.UnlockEnq();
 
-			auto& pq = queues_[id];
+			auto& pq = queues_[MyThread::GetID()];
 
 			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
 				window_put_.CAS(put_ts, put_ts + depth_);
@@ -126,11 +122,8 @@ namespace lf::tswd {
 		}
 
 		std::optional<int> Deq() {
-			static thread_local unsigned round_robin;
-			size_t first_id = MyThread::GetID() + num_thread_ * (round_robin++ % num_queue_per_thread_);
-
 			std::vector<Node*> old_heads(queues_.size());
-			size_t id = first_id;
+			size_t id = MyThread::GetID();
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
@@ -153,10 +146,6 @@ namespace lf::tswd {
 					bool is_empty{ true };
 					for (size_t i = 1; i < queues_.size(); ++i) {
 						id = (i + MyThread::GetID()) % queues_.size();
-						if (id % num_thread_ == MyThread::GetID()) {
-							continue;
-						}
-
 						auto next = old_heads[id]->next;
 						if (nullptr != next) {
 							is_empty = false;
@@ -168,7 +157,7 @@ namespace lf::tswd {
 						return std::nullopt;
 					}
 				} else {
-					id = first_id;
+					id = MyThread::GetID();
 				}
 
 				if (get_ts < put_ts) {
@@ -178,8 +167,6 @@ namespace lf::tswd {
 		}
 	private:
 		int depth_;
-		int num_thread_;
-		int num_queue_per_thread_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 		Window window_get_;

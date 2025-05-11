@@ -119,8 +119,6 @@ namespace lf::tswd {
 				put_ts += depth_;
 			}
 			pq.Enq(node, put_ts);
-
-			for (volatile int idle = 0; idle < 8; ++idle) {}
 		}
 
 		std::optional<int> Deq() {

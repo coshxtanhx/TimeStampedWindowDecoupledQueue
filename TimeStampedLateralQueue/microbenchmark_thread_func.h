@@ -21,6 +21,8 @@ namespace benchmark {
 			} else {
 				queue.Deq();
 			}
+
+			for (volatile int c = 0; c < 250; ++c) {}
 		}
 	}
 }

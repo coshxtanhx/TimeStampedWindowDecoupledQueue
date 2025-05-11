@@ -33,21 +33,6 @@ namespace lf::tswd {
 		volatile uint64_t time_stamp{};
 	};
 
-	struct DeqResult {
-		enum class Status {
-			kFail, kSucc, kNeedsAdvance, kEmpty
-		};
-
-		DeqResult() = default;
-		DeqResult(Status status, int value) : status{ status }, value{ value } {}
-		DeqResult(Status status, Node* old_head) : status{ status }, old_head{ old_head } {}
-		DeqResult(Status status) : status{ status } {}
-
-		Status status{};
-		int value{};
-		Node* old_head{};
-	};
-
 	class PartialQueue {
 	public:
 		PartialQueue() : tail_{ new Node }, head_{ tail_ } {}
@@ -67,20 +52,16 @@ namespace lf::tswd {
 			tail_ = node;
 		}
 
-		DeqResult TryDeq(EBR<Node>& ebr, int depth,
+		std::pair<std::optional<int>, Node*> TryDeq(EBR<Node>& ebr, int depth,
 			uint64_t get_ts, benchmark::RelaxationDistanceManager& rdm) {
-			bool has_failed{};
 			while (true) {
 				auto loc_head = head_;
 				auto first = loc_head->next;
 				if (nullptr == first) {
-					return { DeqResult::Status::kEmpty, loc_head };
+					return std::make_pair(std::nullopt, loc_head); // pq is empty
 				}
 				if (first->time_stamp > get_ts + depth) {
-					return { DeqResult::Status::kNeedsAdvance };
-				}
-				if (has_failed) {
-					return { DeqResult::Status::kFail };
+					return std::make_pair(std::nullopt, nullptr); // retry required
 				}
 				auto value = first->v;
 				rdm.LockDeq();
@@ -88,10 +69,9 @@ namespace lf::tswd {
 					rdm.Deq(first);
 					rdm.UnlockDeq();
 					ebr.Retire(loc_head);
-					return { DeqResult::Status::kSucc, value };
+					return std::make_pair(value, nullptr);
 				}
 				rdm.UnlockDeq();
-				has_failed = true;
 			}
 		}
 
@@ -145,44 +125,28 @@ namespace lf::tswd {
 			std::vector<Node*> old_heads(queues_.size());
 			size_t id = MyThread::GetID();
 
-			constexpr std::array<int, 100> coprimes{ 1, 5, 7, 11, 13, 17, 19, 23, 25, 29, 31, 35, 37, 41, 43, 47, 49, 53, 55, 59, 61, 65, 67, 71, 73, 77, 79, 83, 85, 89, 91, 95, 97, 101, 103, 107, 109, 113, 115, 119, 121, 125, 127, 131, 133, 137, 139, 143, 145, 149, 151, 155, 157, 161, 163, 167, 169, 173, 175, 179, 181, 185, 187, 191, 193, 197, 199, 203, 205, 209, 211, 215, 217, 221, 223, 227, 229, 233, 235, 239, 241, 245, 247, 251, 253, 257, 259, 263, 265, 269, 271, 275, 277, 281, 283, 287, 289, 293, 295, 299 };
-			auto dir = coprimes[Random::Get(0, coprimes.size() - 1)];
-
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};
-				int cnt_needs_advance{};
-
 				auto put_ts = window_put_.time_stamp;
 				auto get_ts = window_get_.time_stamp;
 				for (size_t i = 0; i < queues_.size(); ++i) {
 					auto& pq = queues_[id];
-					auto result = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
-
-					switch (result.status) {
-						case DeqResult::Status::kSucc: {
-							ebr_.EndOp();
-							return result.value;
-						}
-						break;
-						case DeqResult::Status::kNeedsAdvance: {
-							cnt_needs_advance += 1;
-						}
-						break;
-						case DeqResult::Status::kEmpty: {
-							old_heads[id] = result.old_head;
-							cnt_empty += 1;
-						}
-						break;
+					auto [value, old_head] = pq.TryDeq(ebr_, depth_, get_ts, rdm_);
+					if (nullptr != old_head) {
+						old_heads[id] = old_head;
+						cnt_empty += 1;
+					} else if (value.has_value()) {
+						ebr_.EndOp();
+						return value;
 					}
-
-					id = (id + dir) % queues_.size();
+					id = (id + 1) % queues_.size();
 				}
 
 				if (queues_.size() == cnt_empty) {
 					bool is_empty{ true };
 					for (size_t i = 1; i < queues_.size(); ++i) {
-						id = (i * dir + MyThread::GetID()) % queues_.size();
+						id = (i + MyThread::GetID()) % queues_.size();
 						auto next = old_heads[id]->next;
 						if (nullptr != next) {
 							is_empty = false;
@@ -197,9 +161,7 @@ namespace lf::tswd {
 					id = MyThread::GetID();
 				}
 
-				if (queues_.size() == cnt_needs_advance + cnt_empty) {
-					window_get_.CAS(get_ts, get_ts + depth_);
-				}
+				window_get_.CAS(get_ts, get_ts + depth_);
 			}
 		}
 	private:

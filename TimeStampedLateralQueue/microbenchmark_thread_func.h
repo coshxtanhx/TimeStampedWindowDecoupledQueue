@@ -9,7 +9,7 @@ namespace benchmark {
 
 	void Idle()
 	{
-		for (volatile int i = 0; i < 20; ++i) {}
+		for (volatile int i = 0; i < 30; ++i) {}
 	}
 
 	template<class QueueT>

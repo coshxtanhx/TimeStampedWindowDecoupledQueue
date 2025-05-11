@@ -85,7 +85,7 @@ namespace benchmark {
 	void Tester::StartMicroBenchmark()
 	{
 		if (0 == parameter_) {
-			std::print("[Error] Set parameter first.");
+			std::print("[Error] Set parameter first.\n\n");
 			return;
 		}
 

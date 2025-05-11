@@ -115,7 +115,8 @@ namespace lf::tswd2 {
 			rdm_.Enq(node);
 			rdm_.UnlockEnq();
 
-			auto& pq = queues_[MyThread::GetID() + queues_.size() * (++rr % kP)];
+			auto id = MyThread::GetID() + (queues_.size() / kP) * (rr++ % kP);
+			auto& pq = queues_[id];
 
 			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
 				window_put_.CAS(put_ts, put_ts + depth_);
@@ -126,10 +127,10 @@ namespace lf::tswd2 {
 
 		std::optional<int> Deq() {
 			static thread_local uint8_t rr{};
-			size_t first_id = MyThread::GetID() * (rr++ % kP);
+			size_t first_id = MyThread::GetID() + (queues_.size() / kP) * (rr++ % kP);
 
 			std::vector<Node*> old_heads(queues_.size());
-			size_t id = MyThread::GetID();
+			size_t id = first_id;
 			ebr_.StartOp();
 			while (true) {
 				int cnt_empty{};

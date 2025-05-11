@@ -21,8 +21,6 @@ namespace benchmark {
 			} else {
 				queue.Deq();
 			}
-
-			for (volatile int idle = 0; idle < 420; ++idle) {}
 		}
 	}
 }

@@ -102,7 +102,7 @@ namespace benchmark {
 
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
-			for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
+			for (int num_thread : kNumThreads) {
 				threads_.clear();
 				std::pair<double, uint64_t> rd{};
 				double elapsed_sec{};
@@ -210,7 +210,7 @@ namespace benchmark {
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
 
-			for (int num_thread = 9; num_thread <= kMaxThread; num_thread *= 2) {
+			for (int num_thread : kNumThreads) {
 				threads_.clear();
 				std::vector<int> shortest_dists(num_thread);
 				graph_->Reset();

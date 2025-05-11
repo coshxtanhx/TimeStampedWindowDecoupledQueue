@@ -125,7 +125,7 @@ namespace lf::tswd {
 			std::vector<Node*> old_heads(queues_.size());
 			size_t id = MyThread::GetID();
 			constexpr std::array<int, 16> coprimes{ 1, 5, 7, 11, 13, 17, 19, 23, 25, 29, 31, 35, 37, 41, 43, 47 };
-			auto dir = coprimes[Random::Get(0, coprimes.size())];
+			auto dir = coprimes[Random::Get(0, coprimes.size() - 1)];
 
 			ebr_.StartOp();
 			while (true) {

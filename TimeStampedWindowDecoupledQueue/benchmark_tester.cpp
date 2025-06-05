@@ -350,5 +350,8 @@ namespace benchmark {
 			return;
 		}
 		graph_ = std::make_unique<Graph>("graph.bin");
+		if (not graph_->IsValid()) {
+			graph_ = nullptr;
+		}
 	}
 }

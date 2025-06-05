@@ -60,6 +60,12 @@ public:
 
 	Graph(const std::string& file_name) : has_ended_{ false } {
 		std::ifstream in{ file_name, std::ios::binary };
+
+		if (in.fail()) {
+			std::print("[Error] File does not exist.\n");
+			return;
+		}
+
 		int num_edge{};
 
 		in.read(reinterpret_cast<char*>(&num_vertex_), sizeof(num_vertex_));
@@ -148,6 +154,10 @@ public:
 		std::print("Graph has been generated.\n");
 		std::print("vertices: {}\n", num_vertex_);
 		std::print("   edges: {}\n\n", num_edge);
+	}
+
+	bool IsValid() const {
+		return num_vertex_ != 0;
 	}
 
 private:

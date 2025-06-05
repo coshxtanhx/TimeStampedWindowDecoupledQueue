@@ -34,6 +34,7 @@ namespace benchmark {
 		void CheckRelaxationDistance();
 		void GenerateGraph();
 		void LoadGraph();
+		void PrintHelp() const;
 
 		template<class Subject>
 		void CreateThreads(MicrobenchmarkFuncT<Subject> thread_func, int num_thread, Subject& subject) {

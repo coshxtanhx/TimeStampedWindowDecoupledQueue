@@ -59,17 +59,7 @@ namespace benchmark {
 					break;
 				}
 				case 'h': {
-					std::print("e: Set enq rate\n");
-					std::print("r: Check/Do not check relaxation distance\n");
-					std::print("s: Set subject\n");
-					std::print("p: Set parameter\n");
-					std::print("l: Load graph\n");
-					std::print("g: Generate graph\n");
-					std::print("i: Microbenchmark\n");
-					std::print("a: Macrobenchmark\n");
-					std::print("h: help\n");
-					std::print("q: quit\n");
-					std::print("\n");
+					PrintHelp();
 					break;
 				}
 				case 'q': {
@@ -349,9 +339,25 @@ namespace benchmark {
 			std::print("[Error] Graph has already been generated!\n");
 			return;
 		}
+
 		graph_ = std::make_unique<Graph>("graph.bin");
+		
 		if (not graph_->IsValid()) {
 			graph_ = nullptr;
 		}
+	}
+
+	void Tester::PrintHelp() const {
+		std::print("e: Set enq rate\n");
+		std::print("r: Check/Do not check relaxation distance\n");
+		std::print("s: Set subject\n");
+		std::print("p: Set parameter\n");
+		std::print("l: Load graph\n");
+		std::print("g: Generate graph\n");
+		std::print("i: Microbenchmark\n");
+		std::print("a: Macrobenchmark\n");
+		std::print("h: Help\n");
+		std::print("q: Quit\n");
+		std::print("\n");
 	}
 }

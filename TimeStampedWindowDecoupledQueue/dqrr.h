@@ -101,7 +101,8 @@ namespace lf::dqrr {
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
-	struct alignas(std::hardware_destructive_interference_size) RRCounter : std::atomic<uint64_t> {
+	struct alignas(std::hardware_destructive_interference_size) RRCounter {
+		uint64_t value;
 	};
 
 	class DQRR {
@@ -109,8 +110,8 @@ namespace lf::dqrr {
 		DQRR(int num_queue, int num_thread, int b)
 			: b_{ b }, queues_(num_queue), enq_rrs_(b), deq_rrs_(b), ebr_{ num_thread } {
 			for (uint64_t i = 0; i < b; ++i) {
-				enq_rrs_[i].store(i * num_queue / b);
-				deq_rrs_[i].store(i * num_queue / b);
+				enq_rrs_[i].value = i * num_queue / b;
+				deq_rrs_[i].value = i * num_queue / b;
 			}
 		}
 
@@ -161,14 +162,12 @@ namespace lf::dqrr {
 
 	private:
 		size_t GetEnqueuerIndex() {
-			auto rr_id = MyThread::GetID() % b_;
-			auto enq_rr = enq_rrs_[rr_id].fetch_add(1);
+			auto enq_rr = enq_rrs_[MyThread::GetID() % b_].value++;
 			return enq_rr % queues_.size();
 		}
 
 		size_t GetDequeuerIndex() {
-			auto rr_id = MyThread::GetID() % b_;
-			auto deq_rr = deq_rrs_[rr_id].fetch_add(1);
+			auto deq_rr = deq_rrs_[MyThread::GetID() % b_].value++;
 			return deq_rr % queues_.size();
 		}
 

@@ -33,6 +33,6 @@ Follow the steps below to run the macrobenchmark interactively:
   4. TS-interval https://doi.org/10.1145/2676726.2676963
   5. 2Dd https://arxiv.org/abs/1906.07105
 
-## Others
-All data structures are implemented in compliance with the C++ standard.
-The ABA problem and dereferencing dangling pointers was avoided by using epoch-based reclamation.
+## Miscellaneous
+* All data structures are implemented in compliance with the C++ standard.
+* The ABA problem and dereferencing dangling pointers was avoided by using epoch-based reclamation.

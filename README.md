@@ -1,4 +1,4 @@
-# Description
+# Time-Stamped Window Decoupled Queue
 A novel relaxed queue leveraging the Window Decoupled structure by Adones Rukundo and the time-stamp-based algorithm introduced by Mike Dodds.
 
 ## System Requirements
@@ -22,3 +22,11 @@ Follow the steps below to run the benchmark interactively:
   2. Enter `s` to select a subject queue implementation.
   3. Enter `p` to configure parameters for the selected subject.
   4. Enter `a` to start the macrobenchmark.
+
+## Control Groups
+All data structures are implemented in compliance with the C++ standard.
+  1. DQ LRU https://dl.acm.org/doi/abs/10.1145/2482767.2482789
+  2. DQ TL-RR https://dl.acm.org/doi/abs/10.1145/2482767.2482789
+  3. d-CBO https://dl.acm.org/doi/10.1145/3710848.3710892
+  4. TS-interval https://doi.org/10.1145/2676726.2676963
+  5. 2Dd https://arxiv.org/abs/1906.07105

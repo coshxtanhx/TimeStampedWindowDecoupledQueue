@@ -88,7 +88,7 @@ public:
 
 		std::print("Graph has been loaded.\n");
 		std::print("     vertices: {}\n", num_vertex_);
-		std::print("        edges: {}\n\n", num_edge);
+		std::print("        edges: {}\n", num_edge);
 		std::print("shortest dist: {}\n\n", shortest_distance);
 	}
 
@@ -163,7 +163,7 @@ public:
 
 		std::print("Graph has been generated.\n");
 		std::print("     vertices: {}\n", num_vertex_);
-		std::print("        edges: {}\n\n", num_edge);
+		std::print("        edges: {}\n", num_edge);
 		std::print("shortest dist: {}\n\n", shortest_distance);
 	}
 

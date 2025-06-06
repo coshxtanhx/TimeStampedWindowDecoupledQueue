@@ -6,6 +6,7 @@
 #include <vector>
 #include <random>
 #include <optional>
+#include <queue>
 #include <thread>
 #include "print.h"
 
@@ -82,9 +83,13 @@ public:
 			in.read(reinterpret_cast<char*>(adj.data()), num_adj * sizeof(*adj.data()));
 		}
 
+		int shortest_distance{};
+		in.read(reinterpret_cast<char*>(&shortest_distance), sizeof(shortest_distance));
+
 		std::print("Graph has been loaded.\n");
-		std::print("vertices: {}\n", num_vertex_);
-		std::print("   edges: {}\n\n", num_edge);
+		std::print("     vertices: {}\n", num_vertex_);
+		std::print("        edges: {}\n\n", num_edge);
+		std::print("shortest dist: {}\n\n", shortest_distance);
 	}
 
 	template<class QueueT>
@@ -138,7 +143,7 @@ public:
 		has_ended_ = false;
 	}
 
-	void Save(const std::string& file_name) const {
+	void Save(const std::string& file_name) {
 		std::ofstream out{ file_name, std::ios::binary };
 		int size = static_cast<int>(has_visited_.size());
 		out.write(reinterpret_cast<const char*>(&size), sizeof(size));
@@ -151,9 +156,15 @@ public:
 			num_edge += size;
 		}
 
+		Reset();
+		int shortest_distance{ UnsafeBFS() };
+
+		out.write(reinterpret_cast<const char*>(&shortest_distance), sizeof(shortest_distance));
+
 		std::print("Graph has been generated.\n");
-		std::print("vertices: {}\n", num_vertex_);
-		std::print("   edges: {}\n\n", num_edge);
+		std::print("     vertices: {}\n", num_vertex_);
+		std::print("        edges: {}\n\n", num_edge);
+		std::print("shortest dist: {}\n\n", shortest_distance);
 	}
 
 	bool IsValid() const {
@@ -165,6 +176,32 @@ private:
 		return std::atomic_compare_exchange_strong(
 			reinterpret_cast<std::atomic<int>*>(&has_visited_[node]),
 			&expected_cost, desired_cost);
+	}
+
+	int UnsafeBFS() {
+		int dst = num_vertex_ - 1;
+		std::queue<int> queue;
+		queue.push(0);
+
+		while (not queue.empty()) {
+			auto p = queue.front();
+			queue.pop();
+
+			if (p == dst) {
+				break;
+			}
+
+			int cost = has_visited_[p] + 1;
+
+			for (auto adj : adjs_[p]) {
+				if (cost < has_visited_[adj]) {
+					has_visited_[adj] = cost;
+					queue.push(adj);
+				}
+			}
+		}
+
+		return has_visited_[dst];
 	}
 
 	std::vector<std::vector<int>> adjs_;

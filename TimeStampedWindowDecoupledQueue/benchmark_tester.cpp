@@ -307,7 +307,7 @@ namespace benchmark {
 
 	void Tester::SetEnqRate()
 	{
-		std::print("Enq rate(%): ");
+		std::print("Enqueue rate(%): ");
 		std::cin >> enq_rate_;
 		if (std::cin.fail()) {
 			std::cin.clear();
@@ -323,7 +323,7 @@ namespace benchmark {
 		if (checks_relaxation_distance_) {
 			std::print("Checks relaxation distance.\n");
 		} else {
-			std::print("Does not check relaxation distance.\n");
+			std::print("Checks throughput.\n");
 		}
 	}
 
@@ -333,6 +333,8 @@ namespace benchmark {
 			std::print("[Error] Graph has already been generated!\n");
 			return;
 		}
+		std::print("Generating the graph. Please wait a moment.\n");
+
 		graph_ = std::make_unique<Graph>(18'000'000);
 		graph_->Save("graph.bin");
 	}
@@ -352,8 +354,8 @@ namespace benchmark {
 	}
 
 	void Tester::PrintHelp() const {
-		std::print("e: Set enq rate\n");
-		std::print("r: Check/Do not check relaxation distance\n");
+		std::print("e: Set enqueue rate\n");
+		std::print("m: Toggle microbenchmark mode\n");
 		std::print("s: Set subject\n");
 		std::print("p: Set parameter\n");
 		std::print("l: Load graph\n");

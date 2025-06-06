@@ -12,7 +12,7 @@ Follow the steps below to run the benchmark interactively:
   2. Enter `p` to configure parameters for the selected subject.
   3. Enter `e` to set the enqueue rate (percentage).
      The default value is **50%**.
-  4. Enter `r` to toggle the microbenchmark mode.
+  4. Enter `m` to toggle the microbenchmark mode.
      - Throughput check (default)
      - Relaxation distance check
   5. Enter `i` to start the microbenchmark.

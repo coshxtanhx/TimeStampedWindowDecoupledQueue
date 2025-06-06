@@ -79,12 +79,6 @@ namespace benchmark {
 			return;
 		}
 
-		constexpr auto kMaxThread{ kNumThreads.back() };
-		threads_.reserve(kMaxThread);
-		Stopwatch stopwatch;
-
-		std::map<int, double> results{};
-
 		std::print("Input the number of times to repeat: ");
 		int num_repeat;
 		std::cin >> num_repeat;
@@ -94,6 +88,12 @@ namespace benchmark {
 		} else {
 			std::cin.ignore();
 		}
+
+		constexpr auto kMaxThread{ kNumThreads.back() };
+		threads_.reserve(kMaxThread);
+		Stopwatch stopwatch;
+
+		std::map<int, double> results{};
 
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
@@ -163,9 +163,13 @@ namespace benchmark {
 
 				std::print("    threads: {}\n", num_thread);
 				std::print("elapsed sec: {:.2f} s\n", elapsed_sec);
-				std::print(" throughput: {:.2f} MOp/s\n", throughput);
-				std::print("   avg dist: {:.2f}\n", rd.first);
-				std::print("   max dist: {}\n", rd.second);
+
+				if (checks_relaxation_distance_) {
+					std::print("   avg dist: {:.2f}\n", rd.first);
+					std::print("   max dist: {}\n", rd.second);
+				} else {
+					std::print(" throughput: {:.2f} MOp/s\n", throughput);
+				}
 				std::print("\n");
 
 				results[num_thread] += checks_relaxation_distance_ ? rd.first : throughput;
@@ -189,13 +193,6 @@ namespace benchmark {
 			return;
 		}
 
-		constexpr auto kMaxThread{ kNumThreads.back() };
-		threads_.reserve(kMaxThread);
-
-		Stopwatch stopwatch;
-
-		std::map<int, double> results{};
-
 		std::print("Input the number of times to repeat: ");
 		int num_repeat;
 		std::cin >> num_repeat;
@@ -205,6 +202,13 @@ namespace benchmark {
 		} else {
 			std::cin.ignore();
 		}
+
+		constexpr auto kMaxThread{ kNumThreads.back() };
+		threads_.reserve(kMaxThread);
+
+		Stopwatch stopwatch;
+
+		std::map<int, double> results{};
 
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
@@ -287,7 +291,7 @@ namespace benchmark {
 		std::print("        LRU: [parameter] = nbr queue per thread\n");
 		std::print("      TL-RR: [parameter] = nbr queue per thread\n");
 		std::print("      d-CBO: [parameter] = d\n");
-		std::print("TS-interval: [parameter] = delay (us)\n");
+		std::print("TS-interval: [parameter] = delay (microsec)\n");
 		std::print("        2Dd: [parameter] = depth\n");
 		std::print("       TSWD: [parameter] = depth\n");
 		std::print("Parameter: ");

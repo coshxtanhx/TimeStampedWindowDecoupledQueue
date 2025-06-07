@@ -33,6 +33,14 @@ Follow the steps below to run the macrobenchmark interactively:
   4. TS-interval https://doi.org/10.1145/2676726.2676963
   5. 2Dd https://arxiv.org/abs/1906.07105
 
+## Experimental Results
+### Microbenchmark
+![EnqRate50](./results/microbenchmark_e50.svg)
+![EnqRate95](./results/microbenchmark_e95.svg)
+
+### Macrobenchmark
+![BFS](./results/macrobenchmark_bfs.svg)
+
 ## Miscellaneous
 * All data structures are implemented in compliance with the C++ standard.
 * The ABA problem and dereferencing dangling pointers was avoided by using epoch-based reclamation.

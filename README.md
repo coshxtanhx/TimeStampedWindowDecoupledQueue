@@ -35,11 +35,11 @@ Follow the steps below to run the macrobenchmark interactively:
 
 ## Experimental Results
 ### Microbenchmark
-![EnqRate50](./results/microbenchmark_e50.svg)
-![EnqRate95](./results/microbenchmark_e95.svg)
+![EnqRate50](./result/microbenchmark_e50.svg)
+![EnqRate95](./result/microbenchmark_e95.svg)
 
 ### Macrobenchmark
-![BFS](./results/macrobenchmark_bfs.svg)
+![BFS](./result/macrobenchmark_bfs.svg)
 
 ## Miscellaneous
 * All data structures are implemented in compliance with the C++ standard.

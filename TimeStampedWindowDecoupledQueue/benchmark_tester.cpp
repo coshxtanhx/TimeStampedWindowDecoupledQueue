@@ -30,7 +30,7 @@ namespace benchmark {
 					SetEnqRate();
 					break;
 				}
-				case 'r': {
+				case 'm': {
 					CheckRelaxationDistance();
 					break;
 				}

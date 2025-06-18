@@ -44,3 +44,4 @@ Follow the steps below to run the macrobenchmark interactively:
 ## Miscellaneous
 * All data structures are implemented in compliance with the C++ standard.
 * The ABA problem and dereferencing dangling pointers was avoided by using epoch-based reclamation.
+* 128-bit CAS was not used.

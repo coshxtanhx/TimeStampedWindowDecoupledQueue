@@ -69,7 +69,7 @@ public:
 				if (next >= num_vertex_ or max_adj == adjs_[i].size()) {
 					break;
 				}
-				if (max_adj > adjs_[next].size() and uid(re) % 100 < 5) {
+				if (max_adj > adjs_[next].size() and max_adj > adjs_[i].size() and uid(re) % 100 < 5) {
 					adjs_[i].push_back(next);
 					adjs_[next].push_back(i);
 				}

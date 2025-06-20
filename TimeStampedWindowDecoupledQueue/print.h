@@ -1,7 +1,7 @@
 #ifndef PRINT_H
 #define PRINT_H
 
-// This header is for compatibility with systems where print is not implemented.
+// This header is for compatibility with systems where std::print is not implemented.
 
 #include <iostream>
 #include <format>

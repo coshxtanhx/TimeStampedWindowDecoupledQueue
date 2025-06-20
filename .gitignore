@@ -7,4 +7,4 @@ TimeStampedWindowDecoupledQueue/*.vcxproj.filters
 TimeStampedWindowDecoupledQueue/*.vcxproj.user
 TimeStampedWindowDecoupledQueue/TimeStam.7ed6bc86
 TimeStampedWindowDecoupledQueue/x64
-TimeStampedWindowDecoupledQueue/graph.bin
+TimeStampedWindowDecoupledQueue/*.bin

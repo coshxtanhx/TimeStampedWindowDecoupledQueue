@@ -12,14 +12,36 @@
 
 class Graph {
 public:
-	Graph(int num_vertex) : has_ended_{ false } {
+	enum class Type {
+		kFewVerticesFewEdges,
+		kFewVerticesManyEdges,
+		kManyVerticesFewEdges,
+		kManyVerticesManyEdges,
+	};
+
+	Graph(Type type) {
 		int max_adj{};
-		if (std::thread::hardware_concurrency() <= 8) {
-			num_vertex_ = num_vertex / 4;
-			max_adj = 12;
-		} else {
-			num_vertex_ = num_vertex;
-			max_adj = 72;
+		switch (type) {
+			case Type::kFewVerticesFewEdges: {
+				max_adj = 72 / 6;
+				num_vertex_ = 18'000'000 / 4;
+				break;
+			}
+			case Type::kFewVerticesManyEdges: {
+				max_adj = 72;
+				num_vertex_ = 18'000'000 / 4;
+				break;
+			}
+			case Type::kManyVerticesFewEdges: {
+				max_adj = 72 / 6;
+				num_vertex_ = 18'000'000;
+				break;
+			}
+			case Type::kManyVerticesManyEdges: {
+				max_adj = 72;
+				num_vertex_ = 18'000'000;
+				break;
+			}
 		}
 
 		has_visited_.resize(num_vertex_, std::numeric_limits<int>::max());
@@ -59,15 +81,13 @@ public:
 		}
 	}
 
-	Graph(const std::string& file_name) : has_ended_{ false } {
+	Graph(const std::string& file_name) {
 		std::ifstream in{ file_name, std::ios::binary };
 
 		if (in.fail()) {
 			std::print("[Error] File does not exist.\n");
 			return;
 		}
-
-		int num_edge{};
 
 		in.read(reinterpret_cast<char*>(&num_vertex_), sizeof(num_vertex_));
 
@@ -77,19 +97,16 @@ public:
 		int num_adj{};
 		for (auto& adj : adjs_) {
 			in.read(reinterpret_cast<char*>(&num_adj), sizeof(num_adj));
-			num_edge += num_adj;
+			num_edge_ += num_adj;
 			adj.resize(num_adj);
 
 			in.read(reinterpret_cast<char*>(adj.data()), num_adj * sizeof(*adj.data()));
 		}
 
-		int shortest_distance{};
-		in.read(reinterpret_cast<char*>(&shortest_distance), sizeof(shortest_distance));
+		in.read(reinterpret_cast<char*>(&shortest_distance_), sizeof(shortest_distance_));
 
 		std::print("Graph has been loaded.\n");
-		std::print("     vertices: {}\n", num_vertex_);
-		std::print("        edges: {}\n", num_edge);
-		std::print("shortest dist: {}\n\n", shortest_distance);
+		PrintStatus();
 	}
 
 	template<class QueueT>
@@ -148,27 +165,30 @@ public:
 		int size = static_cast<int>(has_visited_.size());
 		out.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
-		int num_edge{};
 		for (const auto& adj : adjs_) {
 			size = static_cast<int>(adj.size());
 			out.write(reinterpret_cast<const char*>(&size), sizeof(size));
 			out.write(reinterpret_cast<const char*>(adj.data()), size * sizeof(*adj.data()));
-			num_edge += size;
+			num_edge_ += size;
 		}
 
 		Reset();
-		int shortest_distance{ UnsafeBFS() };
+		shortest_distance_ = UnsafeBFS();
 
-		out.write(reinterpret_cast<const char*>(&shortest_distance), sizeof(shortest_distance));
+		out.write(reinterpret_cast<const char*>(&shortest_distance_), sizeof(shortest_distance_));
 
 		std::print("Graph has been generated.\n");
-		std::print("     vertices: {}\n", num_vertex_);
-		std::print("        edges: {}\n", num_edge);
-		std::print("shortest dist: {}\n\n", shortest_distance);
+		PrintStatus();
 	}
 
 	bool IsValid() const {
 		return num_vertex_ != 0;
+	}
+
+	void PrintStatus() const {
+		std::print("     vertices: {}\n", num_vertex_);
+		std::print("        edges: {}\n", num_edge_);
+		std::print("shortest dist: {}\n\n", shortest_distance_);
 	}
 
 private:
@@ -207,7 +227,9 @@ private:
 	std::vector<std::vector<int>> adjs_;
 	std::vector<int> has_visited_;
 	int num_vertex_{};
-	volatile bool has_ended_;
+	int num_edge_{};
+	int shortest_distance_{};
+	volatile bool has_ended_{};
 };
 
 #endif

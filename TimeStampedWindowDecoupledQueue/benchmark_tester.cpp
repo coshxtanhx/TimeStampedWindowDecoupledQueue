@@ -210,6 +210,8 @@ namespace benchmark {
 
 		std::map<int, double> results{};
 
+		graph_->PrintStatus();
+
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
 
@@ -277,6 +279,7 @@ namespace benchmark {
 
 	void Tester::SetSubject()
 	{
+		std::print("\n--- List ---\n");
 		std::print("1: LRU, 2: TL-RR, 3: d-CBO, 4: TS-interval, 5: 2Dd, 6: TSWd\n");
 		std::print("Subject: ");
 		int subject_id;
@@ -329,24 +332,47 @@ namespace benchmark {
 
 	void Tester::GenerateGraph()
 	{
-		if (graph_) {
-			std::print("[Error] Graph has already been generated!\n");
+		std::print("\n--- List ---\n");
+		std::print("0: Few vertices + Few edges\n");
+		std::print("1: Few vertices + Many edges\n");
+		std::print("2: Many vertices + Few edges\n");
+		std::print("3: Many vertices + Many edges\n");
+		std::print("Graph Type: ");
+
+		int graph_type;
+		std::cin >> graph_type;
+		std::cin.ignore();
+
+		if (graph_type < 0 or graph_type > 3) {
+			std::print("[Error] Invalid graph type.\n");
 			return;
 		}
+
 		std::print("Generating the graph. Please wait a moment.\n");
 
-		graph_ = std::make_unique<Graph>(18'000'000);
-		graph_->Save("graph.bin");
+		graph_ = std::make_unique<Graph>(static_cast<Graph::Type>(graph_type));
+		graph_->Save(std::format("graph{}.bin", graph_type));
 	}
 
 	void Tester::LoadGraph()
 	{
-		if (graph_) {
-			std::print("[Error] Graph has already been generated!\n");
+		std::print("\n--- List ---\n");
+		std::print("0: Few vertices + Few edges\n");
+		std::print("1: Few vertices + Many edges\n");
+		std::print("2: Many vertices + Few edges\n");
+		std::print("3: Many vertices + Many edges\n");
+		std::print("Graph Type: ");
+
+		int graph_type;
+		std::cin >> graph_type;
+		std::cin.ignore();
+
+		if (graph_type < 0 or graph_type > 3) {
+			std::print("[Error] Invalid graph type.\n");
 			return;
 		}
 
-		graph_ = std::make_unique<Graph>("graph.bin");
+		graph_ = std::make_unique<Graph>(std::format("graph{}.bin", graph_type));
 		
 		if (not graph_->IsValid()) {
 			graph_ = nullptr;

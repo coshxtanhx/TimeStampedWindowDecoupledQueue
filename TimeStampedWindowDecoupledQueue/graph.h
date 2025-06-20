@@ -8,7 +8,7 @@
 #include <optional>
 #include <queue>
 #include <thread>
-#include "fixed_random.h"
+#include <random>
 #include "print.h"
 
 class Graph {
@@ -52,30 +52,31 @@ public:
 			adj.reserve(max_adj);
 		}
 
-		FixedRandom fixed_random;
+		std::mt19937 re{ 2025 };
+		std::uniform_int_distribution<int> uid{ 0, num_vertex_ };
 
 		for (int i = 0; i < num_vertex_ - 1; ++i) {
 			adjs_[i].push_back(i + 1);
 			adjs_[i + 1].push_back(i);
 
-			auto step = fixed_random.Get() % 100;
+			auto step = uid(re) % 100;
 			if (step <= 1) {
 				continue;
 			}
 
 			for (int j = 1; ; ++j) {
 				int next = i + step * j;
-				if (next >= num_vertex_ or adjs_[i].capacity() == adjs_[i].size()) {
+				if (next >= num_vertex_ or max_adj == adjs_[i].size()) {
 					break;
 				}
-				if (adjs_[next].capacity() > adjs_[next].size() and fixed_random.Get() % 100 < 5) {
+				if (max_adj > adjs_[next].size() and uid(re) % 100 < 5) {
 					adjs_[i].push_back(next);
 					adjs_[next].push_back(i);
 				}
 			}
 
 			for (int j = static_cast<int>(adjs_[i].size() - 1); j > 0; --j) {
-				int r = fixed_random.Get() % 100 % j;
+				int r = uid(re) % 100 % j;
 				std::swap(adjs_[i][j], adjs_[i][r]);
 			}
 		}

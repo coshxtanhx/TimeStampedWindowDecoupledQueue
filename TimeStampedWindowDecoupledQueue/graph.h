@@ -34,8 +34,8 @@ public:
 				break;
 			}
 			case Type::kManyVerticesFewEdges: {
-				max_adj = 72 / 6;
-				num_vertex_ = 18'000'000;
+				max_adj = 72 / 4;
+				num_vertex_ = 12'000'000;
 				break;
 			}
 			case Type::kManyVerticesManyEdges: {

@@ -280,7 +280,7 @@ namespace benchmark {
 	void Tester::SetSubject()
 	{
 		std::print("\n--- List ---\n");
-		std::print("1: LRU, 2: TL-RR, 3: d-CBO, 4: TS-interval, 5: 2Dd, 6: TSWd\n");
+		std::print("1: LRU, 2: TL-RR, 3: d-CBO, 4: TS-interval, 5: 2Dd, 6: TSWD\n");
 		std::print("Subject: ");
 		int subject_id;
 		std::cin >> subject_id;

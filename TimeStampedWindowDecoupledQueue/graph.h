@@ -51,8 +51,8 @@ public:
 			adj.reserve(max_adj);
 		}
 
-		std::mt19937 re;
-		std::uniform_int_distribution uid;
+		std::mt19937 re(2025);
+		std::uniform_int_distribution<int> uid{ 0, num_vertex_ };
 
 		for (int i = 0; i < num_vertex_ - 1; ++i) {
 			adjs_[i].push_back(i + 1);

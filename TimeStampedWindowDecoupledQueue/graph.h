@@ -18,6 +18,8 @@ public:
 		kFewVerticesManyEdges,
 		kManyVerticesFewEdges,
 		kManyVerticesManyEdges,
+		kMoreVerticesMoreEdges,
+		kMostVerticesMostEdges,
 	};
 
 	Graph(Type type) {
@@ -41,6 +43,16 @@ public:
 			case Type::kManyVerticesManyEdges: {
 				max_adj = 72;
 				num_vertex_ = 18'000'000;
+				break;
+			}
+			case Type::kMoreVerticesMoreEdges: {
+				max_adj = 84;
+				num_vertex_ = 21'000'000;
+				break;
+			}
+			case Type::kMostVerticesMostEdges: {
+				max_adj = 100;
+				num_vertex_ = 25'000'000;
 				break;
 			}
 		}

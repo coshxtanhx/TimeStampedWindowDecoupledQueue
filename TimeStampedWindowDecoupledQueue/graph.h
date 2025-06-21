@@ -20,6 +20,7 @@ public:
 		kManyVerticesManyEdges,
 		kMoreVerticesMoreEdges,
 		kMostVerticesMostEdges,
+		kSize
 	};
 
 	Graph(Type type) {

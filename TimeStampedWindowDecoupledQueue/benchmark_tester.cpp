@@ -381,7 +381,7 @@ namespace benchmark {
 		std::cin >> graph_type;
 		std::cin.ignore();
 
-		if (graph_type < 0 or graph_type > 3) {
+		if (graph_type < 0 or graph_type >= static_cast<int>(Graph::Type::kSize)) {
 			std::print("[Error] Invalid graph type.\n");
 			return;
 		}

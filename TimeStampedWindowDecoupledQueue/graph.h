@@ -192,6 +192,10 @@ public:
 		std::print("shortest dist: {}\n\n", shortest_distance_);
 	}
 
+	auto GetShortestDistance() const {
+		return shortest_distance_;
+	}
+
 private:
 	bool CAS(int node, int expected_cost, int desired_cost) {
 		return std::atomic_compare_exchange_strong(

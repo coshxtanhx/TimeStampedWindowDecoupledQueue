@@ -11,6 +11,11 @@
 #include "tswd.h"
 
 namespace benchmark {
+	struct BFSResult {
+		int shortest_distance;
+		double elapsed_sec;
+	};
+
 	void Tester::Run()
 	{
 		while (true) {
@@ -208,14 +213,17 @@ namespace benchmark {
 
 		Stopwatch stopwatch;
 
-		std::map<int, double> results{};
+		std::map<int, BFSResult> results{};
+		for (auto num_thread : kNumThreads) {
+			results.insert(std::make_pair(num_thread, BFSResult{}));
+		}
 
 		graph_->PrintStatus();
 
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
 
-			for (int num_thread : kNumThreads) {
+			for (auto num_thread : kNumThreads) {
 				threads_.clear();
 				std::vector<int> shortest_dists(num_thread);
 				graph_->Reset();
@@ -267,12 +275,18 @@ namespace benchmark {
 				std::print("shortest distance: {}\n", shortest_distance);
 				std::print("\n");
 
-				results[num_thread] += elapsed_sec;
+				results[num_thread].elapsed_sec += elapsed_sec;
+				results[num_thread].shortest_distance += shortest_distance;
 			}
 		}
 
+		auto actual_shortest_distance = graph_->GetShortestDistance();
 		for (auto& [num_thread, sum] : results) {
-			std::print("threads: {:2}, avg: {:.2f}\n", num_thread, sum / num_repeat);
+			auto avg_error = (sum.shortest_distance / static_cast<double>(num_repeat)
+				- actual_shortest_distance) / actual_shortest_distance * 100.0;
+
+			std::print("threads: {:2}, avg elapsed sec: {:.2f}, avg error: {:.2f}%\n",
+				num_thread, sum.elapsed_sec / num_repeat, avg_error);
 		}
 		std::print("\n");
 	}

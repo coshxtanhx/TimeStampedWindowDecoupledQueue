@@ -19,8 +19,8 @@ namespace benchmark {
 		Tester() noexcept = default;
 
 		void Run();
-		void StartMicroBenchmark();
-		void StartMacroBenchmark();
+		void RunMicroBenchmark();
+		void RunMacroBenchmark();
 	private:
 		template<class Subject>
 		using MicrobenchmarkFuncT = void(*)(int, int, float, Subject&);
@@ -28,10 +28,13 @@ namespace benchmark {
 		template<class Subject>
 		using MacrobenchmarkFuncT = void(*)(int, int, Subject&, Graph&, int&);
 
+		void RunMicroBenchmarkScalingWithThread(int num_repeat);
+		void RunMicroBenchmarkScalingWithDepth(int num_repeat);
 		void SetSubject();
 		void SetParameter();
 		void SetEnqRate();
 		void CheckRelaxationDistance();
+		void ScaleWithDepth();
 		void GenerateGraph();
 		void LoadGraph();
 		void PrintHelp() const;
@@ -64,12 +67,14 @@ namespace benchmark {
 		}
 
 		static constexpr std::array<int, 4> kNumThreads{ 9, 18, 36, 72 };
+		static constexpr std::array<int, 8> kRelxationBounds{ 80, 160, 320, 640, 1280, 2560, 5120, 10240 };
 
 		std::vector<std::thread> threads_;
 		std::unique_ptr<Graph> graph_{};
 		int parameter_{};
 		Subject subject_{};
 		bool checks_relaxation_distance_{};
+		bool scales_with_depth_{};
 		float enq_rate_{ 50.0f };
 	};
 }

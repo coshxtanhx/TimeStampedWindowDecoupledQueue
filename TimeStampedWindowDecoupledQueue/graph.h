@@ -245,7 +245,7 @@ private:
 	std::vector<std::vector<int>> adjs_;
 	std::vector<int> has_visited_;
 	int num_vertex_{};
-	int num_edge_{};
+	unsigned num_edge_{};
 	int shortest_distance_{};
 	volatile bool has_ended_{};
 };

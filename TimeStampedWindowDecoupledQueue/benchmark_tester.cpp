@@ -1,4 +1,3 @@
-#include <sstream>
 #include "benchmark_tester.h"
 #include "microbenchmark_thread_func.h"
 #include "macrobenchmark_thread_func.h"

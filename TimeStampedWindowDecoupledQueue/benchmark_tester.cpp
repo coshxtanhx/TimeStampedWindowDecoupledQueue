@@ -234,7 +234,7 @@ namespace benchmark {
 						break;
 					}
 					case Subject::kRR: {
-						lf::dqrr::DQRR subject{ num_thread * parameter_, num_thread, 1 };
+						lf::dqrr::DQRR subject{ num_thread * parameter_, num_thread, num_thread };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
@@ -304,7 +304,7 @@ namespace benchmark {
 
 	void Tester::RunMicroBenchmarkScalingWithDepth(int num_repeat)
 	{
-		constexpr auto kNumThread{ 40 };
+		constexpr auto kNumThread{ 41 };
 		threads_.reserve(kNumThread);
 		Stopwatch stopwatch;
 
@@ -320,7 +320,7 @@ namespace benchmark {
 				threads_.clear();
 				switch (subject_) {
 					case Subject::k2Dd: {
-						auto depth = rb / kNumThread;
+						auto depth = rb / (kNumThread - 1);
 						lf::twodd::TwoDd subject{ kNumThread, kNumThread, depth };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, kNumThread, subject);
@@ -329,7 +329,7 @@ namespace benchmark {
 						break;
 					}
 					case Subject::kTSWD: {
-						auto depth = rb / kNumThread - 1;
+						auto depth = rb / (kNumThread - 1) - 1;
 						lf::tswd::TSWD subject{ kNumThread, depth };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, kNumThread, subject);

@@ -1,5 +1,5 @@
-#ifndef TS_INTERVAL_H
-#define TS_INTERVAL_H
+#ifndef TS_CAS_H
+#define TS_CAS_H
 
 #include <utility>
 #include <optional>
@@ -10,20 +10,32 @@
 #include "relaxation_distance.h"
 #include "stopwatch.h"
 
-namespace lf::ts_interval {
+namespace lf::ts_cas {
 	class TimeStamp {
 	public:
 		TimeStamp() = default;
 		TimeStamp(uint64_t t1, uint64_t t2) : t1_{ t1 }, t2_{ t2 } {}
-		TimeStamp(int delay) {
-			Set(delay);
+		TimeStamp(volatile uint64_t& cnt, int delay) {
+			Set(cnt, delay);
 		}
 
-		void Set(int delay) {
-			t1_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
+		void Set(volatile uint64_t& cnt, int delay) {
+			auto loc_cnt1 = cnt;
 			for (volatile int i = 0; i < delay; ++i) {}
-			t2_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
+			auto loc_cnt2 = cnt;
 
+			if (loc_cnt1 != loc_cnt2) {
+				t1_ = loc_cnt1;
+				t2_ = loc_cnt2 - 1;
+			} else if (std::atomic_compare_exchange_strong(
+				reinterpret_cast<volatile std::atomic<uint64_t>*>(&cnt),
+				&loc_cnt1, loc_cnt1 + 1)) {
+				t1_ = loc_cnt1;
+				t2_ = loc_cnt1;
+			} else {
+				t1_ = loc_cnt1;
+				t2_ = cnt - 1;
+			}
 		}
 
 		bool operator<(const TimeStamp& rhs) const {
@@ -33,16 +45,13 @@ namespace lf::ts_interval {
 		using Clock = std::chrono::steady_clock;
 		using Resolution = std::chrono::microseconds;
 
-		static Clock::time_point tp_base_;
 		uint64_t t1_;
 		uint64_t t2_;
 	};
 
-	TimeStamp::Clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
-
 	struct Node {
 		Node() = default;
-		Node(int v, int delay) : v{ v }, time_stamp{ delay } {}
+		Node(int v, volatile uint64_t& cnt, int delay) : v{ v }, time_stamp{ cnt, delay } {}
 
 		Node* volatile next{};
 		uint64_t retire_epoch{};
@@ -62,8 +71,8 @@ namespace lf::ts_interval {
 			delete head_;
 		}
 
-		void Enq(int v, int num_delay_op) {
-			auto node = new Node{ v, num_delay_op };
+		void Enq(int v, volatile uint64_t& cnt, int num_delay_op) {
+			auto node = new Node{ v, cnt, num_delay_op };
 			tail_->next = node;
 			tail_ = node;
 		}
@@ -96,9 +105,9 @@ namespace lf::ts_interval {
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
-	class TSInterval {
+	class TSCAS {
 	public:
-		TSInterval(int num_thread, int delay_us) : num_delay_op_{ delay_us * GetDelayOpPerUs() }
+		TSCAS(int num_thread, int delay_us) : num_delay_op_{ delay_us * GetDelayOpPerUs() }
 			, queues_(num_thread) , ebr_{ num_thread } {}
 
 		void CheckRelaxationDistance() {
@@ -110,7 +119,7 @@ namespace lf::ts_interval {
 		}
 
 		void Enq(int v) {
-			queues_[MyThread::GetID()].Enq(v, num_delay_op_);
+			queues_[MyThread::GetID()].Enq(v, cnt_, num_delay_op_);
 		}
 
 		std::optional<int> Deq() {
@@ -175,12 +184,13 @@ namespace lf::ts_interval {
 		static constexpr int kUndefinedDelay{ -1 };
 		static int delay_per_us_;
 		int num_delay_op_;
+		volatile uint64_t cnt_{ 1 };
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 		benchmark::RelaxationDistanceManager rdm_;
 	};
 
-	int TSInterval::delay_per_us_{ TSInterval::kUndefinedDelay };
+	int TSCAS::delay_per_us_{ TSCAS::kUndefinedDelay };
 }
 
 #endif

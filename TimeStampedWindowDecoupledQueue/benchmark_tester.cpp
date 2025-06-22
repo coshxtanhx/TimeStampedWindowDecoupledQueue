@@ -2,10 +2,11 @@
 #include "microbenchmark_thread_func.h"
 #include "macrobenchmark_thread_func.h"
 #include "stopwatch.h"
-#include "dqrr.h"
 #include "cbo.h"
-#include "dqlru.h"
 #include "ts_interval.h"
+#include "ts_cas.h"
+#include "ts_atomic.h"
+#include "ts_stutter.h"
 #include "twodd.h"
 #include "tswd.h"
 
@@ -148,23 +149,28 @@ namespace benchmark {
 				stopwatch.Start();
 
 				switch (subject_) {
-					case Subject::kLRU: {
-						lf::dqlru::DQLRU subject{ num_thread * parameter_, num_thread };
+					case Subject::kTSCAS: {
+						lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
-					case Subject::kRR: {
-						lf::dqrr::DQRR subject{ num_thread * parameter_, num_thread, num_thread };
+					case Subject::kTSStutter: {
+						lf::ts_stutter::TSStutter subject{ num_thread };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSAtomic: {
+						lf::ts_atomic::TSAtomic subject{ num_thread };
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSInterval: {
+						lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::kCBO: {
 						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					case Subject::kTSInterval: {
-						lf::ts::TSInterval subject{ num_thread, parameter_ };
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
@@ -224,16 +230,32 @@ namespace benchmark {
 				double elapsed_sec{};
 
 				switch (subject_) {
-					case Subject::kLRU: {
-						lf::dqlru::DQLRU subject{ num_thread * parameter_, num_thread };
+					case Subject::kTSCAS: {
+						lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
 						rd = subject.GetRelaxationDistance();
 						break;
 					}
-					case Subject::kRR: {
-						lf::dqrr::DQRR subject{ num_thread * parameter_, num_thread, num_thread };
+					case Subject::kTSStutter: {
+						lf::ts_atomic::TSAtomic subject{ num_thread };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kTSAtomic: {
+						lf::ts_atomic::TSAtomic subject{ num_thread };
+						stopwatch.Start();
+						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
+						elapsed_sec = stopwatch.GetDuration();
+						rd = subject.GetRelaxationDistance();
+						break;
+					}
+					case Subject::kTSInterval: {
+						lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
@@ -242,14 +264,6 @@ namespace benchmark {
 					}
 					case Subject::kCBO: {
 						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-						stopwatch.Start();
-						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
-						elapsed_sec = stopwatch.GetDuration();
-						rd = subject.GetRelaxationDistance();
-						break;
-					}
-					case Subject::kTSInterval: {
-						lf::ts::TSInterval subject{ num_thread, parameter_ };
 						stopwatch.Start();
 						CreateThreads(MicrobenchmarkFunc, num_thread, subject);
 						elapsed_sec = stopwatch.GetDuration();
@@ -368,8 +382,11 @@ namespace benchmark {
 
 	void Tester::SetSubject()
 	{
+		//kNone, kTSCAS, kTSStutter, kTSAtomic, kTSInterval, kCBO, k2Dd, kTSWD
+
 		std::print("\n--- List ---\n");
-		std::print("1: LRU, 2: TL-RR, 3: d-CBO, 4: TS-interval, 5: 2Dd, 6: TSWD\n");
+		std::print("1: TS-CAS, 2: TS-stutter, 3: TS-atomic, 4: TS-interval,\n");
+		std::print("5: d-CBO, 6: 2Dd, 7: TSWD\n");
 		std::print("Subject: ");
 		int subject_id;
 		std::cin >> subject_id;
@@ -379,11 +396,10 @@ namespace benchmark {
 
 	void Tester::SetParameter()
 	{
-		std::print("\n--- List ---\n");
-		std::print("        LRU: [parameter] = nbr queue per thread\n");
-		std::print("      TL-RR: [parameter] = nbr queue per thread\n");
-		std::print("      d-CBO: [parameter] = d\n");
+		std::print("\n--- List ---\n");;
+		std::print("     TS-cas: [parameter] = delay (microsec)\n");
 		std::print("TS-interval: [parameter] = delay (microsec)\n");
+		std::print("      d-CBO: [parameter] = d\n");
 		std::print("        2Dd: [parameter] = depth\n");
 		std::print("       TSWD: [parameter] = depth\n");
 		std::print("Parameter: ");
@@ -472,7 +488,8 @@ namespace benchmark {
 		}
 	}
 
-	void Tester::PrintHelp() const {
+	void Tester::PrintHelp() const
+	{
 		std::print("e: Set enqueue rate\n");
 		std::print("m: Toggle microbenchmark mode\n");
 		std::print("c: Toggle scaling mode (thread/depth)\n");

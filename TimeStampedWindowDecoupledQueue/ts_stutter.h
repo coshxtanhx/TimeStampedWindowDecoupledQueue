@@ -1,5 +1,5 @@
-#ifndef TS_INTERVAL_H
-#define TS_INTERVAL_H
+#ifndef TS_STUTTER_H
+#define TS_STUTTER_H
 
 #include <utility>
 #include <optional>
@@ -10,43 +10,14 @@
 #include "relaxation_distance.h"
 #include "stopwatch.h"
 
-namespace lf::ts_interval {
-	class TimeStamp {
-	public:
-		TimeStamp() = default;
-		TimeStamp(uint64_t t1, uint64_t t2) : t1_{ t1 }, t2_{ t2 } {}
-		TimeStamp(int delay) {
-			Set(delay);
-		}
-
-		void Set(int delay) {
-			t1_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
-			for (volatile int i = 0; i < delay; ++i) {}
-			t2_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
-
-		}
-
-		bool operator<(const TimeStamp& rhs) const {
-			return t2_ < rhs.t1_;
-		}
-	private:
-		using Clock = std::chrono::steady_clock;
-		using Resolution = std::chrono::microseconds;
-
-		static Clock::time_point tp_base_;
-		uint64_t t1_;
-		uint64_t t2_;
-	};
-
-	TimeStamp::Clock::time_point TimeStamp::tp_base_{ std::chrono::steady_clock::now() };
-
+namespace lf::ts_stutter {
 	struct Node {
 		Node() = default;
-		Node(int v, int delay) : v{ v }, time_stamp{ delay } {}
+		Node(int v, uint64_t time_stamp) : v{ v }, time_stamp{ time_stamp } {}
 
 		Node* volatile next{};
 		uint64_t retire_epoch{};
-		TimeStamp time_stamp{};
+		uint64_t time_stamp{};
 		int v{};
 	};
 
@@ -62,8 +33,8 @@ namespace lf::ts_interval {
 			delete head_;
 		}
 
-		void Enq(int v, int num_delay_op) {
-			auto node = new Node{ v, num_delay_op };
+		void Enq(int v, uint64_t time_stamp) {
+			auto node = new Node{ v, time_stamp };
 			tail_->next = node;
 			tail_ = node;
 		}
@@ -96,10 +67,15 @@ namespace lf::ts_interval {
 		alignas(std::hardware_destructive_interference_size) Node* volatile head_;
 	};
 
-	class TSInterval {
+	struct ThreadLocalCounter {
+		ThreadLocalCounter() = default;
+
+		volatile uint64_t cnt{ 1 };
+	};
+
+	class TSStutter {
 	public:
-		TSInterval(int num_thread, int delay_us) : num_delay_op_{ delay_us * GetDelayOpPerUs() }
-			, queues_(num_thread) , ebr_{ num_thread } {}
+		TSStutter(int num_thread) : tl_cnts_(num_thread), queues_(num_thread), ebr_{ num_thread } {}
 
 		void CheckRelaxationDistance() {
 			// Does not support
@@ -110,14 +86,14 @@ namespace lf::ts_interval {
 		}
 
 		void Enq(int v) {
-			queues_[MyThread::GetID()].Enq(v, num_delay_op_);
+			queues_[MyThread::GetID()].Enq(v, GetNewTimeStamp());
 		}
 
 		std::optional<int> Deq() {
 			ebr_.StartOp();
 			size_t id = MyThread::GetID();
 			while (true) {
-				TimeStamp min_time_stamp{ std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max() };
+				uint64_t min_time_stamp{ std::numeric_limits<uint64_t>::max() };
 				Node* youngest{};
 				PartialQueue* trg{};
 				std::vector<Node*> old_heads(queues_.size());
@@ -156,31 +132,24 @@ namespace lf::ts_interval {
 			}
 		}
 	private:
-		int GetDelayOpPerUs() {
-			if (kUndefinedDelay != delay_per_us_) {
-				return delay_per_us_;
+		uint64_t GetNewTimeStamp() {
+			uint64_t max_cnt{};
+			for (auto& tl_cnt : tl_cnts_) {
+				auto cnt = tl_cnt.cnt;
+				if (cnt > max_cnt) {
+					max_cnt = cnt;
+				}
 			}
-
-			Stopwatch sw;
-			sw.Start();
-			constexpr int kLoop = 1'000'000'000;
-			for (volatile int i = 0; i < kLoop; ++i) {}
-			auto us = sw.GetDuration() * 1.0e6;
-
-			delay_per_us_ = static_cast<int>(kLoop / us);
-
-			return delay_per_us_;
+			auto time_stamp = max_cnt + 1;
+			tl_cnts_[MyThread::GetID()].cnt = time_stamp;
+			return time_stamp;
 		}
 
-		static constexpr int kUndefinedDelay{ -1 };
-		static int delay_per_us_;
-		int num_delay_op_;
+		std::vector<ThreadLocalCounter> tl_cnts_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 		benchmark::RelaxationDistanceManager rdm_;
 	};
-
-	int TSInterval::delay_per_us_{ TSInterval::kUndefinedDelay };
 }
 
 #endif

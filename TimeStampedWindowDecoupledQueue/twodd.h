@@ -49,6 +49,18 @@ namespace lf::twodd {
 			}
 		}
 
+		~TwoDd() {
+			for (auto& padded_head : heads_) {
+				auto head = padded_head.ptr;
+				while (nullptr != head->next) {
+					Node* t = head;
+					head = head->next;
+					delete t;
+				}
+				delete head;
+			}
+		}
+
 		void CheckRelaxationDistance() {
 			rdm_.CheckRelaxationDistance();
 		}

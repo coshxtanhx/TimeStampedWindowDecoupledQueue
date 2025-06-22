@@ -350,10 +350,10 @@ namespace benchmark {
 				std::print(" elapsed sec: {:.2f} s\n", elapsed_sec);
 
 				if (checks_relaxation_distance_) {
-					std::print("   avg dist: {:.2f}\n", rd.first);
-					std::print("   max dist: {}\n", rd.second);
+					std::print("    avg dist: {:.2f}\n", rd.first);
+					std::print("    max dist: {}\n", rd.second);
 				} else {
-					std::print(" throughput: {:.2f} MOp/s\n", throughput);
+					std::print("  throughput: {:.2f} MOp/s\n", throughput);
 				}
 				std::print("\n");
 

@@ -14,44 +14,44 @@
 class Graph {
 public:
 	enum class Type {
-		kFewVerticesFewEdges,
-		kFewVerticesManyEdges,
-		kManyVerticesFewEdges,
-		kManyVerticesManyEdges,
-		kMoreVerticesMoreEdges,
-		kMostVerticesMostEdges,
+		kAlpha,
+		kBeta,
+		kGamma,
+		kDelta,
+		kEpsilon,
+		kZeta,
 		kSize
 	};
 
 	Graph(Type type) {
 		int max_adj{};
 		switch (type) {
-			case Type::kFewVerticesFewEdges: {
-				max_adj = 72 / 6;
-				num_vertex_ = 18'000'000 / 4;
+			case Type::kAlpha: {
+				max_adj = 12;
+				num_vertex_ = 4'500'000;
 				break;
 			}
-			case Type::kFewVerticesManyEdges: {
+			case Type::kBeta: {
 				max_adj = 72;
-				num_vertex_ = 18'000'000 / 4;
+				num_vertex_ = 4'500'000;
 				break;
 			}
-			case Type::kManyVerticesFewEdges: {
-				max_adj = 72 / 4;
+			case Type::kGamma: {
+				max_adj = 18;
 				num_vertex_ = 12'000'000;
 				break;
 			}
-			case Type::kManyVerticesManyEdges: {
+			case Type::kDelta: {
 				max_adj = 72;
 				num_vertex_ = 18'000'000;
 				break;
 			}
-			case Type::kMoreVerticesMoreEdges: {
+			case Type::kEpsilon: {
 				max_adj = 84;
 				num_vertex_ = 21'000'000;
 				break;
 			}
-			case Type::kMostVerticesMostEdges: {
+			case Type::kZeta: {
 				max_adj = 100;
 				num_vertex_ = 25'000'000;
 				break;
@@ -89,7 +89,7 @@ public:
 			}
 
 			for (int j = static_cast<int>(adjs_[i].size() - 1); j > 0; --j) {
-				int r = uid(re) % 100 % j;
+				int r = uid(re) % j;
 				std::swap(adjs_[i][j], adjs_[i][r]);
 			}
 		}

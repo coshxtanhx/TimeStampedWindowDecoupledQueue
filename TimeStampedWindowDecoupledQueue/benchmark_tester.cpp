@@ -126,6 +126,10 @@ namespace benchmark {
 			std::cin.ignore();
 		}
 
+		if (num_repeat <= 0) {
+			return;
+		}
+
 		constexpr auto kMaxThread{ kNumThreads.back() };
 		threads_.reserve(kMaxThread);
 
@@ -146,41 +150,46 @@ namespace benchmark {
 				std::vector<int> shortest_dists(num_thread);
 				graph_->Reset();
 
-				stopwatch.Start();
-
 				switch (subject_) {
 					case Subject::kTSCAS: {
 						lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
+						stopwatch.Start();
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::kTSStutter: {
 						lf::ts_stutter::TSStutter subject{ num_thread };
+						stopwatch.Start();
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::kTSAtomic: {
 						lf::ts_atomic::TSAtomic subject{ num_thread };
+						stopwatch.Start();
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::kTSInterval: {
 						lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
+						stopwatch.Start();
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::kCBO: {
 						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+						stopwatch.Start();
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::k2Dd: {
 						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+						stopwatch.Start();
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
 					case Subject::kTSWD: {
 						lf::tswd::TSWD subject{ num_thread, parameter_ };
+						stopwatch.Start();
 						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
 						break;
 					}
@@ -190,8 +199,8 @@ namespace benchmark {
 					}
 				}
 
-				double elapsed_sec{ stopwatch.GetDuration() };
 				auto shortest_distance = *std::min_element(shortest_dists.begin(), shortest_dists.end());
+				double elapsed_sec{ stopwatch.GetDuration() };
 
 				std::print("          threads: {}\n", num_thread);
 				std::print("      elapsed sec: {:.2f} s\n", elapsed_sec);

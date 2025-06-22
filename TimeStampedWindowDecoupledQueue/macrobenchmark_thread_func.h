@@ -12,7 +12,7 @@ namespace benchmark {
 			queue.Enq(0);
 		}
 
-		shortest_dist = graph.BFS(num_thread, queue);
+		shortest_dist = graph.RelaxedBFS(num_thread, queue);
 	}
 }
 

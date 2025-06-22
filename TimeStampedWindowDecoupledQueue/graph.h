@@ -124,28 +124,24 @@ public:
 	}
 
 	template<class QueueT>
-	int BFS(int num_thread, QueueT& queue) {
+	int RelaxedBFS(int num_thread, QueueT& queue) {
 		int dst = num_vertex_ - 1;
 
 		while (not has_ended_) {
 			std::optional<int> prev = queue.Deq();
 
 			if (not prev.has_value()) {
-				//std::cout << std::format("?\n");
 				if (1 == num_thread) {
 					return has_visited_[dst];
 				}
 				continue;
 			}
 
-			//if (thread::ID() == 0) { std::cout << std::format("{}\n", prev.value()); }
-
 			auto cost = has_visited_[prev.value()];
 
 			for (int adj : adjs_[prev.value()]) {
 				if (adj == dst) {
 					has_ended_ = true;
-
 					return cost + 1;
 				}
 				while (true) {
@@ -162,7 +158,6 @@ public:
 				}
 			}
 		}
-
 		return std::numeric_limits<int>::max();
 	}
 

@@ -69,7 +69,6 @@ namespace benchmark {
 		}
 
 		static constexpr std::array<int, 4> kNumThreads{ 9, 18, 36, 72 };
-		static constexpr std::array<int, 8> kRelaxationBounds{ 80, 160, 320, 640, 1280, 2560, 5120, 10240 };
 
 		std::vector<std::thread> threads_;
 		std::unique_ptr<Graph> graph_{};

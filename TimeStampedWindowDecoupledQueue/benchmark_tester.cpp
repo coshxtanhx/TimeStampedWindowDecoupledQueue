@@ -246,6 +246,8 @@ namespace benchmark {
 		threads_.reserve(kNumThread);
 		Stopwatch stopwatch;
 
+		constexpr int kMaxRelaxationBound{ 10240 };
+
 		std::map<int, double> results{};
 
 		for (int i = 1; i <= num_repeat; ++i) {
@@ -254,7 +256,7 @@ namespace benchmark {
 			std::pair<double, uint64_t> rd{};
 			double elapsed_sec{};
 
-			for (auto rb : kRelaxationBounds) {
+			for (auto rb = 40; rb <= kMaxRelaxationBound; rb *= 2) {
 				threads_.clear();
 				switch (subject_) {
 					case Subject::k2Dd: {
@@ -407,8 +409,10 @@ namespace benchmark {
 
 		Stopwatch stopwatch;
 
+		constexpr int kMaxRelaxationBound{ 20480 };
+
 		std::map<int, BFSResult> results{};
-		for (auto rb : kRelaxationBounds) {
+		for (auto rb = 160; rb <= kMaxRelaxationBound; rb *= 2) {
 			results.insert(std::make_pair(rb, BFSResult{}));
 		}
 
@@ -417,7 +421,7 @@ namespace benchmark {
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
 
-			for (auto rb : kRelaxationBounds) {
+			for (auto rb = 160; rb <= kMaxRelaxationBound; rb *= 2) {
 				threads_.clear();
 				std::vector<int> shortest_dists(kNumThread);
 				graph_->Reset();

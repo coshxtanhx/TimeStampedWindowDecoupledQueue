@@ -77,7 +77,9 @@ namespace lf::twodd {
 			while (true) {
 				tail = GetTail(has_contented);
 				node->cnt = tail->cnt + 1;
-				if (nullptr == tail->next) {
+				auto next = tail->next;
+
+				if (nullptr == next) {
 					rdm_.LockEnq();
 					if (true == CAS(tail->next, nullptr, node)) {
 						rdm_.Enq(node);
@@ -93,6 +95,10 @@ namespace lf::twodd {
 					}
 					rdm_.UnlockEnq();
 					has_contented = true;
+				} else {
+					if (false == CAS(tails_[index_].ptr, tail, next)) {
+						has_contented = true;
+					}
 				}
 			}
 		}

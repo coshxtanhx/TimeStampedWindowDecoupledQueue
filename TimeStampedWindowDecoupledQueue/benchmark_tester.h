@@ -30,6 +30,8 @@ namespace benchmark {
 
 		void RunMicroBenchmarkScalingWithThread(int num_repeat);
 		void RunMicroBenchmarkScalingWithDepth(int num_repeat);
+		void RunMacroBenchmarkScalingWithThread(int num_repeat);
+		void RunMacroBenchmarkScalingWithDepth(int num_repeat);
 		void SetSubject();
 		void SetParameter();
 		void SetEnqRate();
@@ -67,7 +69,7 @@ namespace benchmark {
 		}
 
 		static constexpr std::array<int, 4> kNumThreads{ 9, 18, 36, 72 };
-		static constexpr std::array<int, 8> kRelxationBounds{ 80, 160, 320, 640, 1280, 2560, 5120, 10240 };
+		static constexpr std::array<int, 8> kRelaxationBounds{ 80, 160, 320, 640, 1280, 2560, 5120, 10240 };
 
 		std::vector<std::thread> threads_;
 		std::unique_ptr<Graph> graph_{};

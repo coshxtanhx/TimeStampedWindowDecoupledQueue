@@ -111,7 +111,7 @@ namespace benchmark {
 			std::print("[Error] Generate or load graph first.\n\n");
 			return;
 		}
-		if (0 == parameter_) {
+		if (0 == parameter_ and not scales_with_depth_) {
 			std::print("[Error] Set parameter first.\n\n");
 			return;
 		}
@@ -130,97 +130,13 @@ namespace benchmark {
 			return;
 		}
 
-		constexpr auto kMaxThread{ kNumThreads.back() };
-		threads_.reserve(kMaxThread);
-
-		Stopwatch stopwatch;
-
-		std::map<int, BFSResult> results{};
-		for (auto num_thread : kNumThreads) {
-			results.insert(std::make_pair(num_thread, BFSResult{}));
+		if (scales_with_depth_) {
+			RunMacroBenchmarkScalingWithDepth(num_repeat);
+		} else {
+			RunMacroBenchmarkScalingWithThread(num_repeat);
 		}
 
-		graph_->PrintStatus();
-
-		for (int i = 1; i <= num_repeat; ++i) {
-			std::print("------ {}/{} ------\n", i, num_repeat);
-
-			for (auto num_thread : kNumThreads) {
-				threads_.clear();
-				std::vector<int> shortest_dists(num_thread);
-				graph_->Reset();
-
-				switch (subject_) {
-					case Subject::kTSCAS: {
-						lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
-						stopwatch.Start();
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					case Subject::kTSStutter: {
-						lf::ts_stutter::TSStutter subject{ num_thread };
-						stopwatch.Start();
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					case Subject::kTSAtomic: {
-						lf::ts_atomic::TSAtomic subject{ num_thread };
-						stopwatch.Start();
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					case Subject::kTSInterval: {
-						lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
-						stopwatch.Start();
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					case Subject::kCBO: {
-						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
-						stopwatch.Start();
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					case Subject::k2Dd: {
-						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
-						stopwatch.Start();
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					case Subject::kTSWD: {
-						lf::tswd::TSWD subject{ num_thread, parameter_ };
-						stopwatch.Start();
-						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
-						break;
-					}
-					default: {
-						std::print("[Error] Invalid subject.\n");
-						return;
-					}
-				}
-
-				auto shortest_distance = *std::min_element(shortest_dists.begin(), shortest_dists.end());
-				double elapsed_sec{ stopwatch.GetDuration() };
-
-				std::print("          threads: {}\n", num_thread);
-				std::print("      elapsed sec: {:.2f} s\n", elapsed_sec);
-				std::print("shortest distance: {}\n", shortest_distance);
-				std::print("\n");
-
-				results[num_thread].elapsed_sec += elapsed_sec;
-				results[num_thread].shortest_distance += shortest_distance;
-			}
-		}
-
-		auto actual_shortest_distance = graph_->GetShortestDistance();
-		for (auto& [num_thread, sum] : results) {
-			auto avg_error = (sum.shortest_distance / static_cast<double>(num_repeat)
-				- actual_shortest_distance) / actual_shortest_distance * 100.0;
-
-			std::print("threads: {:2}, avg elapsed sec: {:.2f}, avg error: {:.4f}%\n",
-				num_thread, sum.elapsed_sec / num_repeat, avg_error);
-		}
-		std::print("\n");
+		
 	}
 
 	void Tester::RunMicroBenchmarkScalingWithThread(int num_repeat)
@@ -304,7 +220,7 @@ namespace benchmark {
 				auto throughput = kTotalNumOp / elapsed_sec / 1e6;
 
 				std::print("    threads: {}\n", num_thread);
-				std::print("elapsed sec: {:.2f} s\n", elapsed_sec);
+				std::print("elapsed sec: {:.2f}\n", elapsed_sec);
 
 				if (checks_relaxation_distance_) {
 					std::print("   avg dist: {:.2f}\n", rd.first);
@@ -338,7 +254,7 @@ namespace benchmark {
 			std::pair<double, uint64_t> rd{};
 			double elapsed_sec{};
 
-			for (auto rb : kRelxationBounds) {
+			for (auto rb : kRelaxationBounds) {
 				threads_.clear();
 				switch (subject_) {
 					case Subject::k2Dd: {
@@ -369,7 +285,7 @@ namespace benchmark {
 
 				std::print("     threads: {}\n", kNumThread);
 				std::print("k-relaxation: {}\n", rb);
-				std::print(" elapsed sec: {:.2f} s\n", elapsed_sec);
+				std::print(" elapsed sec: {:.2f}\n", elapsed_sec);
 
 				if (checks_relaxation_distance_) {
 					std::print("    avg dist: {:.2f}\n", rd.first);
@@ -384,7 +300,169 @@ namespace benchmark {
 		}
 
 		for (auto& [rb, sum] : results) {
-			std::print("k-relaxation: {:2}, avg: {:.2f}\n", rb, sum / num_repeat);
+			std::print("k-relaxation: {:5}, avg: {:.2f}\n", rb, sum / num_repeat);
+		}
+		std::print("\n");
+	}
+
+	void Tester::RunMacroBenchmarkScalingWithThread(int num_repeat)
+	{
+		constexpr auto kMaxThread{ kNumThreads.back() };
+		threads_.reserve(kMaxThread);
+
+		Stopwatch stopwatch;
+
+		std::map<int, BFSResult> results{};
+		for (auto num_thread : kNumThreads) {
+			results.insert(std::make_pair(num_thread, BFSResult{}));
+		}
+
+		graph_->PrintStatus();
+
+		for (int i = 1; i <= num_repeat; ++i) {
+			std::print("------ {}/{} ------\n", i, num_repeat);
+
+			for (auto num_thread : kNumThreads) {
+				threads_.clear();
+				std::vector<int> shortest_dists(num_thread);
+				graph_->Reset();
+
+				switch (subject_) {
+					case Subject::kTSCAS: {
+						lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSStutter: {
+						lf::ts_stutter::TSStutter subject{ num_thread };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSAtomic: {
+						lf::ts_atomic::TSAtomic subject{ num_thread };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSInterval: {
+						lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kCBO: {
+						lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::k2Dd: {
+						lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSWD: {
+						lf::tswd::TSWD subject{ num_thread, parameter_ };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_dists);
+						break;
+					}
+					default: {
+						std::print("[Error] Invalid subject.\n");
+						return;
+					}
+				}
+
+				auto shortest_distance = *std::min_element(shortest_dists.begin(), shortest_dists.end());
+				double elapsed_sec{ stopwatch.GetDuration() };
+
+				std::print("          threads: {}\n", num_thread);
+				std::print("      elapsed sec: {:.2f}\n", elapsed_sec);
+				std::print("shortest distance: {}\n", shortest_distance);
+				std::print("\n");
+
+				results[num_thread].elapsed_sec += elapsed_sec;
+				results[num_thread].shortest_distance += shortest_distance;
+			}
+		}
+
+		auto actual_shortest_distance = graph_->GetShortestDistance();
+		for (auto& [num_thread, sum] : results) {
+			auto avg_error = (sum.shortest_distance / static_cast<double>(num_repeat)
+				- actual_shortest_distance) / actual_shortest_distance * 100.0;
+
+			std::print("threads: {:2}, avg elapsed sec: {:.2f}, avg error: {:.4f}%\n",
+				num_thread, sum.elapsed_sec / num_repeat, avg_error);
+		}
+		std::print("\n");
+	}
+
+	void Tester::RunMacroBenchmarkScalingWithDepth(int num_repeat)
+	{
+		constexpr auto kNumThread{ 41 };
+		threads_.reserve(kNumThread);
+
+		Stopwatch stopwatch;
+
+		std::map<int, BFSResult> results{};
+		for (auto rb : kRelaxationBounds) {
+			results.insert(std::make_pair(rb, BFSResult{}));
+		}
+
+		graph_->PrintStatus();
+
+		for (int i = 1; i <= num_repeat; ++i) {
+			std::print("------ {}/{} ------\n", i, num_repeat);
+
+			for (auto rb : kRelaxationBounds) {
+				threads_.clear();
+				std::vector<int> shortest_dists(kNumThread);
+				graph_->Reset();
+
+				switch (subject_) {
+					case Subject::k2Dd: {
+						auto depth = rb / (kNumThread - 1);
+						lf::twodd::TwoDd subject{ kNumThread, kNumThread, depth };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, kNumThread, subject, shortest_dists);
+						break;
+					}
+					case Subject::kTSWD: {
+						auto depth = rb / (kNumThread - 1) - 1;
+						lf::tswd::TSWD subject{ kNumThread, depth };
+						stopwatch.Start();
+						CreateThreads(MacrobenchmarkFunc, kNumThread, subject, shortest_dists);
+						break;
+					}
+					default: {
+						std::print("[Error] Invalid subject. 'Scaling with depth' mode is only for 2Dd or TSWD.\n\n");
+						return;
+					}
+				}
+
+				auto shortest_distance = *std::min_element(shortest_dists.begin(), shortest_dists.end());
+				double elapsed_sec{ stopwatch.GetDuration() };
+
+				std::print("          threads: {}\n", kNumThread);
+				std::print("      elapsed sec: {:.2f}\n", elapsed_sec);
+				std::print("shortest distance: {}\n", shortest_distance);
+				std::print("\n");
+
+				results[rb].elapsed_sec += elapsed_sec;
+				results[rb].shortest_distance += shortest_distance;
+			}
+		}
+
+		auto actual_shortest_distance = graph_->GetShortestDistance();
+		for (auto& [rb, sum] : results) {
+			auto avg_error = (sum.shortest_distance / static_cast<double>(num_repeat)
+				- actual_shortest_distance) / actual_shortest_distance * 100.0;
+
+			std::print("k-relaxation: {:5}, avg elapsed sec: {:.2f}, avg error: {:.4f}%\n",
+				rb, sum.elapsed_sec / num_repeat, avg_error);
 		}
 		std::print("\n");
 	}
@@ -500,7 +578,7 @@ namespace benchmark {
 	void Tester::PrintHelp() const
 	{
 		std::print("e: Set enqueue rate\n");
-		std::print("m: Toggle microbenchmark mode\n");
+		std::print("m: Toggle microbenchmark mode (throughput/relaxation)\n");
 		std::print("c: Toggle scaling mode (thread/depth)\n");
 		std::print("s: Set subject\n");
 		std::print("p: Set parameter\n");

@@ -217,7 +217,7 @@ namespace benchmark {
 			auto avg_error = (sum.shortest_distance / static_cast<double>(num_repeat)
 				- actual_shortest_distance) / actual_shortest_distance * 100.0;
 
-			std::print("threads: {:2}, avg elapsed sec: {:.2f}, avg error: {:.2f}%\n",
+			std::print("threads: {:2}, avg elapsed sec: {:.2f}, avg error: {:.4f}%\n",
 				num_thread, sum.elapsed_sec / num_repeat, avg_error);
 		}
 		std::print("\n");

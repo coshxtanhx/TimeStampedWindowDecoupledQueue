@@ -57,7 +57,7 @@ public:
 			}
 		}
 
-		has_visited_.resize(num_vertex_, std::numeric_limits<int>::max());
+		distances_.resize(num_vertex_, std::numeric_limits<int>::max());
 		adjs_.resize(num_vertex_);
 
 		for (auto& adj : adjs_) {
@@ -104,7 +104,7 @@ public:
 
 		in.read(reinterpret_cast<char*>(&num_vertex_), sizeof(num_vertex_));
 
-		has_visited_.resize(num_vertex_, std::numeric_limits<int>::max());
+		distances_.resize(num_vertex_, std::numeric_limits<int>::max());
 		adjs_.resize(num_vertex_);
 
 		int num_adj{};
@@ -127,27 +127,27 @@ public:
 		int dst = num_vertex_ - 1;
 
 		while (not has_ended_) {
-			std::optional<int> prev = queue.Deq();
+			std::optional<int> curr = queue.Deq();
 
-			if (not prev.has_value()) {
+			if (not curr.has_value()) {
 				if (1 == num_thread) {
-					return has_visited_[dst];
+					return distances_[dst];
 				}
 				continue;
 			}
 
-			auto cost = has_visited_[prev.value()];
+			auto dist = distances_[curr.value()];
 
-			for (int adj : adjs_[prev.value()]) {
+			for (int adj : adjs_[curr.value()]) {
 				if (adj == dst) {
 					has_ended_ = true;
-					return cost + 1;
+					return dist + 1;
 				}
 				while (true) {
-					auto expected_cost = has_visited_[adj];
+					auto expected_dist = distances_[adj];
 
-					if (expected_cost > cost + 1) {
-						if (true == CAS(adj, expected_cost, cost + 1)) {
+					if (expected_dist > dist + 1) {
+						if (true == CAS(adj, expected_dist, dist + 1)) {
 							queue.Enq(adj);
 							break;
 						}
@@ -161,16 +161,16 @@ public:
 	}
 
 	void Reset() {
-		for (int& i : has_visited_) {
+		for (int& i : distances_) {
 			i = std::numeric_limits<int>::max();
 		}
-		has_visited_.front() = 0;
+		distances_.front() = 0;
 		has_ended_ = false;
 	}
 
 	void Save(const std::string& file_name) {
 		std::ofstream out{ file_name, std::ios::binary };
-		int size = static_cast<int>(has_visited_.size());
+		int size = static_cast<int>(distances_.size());
 		out.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
 		for (const auto& adj : adjs_) {
@@ -206,7 +206,7 @@ public:
 private:
 	bool CAS(int node, int expected_cost, int desired_cost) {
 		return std::atomic_compare_exchange_strong(
-			reinterpret_cast<std::atomic<int>*>(&has_visited_[node]),
+			reinterpret_cast<std::atomic<int>*>(&distances_[node]),
 			&expected_cost, desired_cost);
 	}
 
@@ -223,21 +223,21 @@ private:
 				break;
 			}
 
-			int cost = has_visited_[p] + 1;
+			int cost = distances_[p] + 1;
 
 			for (auto adj : adjs_[p]) {
-				if (cost < has_visited_[adj]) {
-					has_visited_[adj] = cost;
+				if (cost < distances_[adj]) {
+					distances_[adj] = cost;
 					queue.push(adj);
 				}
 			}
 		}
 
-		return has_visited_[dst];
+		return distances_[dst];
 	}
 
 	std::vector<std::vector<int>> adjs_;
-	std::vector<int> has_visited_;
+	std::vector<int> distances_;
 	int num_vertex_{};
 	unsigned num_edge_{};
 	int shortest_distance_{};

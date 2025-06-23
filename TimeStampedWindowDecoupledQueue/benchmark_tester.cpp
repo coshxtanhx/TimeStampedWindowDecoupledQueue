@@ -409,10 +409,10 @@ namespace benchmark {
 
 		Stopwatch stopwatch;
 
-		constexpr int kMaxRelaxationBound{ 20480 };
+		constexpr int kMaxRelaxationBound{ 40960 };
 
 		std::map<int, BFSResult> results{};
-		for (auto rb = 160; rb <= kMaxRelaxationBound; rb *= 2) {
+		for (auto rb = 640; rb <= kMaxRelaxationBound; rb *= 2) {
 			results.insert(std::make_pair(rb, BFSResult{}));
 		}
 
@@ -421,7 +421,7 @@ namespace benchmark {
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("------ {}/{} ------\n", i, num_repeat);
 
-			for (auto rb = 160; rb <= kMaxRelaxationBound; rb *= 2) {
+			for (auto rb = 640; rb <= kMaxRelaxationBound; rb *= 2) {
 				threads_.clear();
 				std::vector<int> shortest_dists(kNumThread);
 				graph_->Reset();
@@ -451,6 +451,7 @@ namespace benchmark {
 				double elapsed_sec{ stopwatch.GetDuration() };
 
 				std::print("          threads: {}\n", kNumThread);
+				std::print("     k-relaxation: {}\n", rb);
 				std::print("      elapsed sec: {:.2f}\n", elapsed_sec);
 				std::print("shortest distance: {}\n", shortest_distance);
 				std::print("\n");

@@ -93,7 +93,8 @@ namespace lf::tswd {
 	class TSWD {
 	public:
 		TSWD(int num_thread, int depth)
-			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread } {
+			: depth_{ depth }, queues_(num_thread), ebr_{ num_thread }
+			, num_delay_op_{ 3 * GetDelayOpPerUs() } {
 		}
 
 		void CheckRelaxationDistance() {
@@ -118,6 +119,7 @@ namespace lf::tswd {
 			auto& pq = queues_[MyThreadID::Get()];
 
 			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
+
 				window_put_.CAS(put_ts, put_ts + depth_);
 				put_ts += depth_;
 			}
@@ -168,6 +170,26 @@ namespace lf::tswd {
 			}
 		}
 	private:
+		int GetDelayOpPerUs() {
+			if (kUndefinedDelay != delay_per_us_) {
+				return delay_per_us_;
+			}
+
+			Stopwatch sw;
+			sw.Start();
+			constexpr int kLoop = 1'000'000'000;
+			for (volatile int i = 0; i < kLoop; ++i) {}
+			auto us = sw.GetDuration() * 1.0e6;
+
+			delay_per_us_ = static_cast<int>(kLoop / us);
+
+			return delay_per_us_;
+		}
+
+		static constexpr int kUndefinedDelay{ -1 };
+		static int delay_per_us_;
+		int num_delay_op_;
+
 		int depth_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
@@ -175,6 +197,8 @@ namespace lf::tswd {
 		Window window_put_;
 		benchmark::RelaxationDistanceManager rdm_;
 	};
+
+	int TSWD::delay_per_us_{ TSWD::kUndefinedDelay };
 }
 
 #endif

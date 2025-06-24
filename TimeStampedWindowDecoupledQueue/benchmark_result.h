@@ -28,7 +28,7 @@ namespace benchmark {
 				if (checks_relaxation_distance) {
 					std::print("avg dist: {:7.2f}", i->second.avg_relaxation_distance / i->second.num_repeat);
 				} else {
-					std::print("throughput: {:5.2f} MOp/s", num_op / 1e6 / i->second.elapsed_sec * i->second.num_repeat);
+					std::print("avg throughput: {:5.2f} MOp/s", num_op / 1e6 / i->second.elapsed_sec * i->second.num_repeat);
 				}
 				std::print("\n");
 			}

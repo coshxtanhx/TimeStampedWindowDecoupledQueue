@@ -119,9 +119,10 @@ namespace lf::tswd {
 			auto& pq = queues_[MyThreadID::Get()];
 
 			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
+				for (volatile int i = 0; i < num_delay_op_; ++i) {}
 
 				window_put_.CAS(put_ts, put_ts + depth_);
-				put_ts += depth_;
+				put_ts = window_put_.time_stamp;
 			}
 			pq.Enq(node, put_ts);
 		}

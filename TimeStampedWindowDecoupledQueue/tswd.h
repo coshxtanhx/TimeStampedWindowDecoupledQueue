@@ -118,7 +118,6 @@ namespace lf::tswd {
 
 			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
 				window_put_.CAS(put_ts, put_ts + depth_);
-				put_ts += depth_;
 			}
 			pq.Enq(node, put_ts);
 		}

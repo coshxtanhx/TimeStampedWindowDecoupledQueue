@@ -195,8 +195,26 @@ namespace benchmark {
 		for (auto rb = kMinRelaxationBound; rb <= kMaxRelaxationBound; rb *= 2) {
 			switch (subject_) {
 				case Subject::k2Dd: {
-					auto depth = rb / (kFixedNumThread - 1);
-					lf::twodd::TwoDd subject{ kFixedNumThread, kFixedNumThread, depth };
+					int depth, width;
+					while (true) {
+						int d1{ 10 }, w1{ 35 }, d2{ 14 }, w2{ 50 };
+						if (d1 * w1 == rb) {
+							depth = d1;
+							width = w1;
+							break;
+						}
+						if (d2 * w2 == rb) {
+							depth = d2;
+							width = w2;
+							break;
+						}
+						d1 *= 2;
+						d2 *= 2;
+						w1 *= 2;
+						w2 *= 2;
+					}
+
+					lf::twodd::TwoDd subject{ width, kFixedNumThread, depth };
 					Measure(MicrobenchmarkFunc, rb, subject);
 					break;
 				}
@@ -274,7 +292,24 @@ namespace benchmark {
 
 			switch (subject_) {
 				case Subject::k2Dd: {
-					auto depth = rb / (kFixedNumThread - 1);
+					int width, depth;
+					while (true) {
+						int d1{ 14 }, w1{ 40 }, d2{ 20 }, w2{ 56 };
+						if (d1 * w1 == rb) {
+							depth = d1;
+							width = w1;
+							break;
+						}
+						if (d2 * w2 == rb) {
+							depth = d2;
+							width = w2;
+							break;
+						}
+						d1 *= 2;
+						d2 *= 2;
+						w1 *= 2;
+						w2 *= 2;
+					}
 					lf::twodd::TwoDd subject{ kFixedNumThread, kFixedNumThread, depth };
 					Measure(MacrobenchmarkFunc, rb, subject);
 					break;

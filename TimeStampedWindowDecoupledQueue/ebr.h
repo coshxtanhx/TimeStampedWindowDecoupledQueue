@@ -4,9 +4,8 @@
 #include <queue>
 #include <vector>
 #include <atomic>
-#include <iostream>
 #include <limits>
-#include "my_thread.h"
+#include "my_thread_id.h"
 
 namespace lf {
 	struct Reservation {
@@ -46,18 +45,18 @@ namespace lf {
 
 		void Retire(T* ptr) noexcept {
 			ptr->retire_epoch = epoch_.load(std::memory_order_relaxed);
-			retired_[MyThread::GetID()].push(ptr);
-			if (retired_[MyThread::GetID()].size() >= GetCapacity()) {
+			retired_[MyThreadID::Get()].push(ptr);
+			if (retired_[MyThreadID::Get()].size() >= GetCapacity()) {
 				Clear();
 			}
 		}
 
 		void StartOp() noexcept {
-			reservations_[MyThread::GetID()].StartOP(epoch_);
+			reservations_[MyThreadID::Get()].StartOP(epoch_);
 		}
 
 		void EndOp() noexcept {
-			reservations_[MyThread::GetID()].EndOp();
+			reservations_[MyThreadID::Get()].EndOp();
 		}
 
 	private:
@@ -75,12 +74,12 @@ namespace lf {
 		void Clear() noexcept {
 			auto max_safe_epoch = GetMinReservation();
 
-			while (false == retired_[MyThread::GetID()].empty()) {
-				auto f = retired_[MyThread::GetID()].front();
+			while (false == retired_[MyThreadID::Get()].empty()) {
+				auto f = retired_[MyThreadID::Get()].front();
 				if (f->retire_epoch >= max_safe_epoch) {
 					break;
 				}
-				retired_[MyThread::GetID()].pop();
+				retired_[MyThreadID::Get()].pop();
 
 				delete f;
 			}

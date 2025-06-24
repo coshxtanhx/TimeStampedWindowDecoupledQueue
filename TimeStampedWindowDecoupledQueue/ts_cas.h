@@ -119,12 +119,12 @@ namespace lf::ts_cas {
 		}
 
 		void Enq(int v) {
-			queues_[MyThread::GetID()].Enq(v, cnt_, num_delay_op_);
+			queues_[MyThreadID::Get()].Enq(v, cnt_, num_delay_op_);
 		}
 
 		std::optional<int> Deq() {
 			ebr_.StartOp();
-			size_t id = MyThread::GetID();
+			size_t id = MyThreadID::Get();
 			while (true) {
 				TimeStamp min_time_stamp{ std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max() };
 				Node* youngest{};

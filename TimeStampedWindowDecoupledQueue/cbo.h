@@ -150,7 +150,7 @@ namespace lf::cbo {
 	private:
 		size_t GetEnqueuerIndex() {
 			ShuffleIndex();
-			auto& indices = indices_[MyThread::GetID()];
+			auto& indices = indices_[MyThreadID::Get()];
 			
 			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetTail()->stamp < queues_[b].GetTail()->stamp;
@@ -159,7 +159,7 @@ namespace lf::cbo {
 
 		size_t GetDequeuerIndex() {
 			ShuffleIndex();
-			auto& indices = indices_[MyThread::GetID()];
+			auto& indices = indices_[MyThreadID::Get()];
 
 			return *std::min_element(indices.begin(), indices.begin() + d_, [this](size_t a, size_t b) {
 				return queues_[a].GetHead()->stamp < queues_[b].GetHead()->stamp;
@@ -195,7 +195,7 @@ namespace lf::cbo {
 		}
 
 		void ShuffleIndex() {
-			auto& indices = indices_[MyThread::GetID()];
+			auto& indices = indices_[MyThreadID::Get()];
 			for (int i = 0; i < d_; ++i) {
 				auto r = Random::Get(i, indices.size() - 1);
 				std::swap(indices[i], indices[r]);

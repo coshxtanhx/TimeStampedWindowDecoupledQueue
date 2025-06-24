@@ -115,7 +115,7 @@ namespace lf::tswd {
 			rdm_.Enq(node);
 			rdm_.UnlockEnq();
 
-			auto& pq = queues_[MyThread::GetID()];
+			auto& pq = queues_[MyThreadID::Get()];
 
 			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
 				window_put_.CAS(put_ts, put_ts + depth_);
@@ -126,7 +126,7 @@ namespace lf::tswd {
 
 		std::optional<int> Deq() {
 			std::vector<Node*> old_heads(queues_.size());
-			size_t id = MyThread::GetID();
+			size_t id = MyThreadID::Get();
 
 			ebr_.StartOp();
 			while (true) {
@@ -149,7 +149,7 @@ namespace lf::tswd {
 				if (queues_.size() == cnt_empty) {
 					bool is_empty{ true };
 					for (size_t i = 1; i < queues_.size(); ++i) {
-						id = (i + MyThread::GetID()) % queues_.size();
+						id = (i + MyThreadID::Get()) % queues_.size();
 						auto next = old_heads[id]->next;
 						if (nullptr != next) {
 							is_empty = false;
@@ -161,7 +161,7 @@ namespace lf::tswd {
 						return std::nullopt;
 					}
 				} else {
-					id = MyThread::GetID();
+					id = MyThreadID::Get();
 				}
 
 				window_get_.CAS(get_ts, get_ts + depth_);

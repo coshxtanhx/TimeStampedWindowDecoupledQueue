@@ -80,12 +80,12 @@ namespace lf::ts_atomic {
 		}
 
 		void Enq(int v) {
-			queues_[MyThread::GetID()].Enq(v, cnt_.fetch_add(1));
+			queues_[MyThreadID::Get()].Enq(v, cnt_.fetch_add(1));
 		}
 
 		std::optional<int> Deq() {
 			ebr_.StartOp();
-			size_t id = MyThread::GetID();
+			size_t id = MyThreadID::Get();
 			while (true) {
 				auto min_time_stamp{ std::numeric_limits<uint64_t>::max() };
 				Node* youngest{};

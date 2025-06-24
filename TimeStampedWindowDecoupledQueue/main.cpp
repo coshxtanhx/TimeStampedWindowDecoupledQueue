@@ -1,11 +1,11 @@
 #include <iostream>
 #include "benchmark_tester.h"
 #include "print.h"
-#include "my_thread.h"
+#include "my_thread_id.h"
 
 int main()
 {
-	MyThread::SetID(MyThread::kMainThreadID);
+	MyThreadID::Set(MyThreadID::kMainThreadID);
 
 	benchmark::Tester tester;
 	tester.Run();

@@ -86,12 +86,12 @@ namespace lf::ts_stutter {
 		}
 
 		void Enq(int v) {
-			queues_[MyThread::GetID()].Enq(v, GetNewTimeStamp());
+			queues_[MyThreadID::Get()].Enq(v, GetNewTimeStamp());
 		}
 
 		std::optional<int> Deq() {
 			ebr_.StartOp();
-			size_t id = MyThread::GetID();
+			size_t id = MyThreadID::Get();
 			while (true) {
 				uint64_t min_time_stamp{ std::numeric_limits<uint64_t>::max() };
 				Node* youngest{};
@@ -141,7 +141,7 @@ namespace lf::ts_stutter {
 				}
 			}
 			auto time_stamp = max_cnt + 1;
-			tl_cnts_[MyThread::GetID()].cnt = time_stamp;
+			tl_cnts_[MyThreadID::Get()].cnt = time_stamp;
 			return time_stamp;
 		}
 

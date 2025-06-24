@@ -196,16 +196,16 @@ namespace benchmark {
 			switch (subject_) {
 				case Subject::k2Dd: {
 					int depth, width;
+					int d1{ 10 }, w1{ 35 }, d2{ 14 }, w2{ 50 };
 					while (true) {
-						int d1{ 10 }, w1{ 35 }, d2{ 14 }, w2{ 50 };
 						if (d1 * w1 == rb) {
 							depth = d1;
-							width = w1;
+							width = w1 + 1;
 							break;
 						}
 						if (d2 * w2 == rb) {
 							depth = d2;
-							width = w2;
+							width = w2 + 1;
 							break;
 						}
 						d1 *= 2;
@@ -293,16 +293,16 @@ namespace benchmark {
 			switch (subject_) {
 				case Subject::k2Dd: {
 					int width, depth;
+					int d1{ 14 }, w1{ 40 }, d2{ 20 }, w2{ 56 };
 					while (true) {
-						int d1{ 14 }, w1{ 40 }, d2{ 20 }, w2{ 56 };
 						if (d1 * w1 == rb) {
 							depth = d1;
-							width = w1;
+							width = w1 + 1;
 							break;
 						}
 						if (d2 * w2 == rb) {
 							depth = d2;
-							width = w2;
+							width = w2 + 1;
 							break;
 						}
 						d1 *= 2;
@@ -310,7 +310,7 @@ namespace benchmark {
 						w1 *= 2;
 						w2 *= 2;
 					}
-					lf::twodd::TwoDd subject{ kFixedNumThread, kFixedNumThread, depth };
+					lf::twodd::TwoDd subject{ width, kFixedNumThread, depth };
 					Measure(MacrobenchmarkFunc, rb, subject);
 					break;
 				}

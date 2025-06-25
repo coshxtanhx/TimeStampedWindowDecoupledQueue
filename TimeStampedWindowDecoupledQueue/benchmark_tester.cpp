@@ -43,6 +43,10 @@ namespace benchmark {
 					SetParameter();
 					break;
 				}
+				case 'w': {
+					SetWidth();
+					break;
+				}
 				case 'i': {
 					RunMicroBenchmark();
 					break;

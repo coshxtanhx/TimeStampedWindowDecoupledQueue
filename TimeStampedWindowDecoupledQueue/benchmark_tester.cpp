@@ -180,8 +180,8 @@ namespace benchmark {
 
 	void Tester::RunMicroBenchmarkScalingWithDepth()
 	{
-		constexpr int kMinRelaxationBound{ 160 };
-		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 6 };
+		constexpr int kMinRelaxationBound{ 320 };
+		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 5 };
 
 		for (auto rb = kMinRelaxationBound; rb <= kMaxRelaxationBound; rb *= 2) {
 			switch (subject_) {

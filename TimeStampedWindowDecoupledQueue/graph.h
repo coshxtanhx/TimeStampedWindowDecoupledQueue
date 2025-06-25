@@ -13,6 +13,7 @@
 class Graph {
 public:
 	enum class Type {
+		kNone,
 		kAlpha,
 		kBeta,
 		kGamma,

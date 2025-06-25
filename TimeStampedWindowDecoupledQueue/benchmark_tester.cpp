@@ -80,17 +80,10 @@ namespace benchmark {
 			return;
 		}
 
-		std::print("Input the number of times to repeat: ");
-		int num_repeat;
-		std::cin >> num_repeat;
-		if (std::cin.fail()) {
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		} else {
-			std::cin.ignore();
-		}
+		auto num_repeat{ InputNumber<int>("Input the number of times to repeat: ") };
 
 		results.clear();
+
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("---------- {}/{} ----------\n", i, num_repeat);
 			if (scales_with_depth_) {
@@ -112,16 +105,8 @@ namespace benchmark {
 			std::print("[Error] Set parameter first.\n\n");
 			return;
 		}
-
-		std::print("Input the number of times to repeat: ");
-		int num_repeat;
-		std::cin >> num_repeat;
-		if (std::cin.fail()) {
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		} else {
-			std::cin.ignore();
-		}
+		
+		auto num_repeat{ InputNumber<int>("Input the number of times to repeat: ") };
 
 		results.clear();
 		graph_->PrintStatus();
@@ -165,12 +150,14 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kCBO: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+					auto width = 0 == width_ ? num_thread : width_;
+					lf::cbo::CBO subject{ width, num_thread, parameter_ };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::k2Dd: {
-					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+					auto width = 0 == width_ ? num_thread : width_;
+					lf::twodd::TwoDd subject{ width, num_thread, parameter_ };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -195,8 +182,9 @@ namespace benchmark {
 		for (auto rb = kMinRelaxationBound; rb <= kMaxRelaxationBound; rb *= 2) {
 			switch (subject_) {
 				case Subject::k2Dd: {
-					auto depth = rb / (kFixedNumThread - 1);
-					lf::twodd::TwoDd subject{ kFixedNumThread, kFixedNumThread, depth };
+					auto width = 0 == width_ ? kFixedNumThread : width_;
+					auto depth = rb / (width - 1);
+					lf::twodd::TwoDd subject{ width, kFixedNumThread, depth };
 					Measure(MicrobenchmarkFunc, rb, subject);
 					break;
 				}
@@ -242,12 +230,14 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kCBO: {
-					lf::cbo::CBO subject{ num_thread, num_thread, parameter_ };
+					auto width = 0 == width_ ? num_thread : width_;
+					lf::cbo::CBO subject{ width, num_thread, parameter_ };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::k2Dd: {
-					lf::twodd::TwoDd subject{ num_thread, num_thread, parameter_ };
+					auto width = 0 == width_ ? num_thread : width_;
+					lf::twodd::TwoDd subject{ width, num_thread, parameter_ };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -274,8 +264,9 @@ namespace benchmark {
 
 			switch (subject_) {
 				case Subject::k2Dd: {
-					auto depth = rb / (kFixedNumThread - 1);
-					lf::twodd::TwoDd subject{ kFixedNumThread, kFixedNumThread, depth };
+					auto width = 0 == width_ ? kFixedNumThread : width_;
+					auto depth = rb / (width - 1);
+					lf::twodd::TwoDd subject{ width, kFixedNumThread, depth };
 					Measure(MacrobenchmarkFunc, rb, subject);
 					break;
 				}
@@ -300,11 +291,7 @@ namespace benchmark {
 		std::print("\n--- List ---\n");
 		std::print("1: TS-CAS, 2: TS-stutter, 3: TS-atomic, 4: TS-interval,\n");
 		std::print("5: d-CBO, 6: 2Dd, 7: TSWD\n");
-		std::print("Subject: ");
-		int subject_id;
-		std::cin >> subject_id;
-		subject_ = static_cast<Subject>(subject_id);
-		std::cin.ignore();
+		subject_ = static_cast<Subject>(InputNumber<int>("Subject: "));
 	}
 
 	void Tester::SetParameter()
@@ -315,27 +302,17 @@ namespace benchmark {
 		std::print("      d-CBO: [parameter] = d\n");
 		std::print("        2Dd: [parameter] = depth\n");
 		std::print("       TSWD: [parameter] = depth\n");
-		std::print("Parameter: ");
-		std::cin >> parameter_;
-
-		if (std::cin.fail()) {
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		} else {
-			std::cin.ignore();
-		}
+		parameter_ = InputNumber<int>("Parameter: ");
 	}
 
 	void Tester::SetEnqRate()
 	{
-		std::print("Enqueue rate(%): ");
-		std::cin >> enq_rate_;
-		if (std::cin.fail()) {
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		} else {
-			std::cin.ignore();
-		}
+		enq_rate_ = InputNumber<float>("Enqueue rate(%): ");
+	}
+
+	void Tester::SetWidth()
+	{
+		width_ = InputNumber<int>("Input width (0 = use nbr thread): ");
 	}
 
 	void Tester::CheckRelaxationDistance()
@@ -361,14 +338,12 @@ namespace benchmark {
 	void Tester::GenerateGraph()
 	{
 		std::print("\n--- List ---\n");
-		std::print("0: Alpha, 1: Beta, 2: Gamma, 3: Delta, 4: Epsilon, 5: Zeta\n");
-		std::print("Graph Type: ");
+		std::print("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
 
-		int graph_type;
-		std::cin >> graph_type;
-		std::cin.ignore();
+		auto graph_type{ InputNumber<int>("Graph Type: ") };
 
-		if (graph_type < 0 or graph_type >= static_cast<int>(Graph::Type::kSize)) {
+		if (graph_type < static_cast<int>(Graph::Type::kAlpha)
+			or graph_type > static_cast<int>(Graph::Type::kZeta)) {
 			std::print("[Error] Invalid graph type.\n");
 			return;
 		}
@@ -382,14 +357,12 @@ namespace benchmark {
 	void Tester::LoadGraph()
 	{
 		std::print("\n--- List ---\n");
-		std::print("0: Alpha, 1: Beta, 2: Gamma, 3: Delta, 4: Epsilon, 5: Zeta\n");
-		std::print("Graph Type: ");
+		std::print("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
 
-		int graph_type;
-		std::cin >> graph_type;
-		std::cin.ignore();
+		auto graph_type{ InputNumber<int>("Graph Type: ") };
 
-		if (graph_type < 0 or graph_type >= static_cast<int>(Graph::Type::kSize)) {
+		if (graph_type < static_cast<int>(Graph::Type::kAlpha)
+			or graph_type > static_cast<int>(Graph::Type::kZeta)) {
 			std::print("[Error] Invalid graph type.\n");
 			return;
 		}
@@ -408,6 +381,7 @@ namespace benchmark {
 		std::print("c: Toggle scaling mode (thread/depth)\n");
 		std::print("s: Set subject\n");
 		std::print("p: Set parameter\n");
+		std::print("w: Set width\n");
 		std::print("l: Load graph\n");
 		std::print("g: Generate graph\n");
 		std::print("i: Microbenchmark\n");

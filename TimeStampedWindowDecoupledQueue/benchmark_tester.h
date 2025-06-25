@@ -41,11 +41,28 @@ namespace benchmark {
 		void SetSubject();
 		void SetParameter();
 		void SetEnqRate();
+		void SetWidth();
 		void CheckRelaxationDistance();
 		void ScaleWithDepth();
 		void GenerateGraph();
 		void LoadGraph();
 		void PrintHelp() const;
+
+		template<class T> requires std::floating_point<T> or std::integral<T>
+		T InputNumber(const std::string& msg) const {
+			std::cout << msg;
+
+			T input;
+			std::cin >> input;
+			if (std::cin.fail()) {
+				std::cin.clear();
+				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				return T{};
+			} else {
+				std::cin.ignore();
+				return input;
+			}
+		}
 
 		template<class Subject>
 		void Measure(MicrobenchmarkFuncT<Subject> thread_func, int key, Subject& subject) {
@@ -161,6 +178,7 @@ namespace benchmark {
 
 		std::unique_ptr<Graph> graph_{};
 		int parameter_{};
+		int width_{};
 		Subject subject_{};
 		ResultMap results;
 		bool checks_relaxation_distance_{};

@@ -157,7 +157,7 @@ namespace benchmark {
 			}
 		}
 
-		static constexpr auto kFixedNumThread{ 71 };
+		static constexpr auto kFixedNumThread{ 41 };
 
 		std::unique_ptr<Graph> graph_{};
 		int parameter_{};

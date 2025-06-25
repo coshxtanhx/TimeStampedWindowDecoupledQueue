@@ -189,32 +189,14 @@ namespace benchmark {
 
 	void Tester::RunMicroBenchmarkScalingWithDepth()
 	{
-		constexpr int kMinRelaxationBound{ 350 };
-		constexpr int kMaxRelaxationBound{ 11200 };
+		constexpr int kMinRelaxationBound{ 160 };
+		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 6 };
 
 		for (auto rb = kMinRelaxationBound; rb <= kMaxRelaxationBound; rb *= 2) {
 			switch (subject_) {
 				case Subject::k2Dd: {
-					int depth, width;
-					int d1{ 10 }, w1{ 35 }, d2{ 14 }, w2{ 50 };
-					while (true) {
-						if (d1 * w1 == rb) {
-							depth = d1;
-							width = w1 + 1;
-							break;
-						}
-						if (d2 * w2 == rb) {
-							depth = d2;
-							width = w2 + 1;
-							break;
-						}
-						d1 *= 2;
-						d2 *= 2;
-						w1 *= 2;
-						w2 *= 2;
-					}
-
-					lf::twodd::TwoDd subject{ width, kFixedNumThread, depth };
+					auto depth = rb / (kFixedNumThread - 1);
+					lf::twodd::TwoDd subject{ kFixedNumThread, kFixedNumThread, depth };
 					Measure(MicrobenchmarkFunc, rb, subject);
 					break;
 				}
@@ -284,7 +266,7 @@ namespace benchmark {
 
 	void Tester::RunMacroBenchmarkScalingWithDepth()
 	{
-		constexpr int kMinRelaxationBound{ 560 };
+		constexpr int kMinRelaxationBound{ 640 };
 		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 6 };
 
 		for (auto rb = kMinRelaxationBound; rb <= kMaxRelaxationBound; rb *= 2) {
@@ -292,25 +274,8 @@ namespace benchmark {
 
 			switch (subject_) {
 				case Subject::k2Dd: {
-					int width, depth;
-					int d1{ 14 }, w1{ 40 }, d2{ 20 }, w2{ 56 };
-					while (true) {
-						if (d1 * w1 == rb) {
-							depth = d1;
-							width = w1 + 1;
-							break;
-						}
-						if (d2 * w2 == rb) {
-							depth = d2;
-							width = w2 + 1;
-							break;
-						}
-						d1 *= 2;
-						d2 *= 2;
-						w1 *= 2;
-						w2 *= 2;
-					}
-					lf::twodd::TwoDd subject{ width, kFixedNumThread, depth };
+					auto depth = rb / (kFixedNumThread - 1);
+					lf::twodd::TwoDd subject{ kFixedNumThread, kFixedNumThread, depth };
 					Measure(MacrobenchmarkFunc, rb, subject);
 					break;
 				}

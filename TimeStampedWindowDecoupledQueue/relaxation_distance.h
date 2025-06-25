@@ -3,6 +3,7 @@
 
 #include <list>
 #include <mutex>
+#include <deque>
 #include <utility>
 #include <limits>
 
@@ -78,12 +79,11 @@ namespace benchmark {
 		}
 
 	private:
-		using Container = std::list<void*>;
 		bool checks_relaxation_distance_{};
 		std::mutex mx_enq_;
 		std::mutex mx_deq_;
-		Container deq_elements_;
-		Container enq_elements_;
+		std::deque<void*> deq_elements_;
+		std::list<void*> enq_elements_;
 	};
 }
 

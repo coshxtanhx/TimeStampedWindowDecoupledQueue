@@ -87,7 +87,6 @@ namespace benchmark {
 			results[key].num_repeat += 1;
 
 			std::print("     threads: {}\n", num_thread);
-			std::print("elapsed time: {:.2f} sec\n", elapsed_sec);
 			if (scales_with_depth_) {
 				std::print("k-relaxation: {}\n", key);
 			}
@@ -95,6 +94,7 @@ namespace benchmark {
 				std::print("    avg dist: {:.2f}\n", rd.first);
 				std::print("    max dist: {}\n", rd.second);
 			} else {
+				std::print("elapsed time: {:.2f} sec\n", elapsed_sec);
 				auto throughput = kTotalNumOp / elapsed_sec / 1e6;
 				std::print("  throughput: {:.2f} MOp/s\n", throughput);
 			}

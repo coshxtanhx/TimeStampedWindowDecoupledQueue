@@ -147,7 +147,7 @@ public:
 				while (true) {
 					auto expected_dist = distances_[adj];
 
-					if (expected_dist > dist + 1) {
+					if (expected_dist > 2100000000 and expected_dist > dist + 1) {
 						if (true == CAS(adj, expected_dist, dist + 1)) {
 							queue.Enq(adj);
 							break;

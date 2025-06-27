@@ -144,16 +144,12 @@ public:
 					has_ended_ = true;
 					return dist + 1;
 				}
-				while (true) {
-					auto expected_dist = distances_[adj];
 
-					if (expected_dist > 2100000000 and expected_dist > dist + 1) {
-						if (true == CAS(adj, expected_dist, dist + 1)) {
-							queue.Enq(adj);
-							break;
-						}
-					} else {
-						break;
+				auto expected_dist = distances_[adj];
+
+				if (std::numeric_limits<int>::max() == expected_dist) {
+					if (true == CAS(adj, expected_dist, dist + 1)) {
+						queue.Enq(adj);
 					}
 				}
 			}
@@ -182,7 +178,7 @@ public:
 		}
 
 		Reset();
-		shortest_distance_ = UnsafeBFS();
+		shortest_distance_ = SingleThreadBFS();
 
 		out.write(reinterpret_cast<const char*>(&shortest_distance_), sizeof(shortest_distance_));
 
@@ -211,7 +207,7 @@ private:
 			&expected_cost, desired_cost);
 	}
 
-	int UnsafeBFS() {
+	int SingleThreadBFS() {
 		int dst = num_vertex_ - 1;
 		std::queue<int> queue;
 		queue.push(0);

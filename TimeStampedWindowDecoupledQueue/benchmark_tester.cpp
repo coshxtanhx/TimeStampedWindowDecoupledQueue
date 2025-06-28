@@ -83,6 +83,11 @@ namespace benchmark {
 
 	void Tester::RunMicroBenchmark()
 	{
+		if (0 == parameter_ and not scales_with_depth_) {
+			std::print("[Error] Set parameter first.\n\n");
+			return;
+		}
+
 		std::print("Input the number of times to repeat: ");
 		auto num_repeat{ InputNumber<int>() };
 		if (0 == num_repeat) {
@@ -109,6 +114,11 @@ namespace benchmark {
 
 	void Tester::RunMacroBenchmark()
 	{
+		if (0 == parameter_ and not scales_with_depth_) {
+			std::print("[Error] Set parameter first.\n\n");
+			return;
+		}
+
 		if (nullptr == graph_) {
 			std::print("[Error] Generate or load graph first.\n\n");
 			return;
@@ -144,10 +154,9 @@ namespace benchmark {
 		constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
 
 		for (int num_thread : kNumThreads) {
-			auto parameter{ 0 == parameter_ ? num_thread : parameter_ };
 			switch (subject_) {
 				case Subject::kTSCAS: {
-					lf::ts_cas::TSCAS subject{ num_thread, parameter };
+					lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -162,24 +171,24 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSInterval: {
-					lf::ts_interval::TSInterval subject{ num_thread, parameter };
+					lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kCBO: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::cbo::CBO subject{ width, num_thread, parameter };
+					lf::cbo::CBO subject{ width, num_thread, parameter_ };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::k2Dd: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::twodd::TwoDd subject{ width, num_thread, parameter };
+					lf::twodd::TwoDd subject{ width, num_thread, parameter_ };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kTSWD: {
-					lf::tswd::TSWD subject{ num_thread, parameter };
+					lf::tswd::TSWD subject{ num_thread, parameter_ };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -226,10 +235,9 @@ namespace benchmark {
 		constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
 
 		for (int num_thread : kNumThreads) {
-			auto parameter{ 0 == parameter_ ? num_thread : parameter_ };
 			switch (subject_) {
 				case Subject::kTSCAS: {
-					lf::ts_cas::TSCAS subject{ num_thread, parameter };
+					lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -244,24 +252,24 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSInterval: {
-					lf::ts_interval::TSInterval subject{ num_thread, parameter };
+					lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kCBO: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::cbo::CBO subject{ width, num_thread, parameter };
+					lf::cbo::CBO subject{ width, num_thread, parameter_ };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::k2Dd: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::twodd::TwoDd subject{ width, num_thread, parameter };
+					lf::twodd::TwoDd subject{ width, num_thread, parameter_ };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kTSWD: {
-					lf::tswd::TSWD subject{ num_thread, parameter };
+					lf::tswd::TSWD subject{ num_thread, parameter_ };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -324,7 +332,7 @@ namespace benchmark {
 		std::print("      d-CBO: [parameter] = d\n");
 		std::print("        2Dd: [parameter] = depth\n");
 		std::print("       TSWD: [parameter] = depth\n");
-		std::print("Parameter (0 = use nbr thread): ");
+		std::print("Parameter: ");
 		parameter_ = InputNumber<int>();
 	}
 

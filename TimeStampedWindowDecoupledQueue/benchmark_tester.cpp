@@ -144,7 +144,7 @@ namespace benchmark {
 			auto parameter{ 0 == parameter_ ? num_thread : parameter_ };
 			switch (subject_) {
 				case Subject::kTSCAS: {
-					lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
+					lf::ts_cas::TSCAS subject{ num_thread, parameter };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -159,24 +159,24 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSInterval: {
-					lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
+					lf::ts_interval::TSInterval subject{ num_thread, parameter };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kCBO: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::cbo::CBO subject{ width, num_thread, parameter_ };
+					lf::cbo::CBO subject{ width, num_thread, parameter };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::k2Dd: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::twodd::TwoDd subject{ width, num_thread, parameter_ };
+					lf::twodd::TwoDd subject{ width, num_thread, parameter };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kTSWD: {
-					lf::tswd::TSWD subject{ num_thread, parameter_ };
+					lf::tswd::TSWD subject{ num_thread, parameter };
 					Measure(MicrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -224,9 +224,10 @@ namespace benchmark {
 		constexpr auto kMaxThread{ 72 };
 
 		for (int num_thread = kMinThread; num_thread <= kMaxThread; num_thread *= 2) {
+			auto parameter{ 0 == parameter_ ? num_thread : parameter_ };
 			switch (subject_) {
 				case Subject::kTSCAS: {
-					lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
+					lf::ts_cas::TSCAS subject{ num_thread, parameter };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
@@ -241,24 +242,24 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSInterval: {
-					lf::ts_interval::TSInterval subject{ num_thread, parameter_ };
+					lf::ts_interval::TSInterval subject{ num_thread, parameter };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kCBO: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::cbo::CBO subject{ width, num_thread, parameter_ };
+					lf::cbo::CBO subject{ width, num_thread, parameter };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::k2Dd: {
 					auto width = 0 == width_ ? num_thread : width_;
-					lf::twodd::TwoDd subject{ width, num_thread, parameter_ };
+					lf::twodd::TwoDd subject{ width, num_thread, parameter };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}
 				case Subject::kTSWD: {
-					lf::tswd::TSWD subject{ num_thread, parameter_ };
+					lf::tswd::TSWD subject{ num_thread, parameter };
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}

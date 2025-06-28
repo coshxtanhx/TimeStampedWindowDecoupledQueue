@@ -34,7 +34,7 @@ public:
 	}
 private:
 	static constexpr int kUndefinedDelay{ -1 };
-	int delay_per_microsec_;
+	int delay_per_microsec_{ kUndefinedDelay };
 };
 
 inline Idle idle;

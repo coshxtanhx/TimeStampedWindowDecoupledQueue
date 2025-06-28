@@ -7,6 +7,7 @@
 #include <chrono>
 #include <limits>
 #include "ebr.h"
+#include "idle.h"
 #include "relaxation_distance.h"
 #include "stopwatch.h"
 
@@ -98,7 +99,7 @@ namespace lf::ts_interval {
 
 	class TSInterval {
 	public:
-		TSInterval(int num_thread, int delay_us) : num_delay_op_{ delay_us * GetDelayOpPerUs() }
+		TSInterval(int num_thread, int delay_us) : num_delay_op_{ delay_us * idle.GetDelayOpPerMicrosec() }
 			, queues_(num_thread) , ebr_{ num_thread } {}
 
 		void CheckRelaxationDistance() {
@@ -156,31 +157,11 @@ namespace lf::ts_interval {
 			}
 		}
 	private:
-		int GetDelayOpPerUs() {
-			if (kUndefinedDelay != delay_per_us_) {
-				return delay_per_us_;
-			}
-
-			Stopwatch sw;
-			sw.Start();
-			constexpr int kLoop = 1'000'000'000;
-			for (volatile int i = 0; i < kLoop; ++i) {}
-			auto us = sw.GetDuration() * 1.0e6;
-
-			delay_per_us_ = static_cast<int>(kLoop / us);
-
-			return delay_per_us_;
-		}
-
-		static constexpr int kUndefinedDelay{ -1 };
-		static int delay_per_us_;
 		int num_delay_op_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 		benchmark::RelaxationDistanceManager rdm_;
 	};
-
-	int TSInterval::delay_per_us_{ TSInterval::kUndefinedDelay };
 }
 
 #endif

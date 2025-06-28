@@ -47,6 +47,10 @@ namespace benchmark {
 					SetWidth();
 					break;
 				}
+				case 'd': {
+					SetDelay();
+					break;
+				}
 				case 'i': {
 					RunMicroBenchmark();
 					break;
@@ -336,6 +340,12 @@ namespace benchmark {
 		width_ = InputNumber<int>();
 	}
 
+	void Tester::SetDelay()
+	{
+		std::print("Set delay (microsec): ");
+		delay_ = InputNumber<float>();
+	}
+
 	void Tester::CheckRelaxationDistance()
 	{
 		checks_relaxation_distance_ ^= true;
@@ -405,6 +415,7 @@ namespace benchmark {
 		std::print("s: Set subject\n");
 		std::print("p: Set parameter\n");
 		std::print("w: Set width\n");
+		std::print("d: Set delay\n");
 		std::print("l: Load graph\n");
 		std::print("g: Generate graph\n");
 		std::print("i: Microbenchmark\n");

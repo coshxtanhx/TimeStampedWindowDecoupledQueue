@@ -3,13 +3,15 @@
 
 #include "random.h"
 #include "my_thread_id.h"
+#include "idle.h"
 
 namespace benchmark {
 	inline const int kTotalNumOp{ (std::thread::hardware_concurrency() <= 8) ? 360'000 : 18'000'000 };
 	inline constexpr int kNumPrefill{ 100'000 };
 
 	template<class QueueT>
-	void MicrobenchmarkFunc(int thread_id, int num_thread, float enq_rate, QueueT& queue)
+	void MicrobenchmarkFunc(int thread_id, int num_thread, float enq_rate, 
+		float delay, QueueT& queue)
 	{
 		MyThreadID::Set(thread_id);
 		auto num_op = kTotalNumOp / num_thread;
@@ -22,6 +24,8 @@ namespace benchmark {
 			} else {
 				auto p = queue.Deq();
 			}
+
+			idle.Do(delay);
 		}
 	}
 

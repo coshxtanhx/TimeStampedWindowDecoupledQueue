@@ -23,7 +23,7 @@ namespace benchmark {
 		void RunMacroBenchmark();
 	private:
 		template<class Subject>
-		using MicrobenchmarkFuncT = void(*)(int, int, float, Subject&);
+		using MicrobenchmarkFuncT = void(*)(int, int, float, float, Subject&);
 
 		template<class Subject>
 		using MacrobenchmarkFuncT = void(*)(int, int, Subject&, Graph&, int&);
@@ -39,6 +39,7 @@ namespace benchmark {
 		void SetParameter();
 		void SetEnqRate();
 		void SetWidth();
+		void SetDelay();
 		void CheckRelaxationDistance();
 		void ScaleWithDepth();
 		void GenerateGraph();
@@ -127,7 +128,8 @@ namespace benchmark {
 			threads.reserve(num_thread);
 			
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
-				threads.emplace_back(thread_func, thread_id, num_thread, enq_rate_, std::ref(subject));
+				threads.emplace_back(thread_func, thread_id, num_thread, enq_rate_,
+					checks_relaxation_distance_ ? 0.0f : delay_, std::ref(subject));
 			}
 
 			for (auto& t : threads) {
@@ -175,6 +177,7 @@ namespace benchmark {
 		bool checks_relaxation_distance_{};
 		bool scales_with_depth_{};
 		float enq_rate_{ 50.0f };
+		float delay_{};
 	};
 }
 

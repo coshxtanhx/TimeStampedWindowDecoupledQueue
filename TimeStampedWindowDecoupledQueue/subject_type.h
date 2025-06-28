@@ -3,6 +3,7 @@
 
 #include <array>
 #include <string>
+#include <cstdint>
 
 namespace benchmark {
 	enum class Subject : uint8_t {

@@ -107,7 +107,7 @@ namespace benchmark {
 				}
 			} else {
 				for (auto& result : results) {
-					file_ << std::format("{}|", result.elapsed_sec);
+					file_ << std::format("{:.6f}|", result.elapsed_sec);
 				}
 			}
 			file_ << '\n';
@@ -142,7 +142,7 @@ namespace benchmark {
 
 		for (auto& [key, results] : *this) {
 			for (auto& result : results) {
-				file_ << std::format("{}|", result.elapsed_sec);
+				file_ << std::format("{:.6f}|", result.elapsed_sec);
 			}
 			for (auto& result : results) {
 				file_ << std::format("{}|", result.shortest_distance);

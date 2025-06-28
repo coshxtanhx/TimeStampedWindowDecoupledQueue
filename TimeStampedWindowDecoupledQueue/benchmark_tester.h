@@ -11,12 +11,9 @@
 #include "benchmark_result.h"
 #include "microbenchmark_thread_func.h"
 #include "macrobenchmark_thread_func.h"
+#include "subject_type.h"
 
 namespace benchmark {
-	enum class Subject : uint8_t {
-		kNone, kTSCAS, kTSStutter, kTSAtomic, kTSInterval, kCBO, k2Dd, kTSWD
-	};
-
 	class Tester {
 	public:
 		Tester() = default;
@@ -34,10 +31,10 @@ namespace benchmark {
 		template<class Subject>
 		using PrefillFuncT = void(*)(int, int, Subject&);
 
-		void RunMicroBenchmarkScalingWithThread();
-		void RunMicroBenchmarkScalingWithDepth();
-		void RunMacroBenchmarkScalingWithThread();
-		void RunMacroBenchmarkScalingWithDepth();
+		bool RunMicroBenchmarkScalingWithThread();
+		bool RunMicroBenchmarkScalingWithDepth();
+		bool RunMacroBenchmarkScalingWithThread();
+		bool RunMacroBenchmarkScalingWithDepth();
 		void SetSubject();
 		void SetParameter();
 		void SetEnqRate();

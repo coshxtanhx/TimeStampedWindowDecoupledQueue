@@ -86,18 +86,26 @@ namespace benchmark {
 
 		std::print("Input the number of times to repeat: ");
 		auto num_repeat{ InputNumber<int>() };
+		if (0 == num_repeat) {
+			return;
+		}
 
 		results.clear();
 
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("---------- {}/{} ----------\n", i, num_repeat);
 			if (scales_with_depth_) {
-				RunMicroBenchmarkScalingWithDepth();
+				if (false == RunMicroBenchmarkScalingWithDepth()) {
+					return;
+				}
 			} else {
-				RunMicroBenchmarkScalingWithThread();
+				if (false == RunMicroBenchmarkScalingWithThread()) {
+					return;
+				}
 			}
 		}
-		results.PrintMicrobenchmarkResult(checks_relaxation_distance_, scales_with_depth_, kTotalNumOp);
+		results.PrintMicrobenchmarkResult(checks_relaxation_distance_,
+			scales_with_depth_, kTotalNumOp, enq_rate_, subject_, parameter_, width_);
 	}
 
 	void Tester::RunMacroBenchmark()
@@ -113,6 +121,9 @@ namespace benchmark {
 		
 		std::print("Input the number of times to repeat: ");
 		auto num_repeat{ InputNumber<int>() };
+		if (0 == num_repeat) {
+			return;
+		}
 
 		results.clear();
 		graph_->PrintStatus();
@@ -120,15 +131,20 @@ namespace benchmark {
 		for (int i = 1; i <= num_repeat; ++i) {
 			std::print("---------- {}/{} ----------\n", i, num_repeat);
 			if (scales_with_depth_) {
-				RunMacroBenchmarkScalingWithDepth();
+				if (false == RunMacroBenchmarkScalingWithDepth()) {
+					return;
+				}
 			} else {
-				RunMacroBenchmarkScalingWithThread();
+				if (false == RunMacroBenchmarkScalingWithThread()) {
+					return;
+				}
 			}
 		}
-		results.PrintMacrobenchmarkResult(scales_with_depth_, graph_->GetShortestDistance());
+		results.PrintMacrobenchmarkResult(scales_with_depth_,
+			graph_->GetShortestDistance(), graph_->GetType(), subject_, parameter_, width_);
 	}
 
-	void Tester::RunMicroBenchmarkScalingWithThread()
+	bool Tester::RunMicroBenchmarkScalingWithThread()
 	{
 		constexpr auto kMinThread{ 9 };
 		constexpr auto kMaxThread{ 72 };
@@ -174,13 +190,14 @@ namespace benchmark {
 				}
 				default: {
 					std::print("[Error] Invalid subject.\n\n");
-					return;
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
-	void Tester::RunMicroBenchmarkScalingWithDepth()
+	bool Tester::RunMicroBenchmarkScalingWithDepth()
 	{
 		constexpr int kMinRelaxationBound{ 320 };
 		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 5 };
@@ -202,13 +219,14 @@ namespace benchmark {
 				}
 				default: {
 					std::print("[Error] Invalid subject. 'Scaling with depth' mode is only for 2Dd or TSWD.\n\n");
-					return;
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
-	void Tester::RunMacroBenchmarkScalingWithThread()
+	bool Tester::RunMacroBenchmarkScalingWithThread()
 	{
 		constexpr auto kMinThread{ 9 };
 		constexpr auto kMaxThread{ 72 };
@@ -254,13 +272,14 @@ namespace benchmark {
 				}
 				default: {
 					std::print("[Error] Invalid subject.\n");
-					return;
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
-	void Tester::RunMacroBenchmarkScalingWithDepth()
+	bool Tester::RunMacroBenchmarkScalingWithDepth()
 	{
 		constexpr int kMinRelaxationBound{ 640 };
 		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 6 };
@@ -284,10 +303,11 @@ namespace benchmark {
 				}
 				default: {
 					std::print("[Error] Invalid subject. 'Scaling with depth' mode is only for 2Dd or TSWD.\n\n");
-					return;
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 
 	void Tester::SetSubject()
@@ -361,8 +381,8 @@ namespace benchmark {
 
 		std::print("Generating the graph. Please wait a moment.\n");
 
-		graph_ = std::make_unique<Graph>(static_cast<Graph::Type>(graph_type));
-		graph_->Save(std::format("graph{}.bin", graph_type));
+		graph_ = std::make_unique<Graph>(static_cast<Graph::Type>(graph_type), Graph::Option::kGenerate);
+		graph_->Save();
 	}
 
 	void Tester::LoadGraph()
@@ -379,7 +399,7 @@ namespace benchmark {
 			return;
 		}
 
-		graph_ = std::make_unique<Graph>(std::format("graph{}.bin", graph_type));
+		graph_ = std::make_unique<Graph>(static_cast<Graph::Type>(graph_type), Graph::Option::kLoad);
 		
 		if (not graph_->IsValid()) {
 			graph_ = nullptr;

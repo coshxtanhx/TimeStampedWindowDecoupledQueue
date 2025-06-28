@@ -75,17 +75,17 @@ namespace benchmark {
 			stopwatch.Start();
 			CreateThreads(MicrobenchmarkFunc, num_thread, subject);
 			auto elapsed_sec = stopwatch.GetDuration();
-			auto rd = subject.GetRelaxationDistance();
+			auto [num_element, sum_rd, max_rd] = subject.GetRelaxationDistance();
 
-			results[key].emplace_back(elapsed_sec, rd.first);
+			results[key].emplace_back(elapsed_sec, num_element, sum_rd, max_rd);
 
 			std::print("     threads: {}\n", num_thread);
 			if (scales_with_depth_) {
 				std::print("k-relaxation: {}\n", key);
 			}
 			if (checks_relaxation_distance_) {
-				std::print("    avg dist: {:.2f}\n", rd.first);
-				std::print("    max dist: {}\n", rd.second);
+				std::print("    avg dist: {:.2f}\n", static_cast<double>(sum_rd / num_element));
+				std::print("    max dist: {}\n", max_rd);
 			} else {
 				std::print("elapsed time: {:.2f} sec\n", elapsed_sec);
 				auto throughput = kTotalNumOp / elapsed_sec / 1e6;

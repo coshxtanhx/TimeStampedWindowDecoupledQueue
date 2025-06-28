@@ -104,8 +104,8 @@ namespace benchmark {
 				}
 			}
 		}
-		results.PrintMicrobenchmarkResult(checks_relaxation_distance_,
-			scales_with_depth_, kTotalNumOp, enq_rate_, subject_, parameter_, width_);
+		results.PrintResult(checks_relaxation_distance_, scales_with_depth_, kTotalNumOp);
+		results.Save(checks_relaxation_distance_, scales_with_depth_, enq_rate_, subject_, parameter_, width_);
 	}
 
 	void Tester::RunMacroBenchmark()
@@ -140,8 +140,8 @@ namespace benchmark {
 				}
 			}
 		}
-		results.PrintMacrobenchmarkResult(scales_with_depth_,
-			graph_->GetShortestDistance(), graph_->GetType(), subject_, parameter_, width_);
+		results.PrintResult(scales_with_depth_, graph_->GetShortestDistance());
+		results.Save(scales_with_depth_, graph_->GetType(), subject_, parameter_, width_);
 	}
 
 	bool Tester::RunMicroBenchmarkScalingWithThread()

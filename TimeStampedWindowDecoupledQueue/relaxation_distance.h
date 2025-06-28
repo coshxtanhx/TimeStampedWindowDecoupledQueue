@@ -54,12 +54,11 @@ namespace benchmark {
 
 		auto GetRelaxationDistance() {
 			if (not checks_relaxation_distance_) {
-				return std::make_pair<double, uint64_t>(0.0, 0);
+				return std::make_tuple(uint64_t{}, uint64_t{}, uint64_t{});
 			}
 
 			uint64_t sum_rd{};
 			uint64_t max_rd{};
-			auto num_elements = deq_elements_.size();
 
 			for (auto i = deq_elements_.cbegin(); i != deq_elements_.cend(); ++i) {
 				uint64_t cnt_skip{};
@@ -75,7 +74,7 @@ namespace benchmark {
 				}
 			}
 
-			return std::make_pair(sum_rd / static_cast<double>(num_elements), max_rd);
+			return std::make_tuple(deq_elements_.size(), sum_rd, max_rd);
 		}
 
 	private:

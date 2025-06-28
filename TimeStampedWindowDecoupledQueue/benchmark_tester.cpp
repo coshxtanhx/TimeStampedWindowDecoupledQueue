@@ -79,11 +79,6 @@ namespace benchmark {
 
 	void Tester::RunMicroBenchmark()
 	{
-		if (0 == parameter_ and not scales_with_depth_) {
-			std::print("[Error] Set parameter first.\n\n");
-			return;
-		}
-
 		std::print("Input the number of times to repeat: ");
 		auto num_repeat{ InputNumber<int>() };
 		if (0 == num_repeat) {
@@ -112,10 +107,6 @@ namespace benchmark {
 	{
 		if (nullptr == graph_) {
 			std::print("[Error] Generate or load graph first.\n\n");
-			return;
-		}
-		if (0 == parameter_ and not scales_with_depth_) {
-			std::print("[Error] Set parameter first.\n\n");
 			return;
 		}
 		
@@ -150,6 +141,7 @@ namespace benchmark {
 		constexpr auto kMaxThread{ 72 };
 
 		for (int num_thread = kMinThread; num_thread <= kMaxThread; num_thread *= 2) {
+			auto parameter{ 0 == parameter_ ? num_thread : parameter_ };
 			switch (subject_) {
 				case Subject::kTSCAS: {
 					lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
@@ -329,7 +321,7 @@ namespace benchmark {
 		std::print("      d-CBO: [parameter] = d\n");
 		std::print("        2Dd: [parameter] = depth\n");
 		std::print("       TSWD: [parameter] = depth\n");
-		std::print("Parameter: ");
+		std::print("Parameter (0 = use nbr thread): ");
 		parameter_ = InputNumber<int>();
 	}
 

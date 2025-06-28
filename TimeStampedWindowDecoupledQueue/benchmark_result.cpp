@@ -67,14 +67,14 @@ namespace benchmark {
 	void ResultMap::Save(bool checks_relaxation_distance, bool scales_with_depth,
 		float enq_rate, Subject subject, int parameter, int width)
 	{
-		file_ << std::format("subject: {}\n", GetSubjectName(subject));
+		file_ << std::format("subject: {}, ", GetSubjectName(subject));
 		if ((Subject::k2Dd == subject or Subject::kCBO == subject) and width != 0) {
 			file_ << std::format("width: {}, ", width);
 
 		} else {
-			file_ << std::format("width: nbr thread, \n");
+			file_ << std::format("width: nbr thread, ");
 		}
-		file_ << std::format("parameter: {}\n", parameter);
+		file_ << std::format("parameter: {}, ", parameter);
 		file_ << std::format("enq rate: {}\n", enq_rate);
 
 		if (scales_with_depth) {
@@ -119,14 +119,14 @@ namespace benchmark {
 	void ResultMap::Save(bool scales_with_depth, Graph::Type graph,
 		Subject subject, int parameter, int width)
 	{
-		file_ << std::format("subject: {}\n", GetSubjectName(subject));
+		file_ << std::format("subject: {}, ", GetSubjectName(subject));
 		if ((Subject::k2Dd == subject or Subject::kCBO == subject) and width != 0) {
 			file_ << std::format("width: {}, ", width);
 
 		} else {
 			file_ << std::format("width: nbr thread, \n");
 		}
-		file_ << std::format("parameter: {}\n", parameter);
+		file_ << std::format("parameter: {}, ", parameter);
 		file_ << std::format("graph: {}\n", Graph::GetName(graph));
 
 		if (scales_with_depth) {

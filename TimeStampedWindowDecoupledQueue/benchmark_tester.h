@@ -177,7 +177,7 @@ namespace benchmark {
 		bool checks_relaxation_distance_{};
 		bool scales_with_depth_{};
 		float enq_rate_{ 50.0f };
-		float delay_{};
+		float delay_{ 1.2f };
 	};
 }
 

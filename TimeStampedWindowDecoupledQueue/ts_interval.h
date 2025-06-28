@@ -22,7 +22,7 @@ namespace lf::ts_interval {
 
 		void Set(int delay) {
 			t1_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
-			for (volatile int i = 0; i < delay; ++i) {}
+			idle.Do(static_cast<float>(delay));
 			t2_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
 
 		}
@@ -99,7 +99,7 @@ namespace lf::ts_interval {
 
 	class TSInterval {
 	public:
-		TSInterval(int num_thread, int delay_us) : num_delay_op_{ delay_us * idle.GetDelayOpPerMicrosec() }
+		TSInterval(int num_thread, int delay_microsec_) : delay_microsec_{ delay_microsec_ }
 			, queues_(num_thread) , ebr_{ num_thread } {}
 
 		void CheckRelaxationDistance() {
@@ -107,11 +107,11 @@ namespace lf::ts_interval {
 		}
 
 		auto GetRelaxationDistance() {
-			return rdm_.GetRelaxationDistance(); // Returns (0, 0)
+			return rdm_.GetRelaxationDistance(); // Returns (0, 0, 0)
 		}
 
 		void Enq(int v) {
-			queues_[MyThreadID::Get()].Enq(v, num_delay_op_);
+			queues_[MyThreadID::Get()].Enq(v, delay_microsec_);
 		}
 
 		std::optional<int> Deq() {
@@ -157,7 +157,7 @@ namespace lf::ts_interval {
 			}
 		}
 	private:
-		int num_delay_op_;
+		int delay_microsec_;
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;
 		benchmark::RelaxationDistanceManager rdm_;

@@ -22,7 +22,7 @@ namespace lf::ts_cas {
 
 		void Set(volatile uint64_t& cnt, int delay) {
 			auto loc_cnt1 = cnt;
-			for (volatile int i = 0; i < delay; ++i) {}
+			idle.Do(static_cast<float>(delay));
 			auto loc_cnt2 = cnt;
 
 			if (loc_cnt1 != loc_cnt2) {
@@ -108,7 +108,7 @@ namespace lf::ts_cas {
 
 	class TSCAS {
 	public:
-		TSCAS(int num_thread, int delay_us) : num_delay_op_{ delay_us * idle.GetDelayOpPerMicrosec() }
+		TSCAS(int num_thread, int delay_microsec) : delay_microsec_{ delay_microsec }
 			, queues_(num_thread) , ebr_{ num_thread } {}
 
 		void CheckRelaxationDistance() {
@@ -116,11 +116,11 @@ namespace lf::ts_cas {
 		}
 
 		auto GetRelaxationDistance() {
-			return rdm_.GetRelaxationDistance(); // Returns (0, 0)
+			return rdm_.GetRelaxationDistance(); // Returns (0, 0, 0)
 		}
 
 		void Enq(int v) {
-			queues_[MyThreadID::Get()].Enq(v, cnt_, num_delay_op_);
+			queues_[MyThreadID::Get()].Enq(v, cnt_, delay_microsec_);
 		}
 
 		std::optional<int> Deq() {
@@ -166,7 +166,7 @@ namespace lf::ts_cas {
 			}
 		}
 	private:
-		int num_delay_op_;
+		int delay_microsec_;
 		volatile uint64_t cnt_{ 1 };
 		std::vector<PartialQueue> queues_;
 		EBR<Node> ebr_;

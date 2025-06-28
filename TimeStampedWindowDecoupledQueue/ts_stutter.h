@@ -82,7 +82,7 @@ namespace lf::ts_stutter {
 		}
 
 		auto GetRelaxationDistance() {
-			return rdm_.GetRelaxationDistance(); // Returns (0, 0)
+			return rdm_.GetRelaxationDistance(); // Returns (0, 0, 0)
 		}
 
 		void Enq(int v) {

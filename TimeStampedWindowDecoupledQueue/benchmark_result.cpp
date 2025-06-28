@@ -74,7 +74,11 @@ namespace benchmark {
 		} else {
 			file_ << std::format("width: nbr thread, ");
 		}
-		file_ << std::format("parameter: {}, ", parameter);
+		if (0 == parameter) {
+			file_ << std::format("parameter: nbr thread, ");
+		} else {
+			file_ << std::format("parameter: {}, ", parameter);
+		}
 		file_ << std::format("enq rate: {}\n", enq_rate);
 
 		if (scales_with_depth) {
@@ -126,7 +130,11 @@ namespace benchmark {
 		} else {
 			file_ << std::format("width: nbr thread, \n");
 		}
-		file_ << std::format("parameter: {}, ", parameter);
+		if (0 == parameter) {
+			file_ << std::format("parameter: nbr thread, ");
+		} else {
+			file_ << std::format("parameter: {}, ", parameter);
+		}
 		file_ << std::format("graph: {}\n", Graph::GetName(graph));
 
 		if (scales_with_depth) {

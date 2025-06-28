@@ -49,9 +49,7 @@ namespace benchmark {
 		void PrintHelp() const;
 
 		template<class T> requires std::floating_point<T> or std::integral<T>
-		T InputNumber(const std::string& msg) const {
-			std::cout << msg;
-
+		T InputNumber() const {
 			T input;
 			std::cin >> input;
 			if (std::cin.fail()) {
@@ -69,7 +67,7 @@ namespace benchmark {
 			Stopwatch stopwatch;
 			int num_thread = scales_with_depth_ ? kFixedNumThread : key;
 
-			results.try_emplace(key, Result{});
+			results.try_emplace(key, std::vector<Result>{});
 
 			if (checks_relaxation_distance_) {
 				subject.CheckRelaxationDistance();
@@ -82,9 +80,7 @@ namespace benchmark {
 			auto elapsed_sec = stopwatch.GetDuration();
 			auto rd = subject.GetRelaxationDistance();
 
-			results[key].elapsed_sec += elapsed_sec;
-			results[key].avg_relaxation_distance += rd.first;
-			results[key].num_repeat += 1;
+			results[key].emplace_back(elapsed_sec, rd.first);
 
 			std::print("     threads: {}\n", num_thread);
 			if (scales_with_depth_) {
@@ -109,7 +105,7 @@ namespace benchmark {
 			int num_thread = scales_with_depth_ ? kFixedNumThread : key;
 			std::vector<int> shortest_distances(num_thread, std::numeric_limits<int>::max());
 			
-			results.try_emplace(key, Result{});
+			results.try_emplace(key, std::vector<Result>{});
 
 			stopwatch.Start();
 			CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_distances);
@@ -125,9 +121,7 @@ namespace benchmark {
 			std::print("shortest distance: {}\n", shortest_distance);
 			std::print("\n");
 
-			results[key].elapsed_sec += elapsed_sec;
-			results[key].shortest_distance += shortest_distance;
-			results[key].num_repeat += 1;
+			results[key].emplace_back(elapsed_sec, shortest_distance);
 		}
 
 		template<class Subject>

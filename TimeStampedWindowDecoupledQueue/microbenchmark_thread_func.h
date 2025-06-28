@@ -5,7 +5,7 @@
 #include "my_thread_id.h"
 
 namespace benchmark {
-	inline const int kTotalNumOp{ (std::thread::hardware_concurrency() <= 8) ? 360'000 : 3600'0000 };
+	inline const int kTotalNumOp{ (std::thread::hardware_concurrency() <= 8) ? 360'000 : 18'000'000 };
 	inline constexpr int kNumPrefill{ 100'000 };
 
 	template<class QueueT>

@@ -84,7 +84,8 @@ namespace benchmark {
 			return;
 		}
 
-		auto num_repeat{ InputNumber<int>("Input the number of times to repeat: ") };
+		std::print("Input the number of times to repeat: ");
+		auto num_repeat{ InputNumber<int>() };
 
 		results.clear();
 
@@ -110,7 +111,8 @@ namespace benchmark {
 			return;
 		}
 		
-		auto num_repeat{ InputNumber<int>("Input the number of times to repeat: ") };
+		std::print("Input the number of times to repeat: ");
+		auto num_repeat{ InputNumber<int>() };
 
 		results.clear();
 		graph_->PrintStatus();
@@ -295,7 +297,8 @@ namespace benchmark {
 		std::print("\n--- List ---\n");
 		std::print("1: TS-CAS, 2: TS-stutter, 3: TS-atomic, 4: TS-interval,\n");
 		std::print("5: d-CBO, 6: 2Dd, 7: TSWD\n");
-		subject_ = static_cast<Subject>(InputNumber<int>("Subject: "));
+		std::print("Subject: ");
+		subject_ = static_cast<Subject>(InputNumber<int>());
 	}
 
 	void Tester::SetParameter()
@@ -306,17 +309,20 @@ namespace benchmark {
 		std::print("      d-CBO: [parameter] = d\n");
 		std::print("        2Dd: [parameter] = depth\n");
 		std::print("       TSWD: [parameter] = depth\n");
-		parameter_ = InputNumber<int>("Parameter: ");
+		std::print("Parameter: ");
+		parameter_ = InputNumber<int>();
 	}
 
 	void Tester::SetEnqRate()
 	{
-		enq_rate_ = InputNumber<float>("Enqueue rate(%): ");
+		std::print("Enqueue rate(%): ");
+		enq_rate_ = InputNumber<float>();
 	}
 
 	void Tester::SetWidth()
 	{
-		width_ = InputNumber<int>("Input width (0 = use nbr thread): ");
+		std::print("Input width (0 = use nbr thread): ");
+		width_ = InputNumber<int>();
 	}
 
 	void Tester::CheckRelaxationDistance()
@@ -343,8 +349,9 @@ namespace benchmark {
 	{
 		std::print("\n--- List ---\n");
 		std::print("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
+		std::print("Graph Type: ");
 
-		auto graph_type{ InputNumber<int>("Graph Type: ") };
+		auto graph_type{ InputNumber<int>() };
 
 		if (graph_type < static_cast<int>(Graph::Type::kAlpha)
 			or graph_type > static_cast<int>(Graph::Type::kZeta)) {
@@ -362,8 +369,9 @@ namespace benchmark {
 	{
 		std::print("\n--- List ---\n");
 		std::print("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
+		std::print("Graph Type: ");
 
-		auto graph_type{ InputNumber<int>("Graph Type: ") };
+		auto graph_type{ InputNumber<int>() };
 
 		if (graph_type < static_cast<int>(Graph::Type::kAlpha)
 			or graph_type > static_cast<int>(Graph::Type::kZeta)) {

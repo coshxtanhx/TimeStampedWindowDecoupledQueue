@@ -137,10 +137,9 @@ namespace benchmark {
 
 	bool Tester::RunMicroBenchmarkScalingWithThread()
 	{
-		constexpr auto kMinThread{ 9 };
-		constexpr auto kMaxThread{ 72 };
+		constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
 
-		for (int num_thread = kMinThread; num_thread <= kMaxThread; num_thread *= 2) {
+		for (int num_thread : kNumThreads) {
 			auto parameter{ 0 == parameter_ ? num_thread : parameter_ };
 			switch (subject_) {
 				case Subject::kTSCAS: {
@@ -220,10 +219,9 @@ namespace benchmark {
 
 	bool Tester::RunMacroBenchmarkScalingWithThread()
 	{
-		constexpr auto kMinThread{ 9 };
-		constexpr auto kMaxThread{ 72 };
+		constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
 
-		for (int num_thread = kMinThread; num_thread <= kMaxThread; num_thread *= 2) {
+		for (int num_thread : kNumThreads) {
 			auto parameter{ 0 == parameter_ ? num_thread : parameter_ };
 			switch (subject_) {
 				case Subject::kTSCAS: {

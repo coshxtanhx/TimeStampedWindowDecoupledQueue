@@ -128,11 +128,9 @@ namespace benchmark {
 			file_ << std::format("width: {}, ", width);
 
 		} else {
-			file_ << std::format("width: nbr thread, \n");
+			file_ << std::format("width: nbr thread, ");
 		}
-		if (0 == parameter) {
-			file_ << std::format("parameter: nbr thread, ");
-		} else {
+		if (not scales_with_depth) {
 			file_ << std::format("parameter: {}, ", parameter);
 		}
 		file_ << std::format("graph: {}\n", Graph::GetName(graph));

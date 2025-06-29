@@ -94,7 +94,7 @@ public:
 
 	static std::string GetName(Type type) {
 		constexpr std::array<const char*, 7> names{
-			"None", "Alpha", "Beta", "Gamma, Delta", "Epsilon", "Zeta"
+			"None", "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta"
 		};
 
 		return names[static_cast<int>(type)];

@@ -85,7 +85,7 @@ namespace benchmark {
 				std::print("k-relaxation: {}\n", key);
 			}
 			if (checks_relaxation_distance_) {
-				std::print("    avg dist: {:.2f}\n", static_cast<double>(sum_rd / num_element));
+				std::print("    avg dist: {:.2f}\n", static_cast<double>(sum_rd) / num_element);
 				std::print("    max dist: {}\n", max_rd);
 			} else {
 				std::print("elapsed time: {:.2f} sec\n", elapsed_sec);

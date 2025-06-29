@@ -155,6 +155,8 @@ namespace benchmark {
 			for (auto& result : results) {
 				file_ << std::format("{}|", result.shortest_distance);
 			}
+			file_ << '\n';
 		}
+		file_ << "\n\n";
 	}
 }

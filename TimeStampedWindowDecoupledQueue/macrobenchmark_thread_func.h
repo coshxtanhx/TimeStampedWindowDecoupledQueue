@@ -5,14 +5,14 @@
 
 namespace benchmark {
 	template<class QueueT>
-	void MacrobenchmarkFunc(int thread_id, int num_thread, QueueT& queue, Graph& graph, int& shortest_dist)
+	void MacrobenchmarkFunc(int thread_id, int num_thread, QueueT& queue, Graph& graph, int& distance)
 	{
 		MyThreadID::Set(thread_id);
 		if (0 == thread_id) {
 			queue.Enq(0);
 		}
 
-		shortest_dist = graph.RelaxedBFS(num_thread, queue);
+		distance = graph.RelaxedBFS(num_thread, queue);
 	}
 }
 

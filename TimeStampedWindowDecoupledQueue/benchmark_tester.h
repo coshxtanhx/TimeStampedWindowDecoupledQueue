@@ -101,25 +101,25 @@ namespace benchmark {
 			
 			Stopwatch stopwatch;
 			int num_thread = scales_with_depth_ ? kFixedNumThread : key;
-			std::vector<int> shortest_distances(num_thread, std::numeric_limits<int>::max());
+			std::vector<int> distances(num_thread, std::numeric_limits<int>::max());
 			
 			results.try_emplace(key, std::vector<Result>{});
 
 			stopwatch.Start();
-			CreateThreads(MacrobenchmarkFunc, num_thread, subject, shortest_distances);
+			CreateThreads(MacrobenchmarkFunc, num_thread, subject, distances);
 			
-			auto shortest_distance = *std::min_element(shortest_distances.begin(), shortest_distances.end());
+			auto distance = *std::min_element(distances.begin(), distances.end());
 			auto elapsed_sec = stopwatch.GetDuration();
 
-			std::print("          threads: {}\n", num_thread);
+			std::print("     threads: {}\n", num_thread);
 			if (scales_with_depth_) {
-				std::print("     k-relaxation: {}\n", key);
+				std::print("k-relaxation: {}\n", key);
 			}
-			std::print("     elapsed time: {:.2f} sec\n", elapsed_sec);
-			std::print("shortest distance: {}\n", shortest_distance);
+			std::print("elapsed time: {:.2f} sec\n", elapsed_sec);
+			std::print("    distance: {}\n", distance);
 			std::print("\n");
 
-			results[key].emplace_back(elapsed_sec, shortest_distance);
+			results[key].emplace_back(elapsed_sec, distance);
 		}
 
 		template<class Subject>
@@ -139,13 +139,13 @@ namespace benchmark {
 
 		template<class Subject>
 		void CreateThreads(MacrobenchmarkFuncT<Subject> thread_func,
-			int num_thread, Subject& subject, std::vector<int>& shortest_dists) {
+			int num_thread, Subject& subject, std::vector<int>& _distances) {
 			std::vector<std::thread> threads;
 			threads.reserve(num_thread);
 
 			for (int thread_id = 0; thread_id < num_thread; ++thread_id) {
 				threads.emplace_back(thread_func, thread_id, num_thread,
-					std::ref(subject), std::ref(*graph_), std::ref(shortest_dists[thread_id]));
+					std::ref(subject), std::ref(*graph_), std::ref(distances[thread_id]));
 			}
 
 			for (auto& t : threads) {
@@ -167,7 +167,10 @@ namespace benchmark {
 			}
 		}
 
+		bool HasValidParameter() const;
+
 		static constexpr auto kFixedNumThread{ 41 };
+		static constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
 
 		std::unique_ptr<Graph> graph_{};
 		int parameter_{};

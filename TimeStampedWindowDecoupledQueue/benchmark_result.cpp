@@ -36,7 +36,7 @@ namespace benchmark {
 		std::print("\n");
 	}
 
-	void ResultMap::PrintResult(bool scales_with_depth, int shortest_distance) const
+	void ResultMap::PrintResult(bool scales_with_depth, int distance) const
 	{
 		for (auto i = cbegin(); i != cend(); ++i) {
 			if (scales_with_depth) {
@@ -54,11 +54,11 @@ namespace benchmark {
 			std::print("  |  avg elapsed time: {:5.2f} sec", avg_sec);
 
 			auto sum_dist = std::accumulate(results.begin(), results.end(), 0, [](int acc, const Result& r) {
-				return acc + r.shortest_distance;
+				return acc + r.distance;
 				});
 
 			auto avg_error = (static_cast<double>(sum_dist) / results.size()
-				- shortest_distance) / shortest_distance * 100.0;
+				- distance) / distance * 100.0;
 			std::print("  |  avg error: {:.4f}%\n", avg_error);
 		}
 		std::print("\n");
@@ -74,18 +74,14 @@ namespace benchmark {
 		} else {
 			file_ << std::format("width: nbr thread, ");
 		}
-		if (0 == parameter) {
-			file_ << std::format("parameter: nbr thread, ");
-		} else {
-			file_ << std::format("parameter: {}, ", parameter);
-		}
-		file_ << std::format("enq rate: {}\n", enq_rate);
 
 		if (scales_with_depth) {
 			file_ << "k-relaxation: ";
 		} else {
+			file_ << std::format("parameter: {}, ", parameter);
 			file_ << "threads: ";
 		}
+		file_ << std::format("enq rate: {}\n", enq_rate);
 
 		for (auto& [key, results] : *this) {
 			file_ << std::format("{}|", key);
@@ -130,16 +126,14 @@ namespace benchmark {
 		} else {
 			file_ << std::format("width: nbr thread, ");
 		}
-		if (not scales_with_depth) {
-			file_ << std::format("parameter: {}, ", parameter);
-		}
-		file_ << std::format("graph: {}\n", Graph::GetName(graph));
 
 		if (scales_with_depth) {
 			file_ << "k-relaxation: ";
 		} else {
+			file_ << std::format("parameter: {}, ", parameter);
 			file_ << "threads: ";
 		}
+		file_ << std::format("graph: {}\n", Graph::GetName(graph));
 
 		for (auto& [key, results] : *this) {
 			file_ << std::format("{}|", key);
@@ -151,7 +145,7 @@ namespace benchmark {
 				file_ << std::format("{:.6f}|", result.elapsed_sec);
 			}
 			for (auto& result : results) {
-				file_ << std::format("{}|", result.shortest_distance);
+				file_ << std::format("{}|", result.distance);
 			}
 			file_ << '\n';
 		}

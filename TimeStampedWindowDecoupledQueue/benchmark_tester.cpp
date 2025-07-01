@@ -151,8 +151,6 @@ namespace benchmark {
 
 	bool Tester::RunMicroBenchmarkScalingWithThread()
 	{
-		constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
-
 		for (int num_thread : kNumThreads) {
 			switch (subject_) {
 				case Subject::kTSCAS: {
@@ -232,8 +230,6 @@ namespace benchmark {
 
 	bool Tester::RunMacroBenchmarkScalingWithThread()
 	{
-		constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
-
 		for (int num_thread : kNumThreads) {
 			switch (subject_) {
 				case Subject::kTSCAS: {
@@ -431,5 +427,49 @@ namespace benchmark {
 		std::print("h: Help\n");
 		std::print("q: Quit\n");
 		std::print("\n");
+	}
+
+	bool Tester::HasValidParameter() const
+	{
+		if (width_ < 0) {
+			std::print("[Error] Invalid width.\n");
+			return false;
+		}
+
+		switch (subject_)
+		{
+			case Subject::kCBO: {
+				auto min_width{ width_ };
+				if (0 == width_) {
+					if (scales_with_depth_) {
+						min_width = kFixedNumThread;
+					} else {
+						min_width = kNumThreads.front();
+					}
+				}
+
+				if (parameter_ <= 0 or parameter_ > min_width) {
+					std::print("[Error] Invalid d.\n");
+					return false;
+				}
+				break;
+			}
+			case Subject::k2Dd: {
+				if (parameter_ <= 0) {
+					std::print("[Error] Invalid depth.\n");
+					return false;
+				}
+				break;
+			}
+			case Subject::kTSWD: {
+				if (parameter_ <= 0) {
+					std::print("[Error] Invalid depth.\n");
+					return false;
+				}
+				break;
+			}
+		}
+
+		return true;
 	}
 }

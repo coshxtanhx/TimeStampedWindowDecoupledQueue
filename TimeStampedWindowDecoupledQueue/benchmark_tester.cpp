@@ -83,8 +83,7 @@ namespace benchmark {
 
 	void Tester::RunMicroBenchmark()
 	{
-		if (0 == parameter_ and not scales_with_depth_) {
-			std::print("[Error] Set parameter first.\n\n");
+		if (not HasValidParameter()) {
 			return;
 		}
 
@@ -114,8 +113,7 @@ namespace benchmark {
 
 	void Tester::RunMacroBenchmark()
 	{
-		if (0 == parameter_ and not scales_with_depth_) {
-			std::print("[Error] Set parameter first.\n\n");
+		if (not HasValidParameter()) {
 			return;
 		}
 

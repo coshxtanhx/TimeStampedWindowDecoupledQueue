@@ -139,7 +139,7 @@ namespace benchmark {
 
 		template<class Subject>
 		void CreateThreads(MacrobenchmarkFuncT<Subject> thread_func,
-			int num_thread, Subject& subject, std::vector<int>& _distances) {
+			int num_thread, Subject& subject, std::vector<int>& distances) {
 			std::vector<std::thread> threads;
 			threads.reserve(num_thread);
 

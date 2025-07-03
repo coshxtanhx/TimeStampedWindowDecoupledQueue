@@ -4,14 +4,13 @@ void Graph::Save()
 {	
 	std::ofstream out{ std::format("graph{}.bin", static_cast<int>(type_)), std::ios::binary };
 
-	int size = static_cast<int>(distances_.size());
-	out.write(reinterpret_cast<const char*>(&size), sizeof(size));
+	out.write(reinterpret_cast<const char*>(&num_vertex_), sizeof(num_vertex_));
 
 	for (const auto& adj : adjs_) {
-		size = static_cast<int>(adj.size());
-		out.write(reinterpret_cast<const char*>(&size), sizeof(size));
-		out.write(reinterpret_cast<const char*>(adj.data()), size * sizeof(*adj.data()));
-		num_edge_ += size;
+		auto num_adj = static_cast<int32_t>(adj.size());
+		out.write(reinterpret_cast<const char*>(&num_adj), sizeof(num_adj));
+		out.write(reinterpret_cast<const char*>(adj.data()), num_adj * sizeof(*adj.data()));
+		num_edge_ += num_adj;
 	}
 
 	Reset();
@@ -25,7 +24,7 @@ void Graph::Save()
 
 void Graph::Generate()
 {
-	int max_adj{};
+	int32_t max_adj{};
 	switch (type_) {
 		case Type::kAlpha: {
 			max_adj = 12;
@@ -67,9 +66,9 @@ void Graph::Generate()
 	}
 
 	std::mt19937 re{ 2025 };
-	std::uniform_int_distribution<int> uid{ 0, num_vertex_ };
+	std::uniform_int_distribution<int32_t> uid{ 0, num_vertex_ };
 
-	for (int i = 0; i < num_vertex_ - 1; ++i) {
+	for (int32_t i = 0; i < num_vertex_ - 1; ++i) {
 		adjs_[i].push_back(i + 1);
 		adjs_[i + 1].push_back(i);
 
@@ -78,8 +77,8 @@ void Graph::Generate()
 			continue;
 		}
 
-		for (int j = 1; ; ++j) {
-			int next = i + step * j;
+		for (int32_t j = 1; ; ++j) {
+			auto next = i + step * j;
 			if (next >= num_vertex_ or max_adj == adjs_[i].size()) {
 				break;
 			}
@@ -89,8 +88,8 @@ void Graph::Generate()
 			}
 		}
 
-		for (int j = static_cast<int>(adjs_[i].size() - 1); j > 0; --j) {
-			int r = uid(re) % j;
+		for (auto j = static_cast<int32_t>(adjs_[i].size() - 1); j > 0; --j) {
+			auto r = uid(re) % j;
 			std::swap(adjs_[i][j], adjs_[i][r]);
 		}
 	}
@@ -107,10 +106,10 @@ void Graph::Load()
 
 	in.read(reinterpret_cast<char*>(&num_vertex_), sizeof(num_vertex_));
 
-	distances_.resize(num_vertex_, std::numeric_limits<int>::max());
+	distances_.resize(num_vertex_, std::numeric_limits<int32_t>::max());
 	adjs_.resize(num_vertex_);
 
-	int num_adj{};
+	int32_t num_adj{};
 	for (auto& adj : adjs_) {
 		in.read(reinterpret_cast<char*>(&num_adj), sizeof(num_adj));
 		num_edge_ += num_adj;
@@ -125,9 +124,9 @@ void Graph::Load()
 	PrintStatus();
 }
 
-int Graph::SingleThreadBFS()
+int32_t Graph::SingleThreadBFS()
 {
-	int dst = num_vertex_ - 1;
+	auto dst = num_vertex_ - 1;
 	std::queue<int> queue;
 	queue.push(0);
 
@@ -139,7 +138,7 @@ int Graph::SingleThreadBFS()
 			break;
 		}
 
-		int cost = distances_[p] + 1;
+		auto cost = distances_[p] + 1;
 
 		for (auto adj : adjs_[p]) {
 			if (cost < distances_[adj]) {

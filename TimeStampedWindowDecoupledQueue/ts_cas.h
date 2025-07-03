@@ -72,8 +72,8 @@ namespace lf::ts_cas {
 			delete head_;
 		}
 
-		void Enq(int v, volatile uint64_t& cnt, int num_delay_op) {
-			auto node = new Node{ v, cnt, num_delay_op };
+		void Enq(int v, volatile uint64_t& cnt, int delay) {
+			auto node = new Node{ v, cnt, delay };
 			tail_->next = node;
 			tail_ = node;
 		}

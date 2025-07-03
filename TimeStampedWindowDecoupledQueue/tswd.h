@@ -106,9 +106,9 @@ namespace lf::tswd {
 		void Enq(int v) {
 			auto node = new Node{ v };
 
-			// Unless a dequeue occurs when the queue is empty,
-			// using the moment of reading the time-stamp of window put
-			// as the linearization point does not affect linearizability.
+			/* Unless a dequeue occurs when the queue is empty,
+			using the moment of reading the time-stamp of window put
+			as the linearization point does not affect linearizability. */
 			rdm_.LockEnq();
 			auto put_ts = window_put_.time_stamp;
 			rdm_.Enq(node);

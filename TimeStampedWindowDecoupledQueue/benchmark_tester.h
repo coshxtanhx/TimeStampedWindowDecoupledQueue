@@ -61,9 +61,9 @@ namespace benchmark {
 		}
 
 		template<class Subject>
-		void Measure(MicrobenchmarkFuncT<Subject> thread_func, int key, Subject& subject) {
+		void Measure(MicrobenchmarkFuncT<Subject> thread_func, int32_t key, Subject& subject) {
 			Stopwatch stopwatch;
-			int num_thread = scales_with_depth_ ? kFixedNumThread : key;
+			auto num_thread = scales_with_depth_ ? kFixedNumThread : key;
 
 			results.try_emplace(key, std::vector<Result>{});
 
@@ -96,12 +96,12 @@ namespace benchmark {
 		}
 
 		template<class Subject>
-		void Measure(MacrobenchmarkFuncT<Subject> thread_func, int key, Subject& subject) {
+		void Measure(MacrobenchmarkFuncT<Subject> thread_func, int32_t key, Subject& subject) {
 			graph_->Reset();
-			
+
 			Stopwatch stopwatch;
-			int num_thread = scales_with_depth_ ? kFixedNumThread : key;
-			std::vector<int> distances(num_thread, std::numeric_limits<int>::max());
+			auto num_thread = scales_with_depth_ ? kFixedNumThread : key;
+			std::vector<int32_t> distances(num_thread, std::numeric_limits<int>::max());
 			
 			results.try_emplace(key, std::vector<Result>{});
 
@@ -139,7 +139,7 @@ namespace benchmark {
 
 		template<class Subject>
 		void CreateThreads(MacrobenchmarkFuncT<Subject> thread_func,
-			int num_thread, Subject& subject, std::vector<int>& distances) {
+			int num_thread, Subject& subject, std::vector<int32_t>& distances) {
 			std::vector<std::thread> threads;
 			threads.reserve(num_thread);
 

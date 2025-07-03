@@ -3,7 +3,7 @@
 
 namespace benchmark {
 	void ResultMap::PrintResult(bool checks_relaxation_distance,
-		bool scales_with_depth, int num_op) const
+		bool scales_with_depth, int32_t num_op) const
 	{
 		for (auto i = cbegin(); i != cend(); ++i) {
 			if (scales_with_depth) {
@@ -36,7 +36,7 @@ namespace benchmark {
 		std::print("\n");
 	}
 
-	void ResultMap::PrintResult(bool scales_with_depth, int distance) const
+	void ResultMap::PrintResult(bool scales_with_depth, int32_t distance) const
 	{
 		for (auto i = cbegin(); i != cend(); ++i) {
 			if (scales_with_depth) {
@@ -53,7 +53,7 @@ namespace benchmark {
 				}) / results.size();
 			std::print("  |  avg elapsed time: {:5.2f} sec", avg_sec);
 
-			auto sum_dist = std::accumulate(results.begin(), results.end(), 0, [](int acc, const Result& r) {
+			auto sum_dist = std::accumulate(results.begin(), results.end(), 0, [](int32_t acc, const Result& r) {
 				return acc + r.distance;
 				});
 

@@ -16,22 +16,22 @@ namespace benchmark {
 			: elapsed_sec{ elapsed_sec }, num_element{ num_element }
 			, sum_relaxation_distance{ sum_rd }, max_relaxation_distance{ max_rd } {}
 
-		Result(double elapsed_sec, int distance)
+		Result(double elapsed_sec, int32_t distance)
 			: elapsed_sec{ elapsed_sec }, distance{ distance } {}
 
 		double elapsed_sec{};
 		uint64_t num_element{};
 		uint64_t sum_relaxation_distance{};
 		uint64_t max_relaxation_distance{};
-		int distance{};
+		int32_t distance{};
 	};
 
 	class ResultMap : public std::map<int, std::vector<Result>>{
 	public:
 		ResultMap() = default;
 		void PrintResult(bool checks_relaxation_distance,
-			bool scales_with_depth, int num_op) const;
-		void PrintResult(bool scales_with_depth, int distance) const;
+			bool scales_with_depth, int32_t num_op) const;
+		void PrintResult(bool scales_with_depth, int32_t distance) const;
 
 		void Save(bool checks_relaxation_distance, bool scales_with_depth,
 			float enq_rate, Subject subject, int parameter, int width);

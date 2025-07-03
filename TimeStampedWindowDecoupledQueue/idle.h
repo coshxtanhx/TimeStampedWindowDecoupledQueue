@@ -9,18 +9,18 @@ public:
 		GetDelayOpPerMicrosec();
 	}
 
-	int GetDelayOpPerMicrosec() {
+	int32_t GetDelayOpPerMicrosec() {
 		if (kUndefinedDelay != delay_per_microsec_) [[likely]] {
 			return delay_per_microsec_;
 		}
 
 		Stopwatch sw;
 		sw.Start();
-		constexpr int kLoop = 1'000'000'000;
-		for (volatile int i = 0; i < kLoop; ++i) {}
+		constexpr auto kLoop = 1'000'000'000;
+		for (volatile int32_t i = 0; i < kLoop; ++i) {}
 		auto us = sw.GetDuration() * 1.0e6;
 
-		delay_per_microsec_ = static_cast<int>(kLoop / us);
+		delay_per_microsec_ = static_cast<int32_t>(kLoop / us);
 
 		return delay_per_microsec_;
 	}
@@ -30,11 +30,11 @@ public:
 			return;
 		}
 
-		for (volatile int i = 0; i < static_cast<int>(delay_per_microsec_ * microsec); ++i) {}
+		for (volatile int32_t i = 0; i < static_cast<int32_t>(delay_per_microsec_ * microsec); ++i) {}
 	}
 private:
-	static constexpr int kUndefinedDelay{ -1 };
-	int delay_per_microsec_{ kUndefinedDelay };
+	static constexpr int32_t kUndefinedDelay{ -1 };
+	int32_t delay_per_microsec_{ kUndefinedDelay };
 };
 
 inline Idle idle;

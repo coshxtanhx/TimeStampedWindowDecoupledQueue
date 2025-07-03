@@ -24,7 +24,6 @@ namespace lf::ts_interval {
 			t1_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
 			idle.Do(static_cast<float>(delay));
 			t2_ = std::chrono::duration_cast<Resolution>(Clock::now() - tp_base_).count();
-
 		}
 
 		bool operator<(const TimeStamp& rhs) const {
@@ -63,8 +62,8 @@ namespace lf::ts_interval {
 			delete head_;
 		}
 
-		void Enq(int v, int num_delay_op) {
-			auto node = new Node{ v, num_delay_op };
+		void Enq(int v, int delay) {
+			auto node = new Node{ v, delay };
 			tail_->next = node;
 			tail_ = node;
 		}

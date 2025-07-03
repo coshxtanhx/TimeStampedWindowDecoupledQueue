@@ -149,7 +149,7 @@ namespace benchmark {
 
 	bool Tester::RunMicroBenchmarkScalingWithThread()
 	{
-		for (int num_thread : kNumThreads) {
+		for (auto num_thread : kNumThreads) {
 			switch (subject_) {
 				case Subject::kTSCAS: {
 					lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
@@ -199,8 +199,8 @@ namespace benchmark {
 
 	bool Tester::RunMicroBenchmarkScalingWithDepth()
 	{
-		constexpr int kMinRelaxationBound{ 320 };
-		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 5 };
+		constexpr int32_t kMinRelaxationBound{ 320 };
+		constexpr int32_t kMaxRelaxationBound{ kMinRelaxationBound << 5 };
 
 		for (auto rb = kMinRelaxationBound; rb <= kMaxRelaxationBound; rb *= 2) {
 			switch (subject_) {
@@ -228,7 +228,7 @@ namespace benchmark {
 
 	bool Tester::RunMacroBenchmarkScalingWithThread()
 	{
-		for (int num_thread : kNumThreads) {
+		for (auto num_thread : kNumThreads) {
 			switch (subject_) {
 				case Subject::kTSCAS: {
 					lf::ts_cas::TSCAS subject{ num_thread, parameter_ };
@@ -278,8 +278,8 @@ namespace benchmark {
 
 	bool Tester::RunMacroBenchmarkScalingWithDepth()
 	{
-		constexpr int kMinRelaxationBound{ 640 };
-		constexpr int kMaxRelaxationBound{ kMinRelaxationBound << 6 };
+		constexpr int32_t kMinRelaxationBound{ 640 };
+		constexpr int32_t kMaxRelaxationBound{ kMinRelaxationBound << 6 };
 
 		for (auto rb = kMinRelaxationBound; rb <= kMaxRelaxationBound; rb *= 2) {
 			graph_->Reset();

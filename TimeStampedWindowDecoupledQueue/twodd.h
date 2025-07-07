@@ -70,7 +70,7 @@ namespace lf::twodd {
 		}
 
 		void Enq(int v) {
-			bool has_contented{ false };
+			bool has_contented{};
 			ebr_.StartOp();
 			auto node = new Node{ v };
 			Node* tail;
@@ -104,7 +104,7 @@ namespace lf::twodd {
 		}
 
 		std::optional<int> Deq() {
-			bool has_contented{ false };
+			bool has_contented{};
 			ebr_.StartOp();
 			while (true) {
 				auto head = GetHead(has_contented);

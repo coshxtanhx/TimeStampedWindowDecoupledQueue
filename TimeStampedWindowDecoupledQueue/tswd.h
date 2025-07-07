@@ -116,7 +116,7 @@ namespace lf::tswd {
 
 			auto& pq = queues_[MyThreadID::Get()];
 
-			if (pq.GetTailTimeStamp() >= put_ts + depth_) {
+			if (pq.GetTailTimeStamp() == put_ts + depth_) {
 				window_put_.CAS(put_ts, put_ts + depth_);
 			}
 			pq.Enq(node, put_ts);
@@ -162,7 +162,9 @@ namespace lf::tswd {
 					id = MyThreadID::Get();
 				}
 
-				window_get_.CAS(get_ts, get_ts + depth_);
+				if (get_ts < put_ts) {
+					window_get_.CAS(get_ts, get_ts + depth_);
+				}
 			}
 		}
 	private:

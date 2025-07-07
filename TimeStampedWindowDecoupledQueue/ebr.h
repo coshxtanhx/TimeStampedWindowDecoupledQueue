@@ -26,7 +26,7 @@ namespace lf {
 	class EBR {
 	public:
 		EBR() = delete;
-		EBR(int num_thread) noexcept
+		EBR(int num_thread)
 			: num_thread_{ num_thread }, reservations_(num_thread), retired_(num_thread) {
 		}
 		~EBR() noexcept {
@@ -43,7 +43,7 @@ namespace lf {
 		EBR& operator=(const EBR&) = delete;
 		EBR& operator=(EBR&&) = delete;
 
-		void Retire(T* ptr) noexcept {
+		void Retire(T* ptr) {
 			ptr->retire_epoch = epoch_.load(std::memory_order_relaxed);
 			retired_[MyThreadID::Get()].push(ptr);
 			if (retired_[MyThreadID::Get()].size() >= GetCapacity()) {
@@ -51,27 +51,27 @@ namespace lf {
 			}
 		}
 
-		void StartOp() noexcept {
+		void StartOp() {
 			reservations_[MyThreadID::Get()].StartOP(epoch_);
 		}
 
-		void EndOp() noexcept {
+		void EndOp() {
 			reservations_[MyThreadID::Get()].EndOp();
 		}
 
 	private:
-		uint64_t GetCapacity() const noexcept {
+		uint64_t GetCapacity() const {
 			return static_cast<uint64_t>(num_thread_ * 60);
 		}
 
-		uint64_t GetMinReservation() const noexcept {
+		uint64_t GetMinReservation() const {
 			return std::min_element(reservations_.begin(), reservations_.end(),
 				[](const Reservation& a, const Reservation& b) {
 					return a.epoch < b.epoch;
 				})->epoch;
 		}
 
-		void Clear() noexcept {
+		void Clear() {
 			auto max_safe_epoch = GetMinReservation();
 
 			while (false == retired_[MyThreadID::Get()].empty()) {

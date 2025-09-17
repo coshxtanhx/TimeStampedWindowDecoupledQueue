@@ -75,9 +75,16 @@ namespace benchmark {
 				logs.clear();
 				for (auto j = enq_logs_.cbegin(); j != enq_logs_.cend(); ++j) {
 					if (*i == j->ptr) {
+						/*std::print("trg - ({}, {})\n", j->begin, j->end);
+
+						for (const auto& l : logs) {
+							std::print("({}, {}), ", l.begin, l.end);
+						}*/
+
 						uint64_t cnt_skip = std::count_if(logs.begin(), logs.end(), [j](const RelaxationDistanceLog& log) {
-							return j->end < log.begin;
+							return log.end < j->begin;
 							});
+						//std::print("\ncnt: {}\n", cnt_skip);
 
 						enq_logs_.erase(j);
 
@@ -88,7 +95,7 @@ namespace benchmark {
 						break;
 					}
 
-					logs.emplace_back(j->begin, j->end, j->ptr);
+					logs.push_back(*j);
 				}
 			}
 

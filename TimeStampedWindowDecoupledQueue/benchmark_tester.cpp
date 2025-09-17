@@ -453,14 +453,14 @@ namespace benchmark {
 				break;
 			}
 			case Subject::k2Dd: {
-				if (parameter_ <= 0) {
+				if (parameter_ <= 0 and not scales_with_depth_) {
 					std::print("[Error] Invalid depth.\n");
 					return false;
 				}
 				break;
 			}
 			case Subject::kTSWD: {
-				if (parameter_ <= 0) {
+				if (parameter_ <= 0 and not scales_with_depth_) {
 					std::print("[Error] Invalid depth.\n");
 					return false;
 				}

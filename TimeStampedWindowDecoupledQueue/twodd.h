@@ -70,8 +70,9 @@ namespace lf::twodd {
 		}
 
 		void Enq(int v) {
-			bool has_contented{};
+			auto begin = rdm_.StartEnq();
 			ebr_.StartOp();
+			bool has_contented{};
 			auto node = new Node{ v };
 			Node* tail;
 			while (true) {
@@ -80,20 +81,18 @@ namespace lf::twodd {
 				auto next = tail->next;
 
 				if (nullptr == next) {
-					rdm_.LockEnq();
 					if (true == CAS(tail->next, nullptr, node)) {
-						rdm_.Enq(node);
-						rdm_.UnlockEnq();
 						if (false == CAS(tails_[index_].ptr, tail, node)) {
 							has_contented = true;
 						}
 						ebr_.EndOp();
 
+						rdm_.EndEnq(node, begin);
+
 						//std::cout << index_ << ' ' << window_put.max << '\n';
 
 						return;
 					}
-					rdm_.UnlockEnq();
 					has_contented = true;
 				} else {
 					if (false == CAS(tails_[index_].ptr, tail, next)) {

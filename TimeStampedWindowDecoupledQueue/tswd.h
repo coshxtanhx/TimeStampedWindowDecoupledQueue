@@ -104,15 +104,10 @@ namespace lf::tswd {
 		}
 
 		void Enq(int v) {
-			auto node = new Node{ v };
+			auto begin = rdm_.StartEnq();
 
-			/* Unless a dequeue occurs when the queue is empty,
-			using the moment of reading the time-stamp of window put
-			as the linearization point does not affect linearizability. */
-			rdm_.LockEnq();
+			auto node = new Node{ v };
 			auto put_ts = window_put_.time_stamp;
-			rdm_.Enq(node);
-			rdm_.UnlockEnq();
 
 			auto& pq = queues_[MyThreadID::Get()];
 
@@ -120,6 +115,8 @@ namespace lf::tswd {
 				window_put_.CAS(put_ts, put_ts + depth_);
 			}
 			pq.Enq(node, put_ts);
+
+			rdm_.EndEnq(node, begin);
 		}
 
 		std::optional<int> Deq() {

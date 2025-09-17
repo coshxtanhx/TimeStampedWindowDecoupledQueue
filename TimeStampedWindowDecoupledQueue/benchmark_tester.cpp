@@ -212,7 +212,7 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSWD: {
-					auto depth = rb / (kFixedNumThread - 1) - 1;
+					auto depth = rb / (kFixedNumThread - 1);
 					lf::tswd::TSWD subject{ kFixedNumThread, depth };
 					Measure(MicrobenchmarkFunc, rb, subject);
 					break;
@@ -293,7 +293,7 @@ namespace benchmark {
 					break;
 				}
 				case Subject::kTSWD: {
-					auto depth = rb / (kFixedNumThread - 1) - 1;
+					auto depth = rb / (kFixedNumThread - 1);
 					lf::tswd::TSWD subject{ kFixedNumThread, depth };
 					Measure(MacrobenchmarkFunc, rb, subject);
 					break;

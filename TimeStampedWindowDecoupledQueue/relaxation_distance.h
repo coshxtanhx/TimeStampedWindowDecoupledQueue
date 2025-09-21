@@ -8,15 +8,6 @@
 #include <limits>
 
 namespace benchmark {
-	struct RelaxationDistanceLog {
-		RelaxationDistanceLog(uint64_t begin, uint64_t end, void* ptr)
-			: begin{ begin }, end{ end }, ptr{ ptr } {}
-
-		uint64_t begin;
-		uint64_t end;
-		void* ptr;
-	};
-
 	class RelaxationDistanceManager {
 	public:
 		RelaxationDistanceManager() = default;
@@ -25,19 +16,14 @@ namespace benchmark {
 			checks_relaxation_distance_ = true;
 		}
 
-		uint64_t StartEnq() {
-			if (not checks_relaxation_distance_) {
-				return 0;
-			}
-
-			return order_.fetch_add(1);
-		}
-
-		void EndEnq(void* ptr, uint64_t begin) {
+		void LockEnq() {
 			if (checks_relaxation_distance_) {
 				mx_enq_.lock();
-				auto end = order_.fetch_add(1);
-				enq_logs_.emplace_back(begin, end, ptr);
+			}
+		}
+
+		void UnlockEnq() {
+			if (checks_relaxation_distance_) {
 				mx_enq_.unlock();
 			}
 		}
@@ -54,9 +40,15 @@ namespace benchmark {
 			}
 		}
 
-		void Deq(void* ptr) {
+		void Enq(void* node) {
 			if (checks_relaxation_distance_) {
-				deq_elements_.push_back(ptr);
+				enq_elements_.push_back(node);
+			}
+		}
+
+		void Deq(void* node) {
+			if (checks_relaxation_distance_) {
+				deq_elements_.push_back(node);
 			}
 		}
 
@@ -68,34 +60,17 @@ namespace benchmark {
 			uint64_t sum_rd{};
 			uint64_t max_rd{};
 
-			std::vector<RelaxationDistanceLog> logs;
-			logs.reserve(3000);
-
 			for (auto i = deq_elements_.cbegin(); i != deq_elements_.cend(); ++i) {
-				logs.clear();
-				for (auto j = enq_logs_.cbegin(); j != enq_logs_.cend(); ++j) {
-					if (*i == j->ptr) {
-						/*std::print("trg - ({}, {})\n", j->begin, j->end);
-
-						for (const auto& l : logs) {
-							std::print("({}, {}), ", l.begin, l.end);
-						}*/
-
-						uint64_t cnt_skip = std::count_if(logs.begin(), logs.end(), [j](const RelaxationDistanceLog& log) {
-							return log.end < j->begin;
-							});
-						//std::print("\ncnt: {}\n", cnt_skip);
-
-						enq_logs_.erase(j);
-
+				uint64_t cnt_skip{};
+				for (auto j = enq_elements_.cbegin(); j != enq_elements_.cend(); ++j, ++cnt_skip) {
+					if (*i == *j) {
+						enq_elements_.erase(j);
 						sum_rd += cnt_skip;
 						if (cnt_skip > max_rd) {
 							max_rd = cnt_skip;
 						}
 						break;
 					}
-
-					logs.push_back(*j);
 				}
 			}
 
@@ -104,11 +79,10 @@ namespace benchmark {
 
 	private:
 		bool checks_relaxation_distance_{};
-		std::atomic<uint64_t> order_;
 		std::mutex mx_enq_;
 		std::mutex mx_deq_;
 		std::deque<void*> deq_elements_;
-		std::list<RelaxationDistanceLog> enq_logs_;
+		std::list<void*> enq_elements_;
 	};
 }
 

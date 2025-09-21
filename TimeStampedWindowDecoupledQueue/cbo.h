@@ -34,7 +34,9 @@ namespace lf::cbo {
 			delete head_;
 		}
 
-		void Enq(Node* node) {
+		void Enq(int v, benchmark::RelaxationDistanceManager& rdm) {
+			auto node = new Node{ v };
+
 			while (true) {
 				auto loc_tail = tail_;
 				auto next = loc_tail->next;
@@ -45,10 +47,14 @@ namespace lf::cbo {
 
 				if (nullptr == next) {
 					node->stamp = loc_tail->stamp + 1;
+					rdm.LockEnq();
 					if (true == CAS(loc_tail->next, nullptr, node)) {
+						rdm.Enq(node);
+						rdm.UnlockEnq();
 						CAS(tail_, loc_tail, node);
 						return;
 					}
+					rdm.UnlockEnq();
 				} else {
 					CAS(tail_, loc_tail, next);
 				}
@@ -122,14 +128,9 @@ namespace lf::cbo {
 		}
 
 		void Enq(int v) {
-			auto begin = rdm_.StartEnq();
-			auto node = new Node{ v };
-
 			ebr_.StartOp();
-			queues_[GetEnqueuerIndex()].Enq(node);
+			queues_[GetEnqueuerIndex()].Enq(v, rdm_);
 			ebr_.EndOp();
-
-			rdm_.EndEnq(node, begin);
 		}
 
 		std::optional<int> Deq() {

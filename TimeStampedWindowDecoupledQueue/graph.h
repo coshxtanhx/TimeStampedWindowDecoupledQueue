@@ -79,9 +79,9 @@ public:
 	}
 
 	void PrintStatus() const {
-		std::print("     vertices: {}\n", num_vertex_);
-		std::print("        edges: {}\n", num_edge_);
-		std::print("shortest dist: {}\n\n", shortest_distance_);
+		PRINT("     vertices: {}\n", num_vertex_);
+		PRINT("        edges: {}\n", num_edge_);
+		PRINT("shortest dist: {}\n\n", shortest_distance_);
 	}
 
 	auto GetShortestDistance() const {

@@ -80,19 +80,19 @@ namespace benchmark {
 
 			results[key].emplace_back(elapsed_sec, num_element, sum_rd, max_rd);
 
-			std::print("     threads: {}\n", num_thread);
+			PRINT("     threads: {}\n", num_thread);
 			if (scales_with_depth_) {
-				std::print("k-relaxation: {}\n", key);
+				PRINT("k-relaxation: {}\n", key);
 			}
 			if (checks_relaxation_distance_) {
-				std::print("    avg dist: {:.2f}\n", static_cast<double>(sum_rd) / num_element);
-				std::print("    max dist: {}\n", max_rd);
+				PRINT("    avg dist: {:.2f}\n", static_cast<double>(sum_rd) / num_element);
+				PRINT("    max dist: {}\n", max_rd);
 			} else {
-				std::print("elapsed time: {:.2f} sec\n", elapsed_sec);
+				PRINT("elapsed time: {:.2f} sec\n", elapsed_sec);
 				auto throughput = kTotalNumOp / elapsed_sec / 1e6;
-				std::print("  throughput: {:.2f} MOp/s\n", throughput);
+				PRINT("  throughput: {:.2f} MOp/s\n", throughput);
 			}
-			std::print("\n");
+			PRINT("\n");
 		}
 
 		template<class Subject>
@@ -111,13 +111,13 @@ namespace benchmark {
 			auto distance = *std::min_element(distances.begin(), distances.end());
 			auto elapsed_sec = stopwatch.GetDuration();
 
-			std::print("     threads: {}\n", num_thread);
+			PRINT("     threads: {}\n", num_thread);
 			if (scales_with_depth_) {
-				std::print("k-relaxation: {}\n", key);
+				PRINT("k-relaxation: {}\n", key);
 			}
-			std::print("elapsed time: {:.2f} sec\n", elapsed_sec);
-			std::print("    distance: {}\n", distance);
-			std::print("\n");
+			PRINT("elapsed time: {:.2f} sec\n", elapsed_sec);
+			PRINT("    distance: {}\n", distance);
+			PRINT("\n");
 
 			results[key].emplace_back(elapsed_sec, distance);
 		}

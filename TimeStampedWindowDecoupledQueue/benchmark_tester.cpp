@@ -11,7 +11,7 @@ namespace benchmark {
 	void Tester::Run()
 	{
 		while (true) {
-			std::print("Command ('h' for help): ");
+			PRINT("Command ('h' for help): ");
 			std::string cmd;
 			std::getline(std::cin, cmd);
 
@@ -87,7 +87,7 @@ namespace benchmark {
 			return;
 		}
 
-		std::print("Input the number of times to repeat: ");
+		PRINT("Input the number of times to repeat: ");
 		auto num_repeat{ InputNumber<int>() };
 		if (0 == num_repeat) {
 			return;
@@ -96,7 +96,7 @@ namespace benchmark {
 		results.clear();
 
 		for (int i = 1; i <= num_repeat; ++i) {
-			std::print("---------- {}/{} ----------\n", i, num_repeat);
+			PRINT("---------- {}/{} ----------\n", i, num_repeat);
 			if (scales_with_depth_) {
 				if (false == RunMicroBenchmarkScalingWithDepth()) {
 					return;
@@ -118,11 +118,11 @@ namespace benchmark {
 		}
 
 		if (nullptr == graph_) {
-			std::print("[Error] Generate or load graph first.\n\n");
+			PRINT("[Error] Generate or load graph first.\n\n");
 			return;
 		}
 		
-		std::print("Input the number of times to repeat: ");
+		PRINT("Input the number of times to repeat: ");
 		auto num_repeat{ InputNumber<int>() };
 		if (0 == num_repeat) {
 			return;
@@ -132,7 +132,7 @@ namespace benchmark {
 		graph_->PrintStatus();
 
 		for (int i = 1; i <= num_repeat; ++i) {
-			std::print("---------- {}/{} ----------\n", i, num_repeat);
+			PRINT("---------- {}/{} ----------\n", i, num_repeat);
 			if (scales_with_depth_) {
 				if (false == RunMacroBenchmarkScalingWithDepth()) {
 					return;
@@ -189,7 +189,7 @@ namespace benchmark {
 					break;
 				}
 				default: {
-					std::print("[Error] Invalid subject.\n\n");
+					PRINT("[Error] Invalid subject.\n\n");
 					return false;
 				}
 			}
@@ -218,7 +218,7 @@ namespace benchmark {
 					break;
 				}
 				default: {
-					std::print("[Error] Invalid subject. 'Scaling with depth' mode is only for 2Dd or TSWD.\n\n");
+					PRINT("[Error] Invalid subject. 'Scaling with depth' mode is only for 2Dd or TSWD.\n\n");
 					return false;
 				}
 			}
@@ -268,7 +268,7 @@ namespace benchmark {
 					break;
 				}
 				default: {
-					std::print("[Error] Invalid subject.\n");
+					PRINT("[Error] Invalid subject.\n");
 					return false;
 				}
 			}
@@ -299,7 +299,7 @@ namespace benchmark {
 					break;
 				}
 				default: {
-					std::print("[Error] Invalid subject. 'Scaling with depth' mode is only for 2Dd or TSWD.\n\n");
+					PRINT("[Error] Invalid subject. 'Scaling with depth' mode is only for 2Dd or TSWD.\n\n");
 					return false;
 				}
 			}
@@ -311,40 +311,40 @@ namespace benchmark {
 	{
 		//kNone, kTSCAS, kTSStutter, kTSAtomic, kTSInterval, kCBO, k2Dd, kTSWD
 
-		std::print("\n--- List ---\n");
-		std::print("1: TS-CAS, 2: TS-stutter, 3: TS-atomic, 4: TS-interval,\n");
-		std::print("5: d-CBO, 6: 2Dd, 7: TSWD\n");
-		std::print("Subject: ");
+		PRINT("\n--- List ---\n");
+		PRINT("1: TS-CAS, 2: TS-stutter, 3: TS-atomic, 4: TS-interval,\n");
+		PRINT("5: d-CBO, 6: 2Dd, 7: TSWD\n");
+		PRINT("Subject: ");
 		subject_ = static_cast<Subject>(InputNumber<int>());
 	}
 
 	void Tester::SetParameter()
 	{
-		std::print("\n--- List ---\n");;
-		std::print("     TS-cas: [parameter] = delay (microsec)\n");
-		std::print("TS-interval: [parameter] = delay (microsec)\n");
-		std::print("      d-CBO: [parameter] = d\n");
-		std::print("        2Dd: [parameter] = depth\n");
-		std::print("       TSWD: [parameter] = depth\n");
-		std::print("Parameter: ");
+		PRINT("\n--- List ---\n");;
+		PRINT("     TS-cas: [parameter] = delay (microsec)\n");
+		PRINT("TS-interval: [parameter] = delay (microsec)\n");
+		PRINT("      d-CBO: [parameter] = d\n");
+		PRINT("        2Dd: [parameter] = depth\n");
+		PRINT("       TSWD: [parameter] = depth\n");
+		PRINT("Parameter: ");
 		parameter_ = InputNumber<int>();
 	}
 
 	void Tester::SetEnqRate()
 	{
-		std::print("Enqueue rate(%): ");
+		PRINT("Enqueue rate(%): ");
 		enq_rate_ = InputNumber<float>();
 	}
 
 	void Tester::SetWidth()
 	{
-		std::print("Input width (0 = use nbr thread): ");
+		PRINT("Input width (0 = use nbr thread): ");
 		width_ = InputNumber<int>();
 	}
 
 	void Tester::SetDelay()
 	{
-		std::print("Set delay (microsec): ");
+		PRINT("Set delay (microsec): ");
 		delay_ = InputNumber<float>();
 	}
 
@@ -352,9 +352,9 @@ namespace benchmark {
 	{
 		checks_relaxation_distance_ ^= true;
 		if (checks_relaxation_distance_) {
-			std::print("Checks relaxation distance.\n");
+			PRINT("Checks relaxation distance.\n");
 		} else {
-			std::print("Checks throughput.\n");
+			PRINT("Checks throughput.\n");
 		}
 	}
 
@@ -362,27 +362,27 @@ namespace benchmark {
 	{
 		scales_with_depth_ ^= true;
 		if (scales_with_depth_) {
-			std::print("Scales with depth.\n");
+			PRINT("Scales with depth.\n");
 		} else {
-			std::print("Scales with thread.\n");
+			PRINT("Scales with thread.\n");
 		}
 	}
 
 	void Tester::GenerateGraph()
 	{
-		std::print("\n--- List ---\n");
-		std::print("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
-		std::print("Graph Type: ");
+		PRINT("\n--- List ---\n");
+		PRINT("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
+		PRINT("Graph Type: ");
 
 		auto graph_type{ InputNumber<int>() };
 
 		if (graph_type < static_cast<int>(Graph::Type::kAlpha)
 			or graph_type > static_cast<int>(Graph::Type::kZeta)) {
-			std::print("[Error] Invalid graph type.\n");
+			PRINT("[Error] Invalid graph type.\n");
 			return;
 		}
 
-		std::print("Generating the graph. Please wait a moment.\n");
+		PRINT("Generating the graph. Please wait a moment.\n");
 
 		graph_ = std::make_unique<Graph>(static_cast<Graph::Type>(graph_type), Graph::Option::kGenerate);
 		graph_->Save();
@@ -390,15 +390,15 @@ namespace benchmark {
 
 	void Tester::LoadGraph()
 	{
-		std::print("\n--- List ---\n");
-		std::print("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
-		std::print("Graph Type: ");
+		PRINT("\n--- List ---\n");
+		PRINT("1: Alpha, 2: Beta, 3: Gamma, 4: Delta, 5: Epsilon, 6: Zeta\n");
+		PRINT("Graph Type: ");
 
 		auto graph_type{ InputNumber<int>() };
 
 		if (graph_type < static_cast<int>(Graph::Type::kAlpha)
 			or graph_type > static_cast<int>(Graph::Type::kZeta)) {
-			std::print("[Error] Invalid graph type.\n");
+			PRINT("[Error] Invalid graph type.\n");
 			return;
 		}
 
@@ -411,26 +411,26 @@ namespace benchmark {
 
 	void Tester::PrintHelp() const
 	{
-		std::print("e: Set enqueue rate\n");
-		std::print("m: Toggle microbenchmark mode (throughput/relaxation)\n");
-		std::print("c: Toggle scaling mode (thread/depth)\n");
-		std::print("s: Set subject\n");
-		std::print("p: Set parameter\n");
-		std::print("w: Set width\n");
-		std::print("d: Set delay\n");
-		std::print("l: Load graph\n");
-		std::print("g: Generate graph\n");
-		std::print("i: Microbenchmark\n");
-		std::print("a: Macrobenchmark\n");
-		std::print("h: Help\n");
-		std::print("q: Quit\n");
-		std::print("\n");
+		PRINT("e: Set enqueue rate\n");
+		PRINT("m: Toggle microbenchmark mode (throughput/relaxation)\n");
+		PRINT("c: Toggle scaling mode (thread/depth)\n");
+		PRINT("s: Set subject\n");
+		PRINT("p: Set parameter\n");
+		PRINT("w: Set width\n");
+		PRINT("d: Set delay\n");
+		PRINT("l: Load graph\n");
+		PRINT("g: Generate graph\n");
+		PRINT("i: Microbenchmark\n");
+		PRINT("a: Macrobenchmark\n");
+		PRINT("h: Help\n");
+		PRINT("q: Quit\n");
+		PRINT("\n");
 	}
 
 	bool Tester::HasValidParameter() const
 	{
 		if (width_ < 0) {
-			std::print("[Error] Invalid width.\n");
+			PRINT("[Error] Invalid width.\n");
 			return false;
 		}
 
@@ -447,21 +447,21 @@ namespace benchmark {
 				}
 
 				if (parameter_ <= 0 or parameter_ > min_width) {
-					std::print("[Error] Invalid d.\n");
+					PRINT("[Error] Invalid d.\n");
 					return false;
 				}
 				break;
 			}
 			case Subject::k2Dd: {
 				if (parameter_ <= 0 and not scales_with_depth_) {
-					std::print("[Error] Invalid depth.\n");
+					PRINT("[Error] Invalid depth.\n");
 					return false;
 				}
 				break;
 			}
 			case Subject::kTSWD: {
 				if (parameter_ <= 0 and not scales_with_depth_) {
-					std::print("[Error] Invalid depth.\n");
+					PRINT("[Error] Invalid depth.\n");
 					return false;
 				}
 				break;

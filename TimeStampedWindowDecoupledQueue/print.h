@@ -8,8 +8,9 @@
 
 #ifdef __cpp_lib_print
 #include <print>
+#define PRINT std::print 
 #else
-#define print cout << std::format
+#define PRINT std::cout << std::format
 #endif
 
 #endif

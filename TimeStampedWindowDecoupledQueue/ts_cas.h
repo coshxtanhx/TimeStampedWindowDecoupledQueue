@@ -97,9 +97,8 @@ namespace lf::ts_cas {
 	private:
 		bool CAS(Node* volatile& trg, Node* expected, Node* desired) {
 			return std::atomic_compare_exchange_strong(
-				reinterpret_cast<volatile std::atomic<uint64_t>*>(&trg),
-				reinterpret_cast<uint64_t*>(&expected),
-				reinterpret_cast<uint64_t>(desired));
+				reinterpret_cast<volatile std::atomic<Node*>*>(&trg),
+				&expected, desired);
 		}
 
 		alignas(std::hardware_destructive_interference_size) Node* volatile tail_;

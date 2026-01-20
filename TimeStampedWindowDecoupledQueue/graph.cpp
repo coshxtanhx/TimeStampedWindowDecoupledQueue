@@ -18,7 +18,7 @@ void Graph::Save()
 
 	out.write(reinterpret_cast<const char*>(&shortest_distance_), sizeof(shortest_distance_));
 
-	PRINT("Graph has been generated.\n");
+	compat::Print("Graph has been generated.\n");
 	PrintStatus();
 }
 
@@ -100,7 +100,7 @@ void Graph::Load()
 	std::ifstream in{ std::format("graph{}.bin", static_cast<int>(type_)), std::ios::binary };
 
 	if (in.fail()) {
-		PRINT("[Error] File does not exist.\n");
+		compat::Print("[Error] File does not exist.\n");
 		return;
 	}
 
@@ -120,7 +120,7 @@ void Graph::Load()
 
 	in.read(reinterpret_cast<char*>(&shortest_distance_), sizeof(shortest_distance_));
 
-	PRINT("Graph has been loaded.\n");
+	compat::Print("Graph has been loaded.\n");
 	PrintStatus();
 }
 

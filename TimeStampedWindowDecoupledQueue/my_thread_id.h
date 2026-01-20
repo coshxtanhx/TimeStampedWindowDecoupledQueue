@@ -8,14 +8,14 @@ class MyThreadID {
 public:
 	static void Set(int id) {
 		if (kUndefinedThreadID != id_) [[unlikely]] {
-			PRINT("[Error] Thread ID has already been assigned.\n");
+			compat::Print("[Error] Thread ID has already been assigned.\n");
 			std::exit(getchar());
 		}
 		id_ = id;
 	}
 	static int Get() {
 		if (kUndefinedThreadID == id_) [[unlikely]] {
-			PRINT("[Error] Must register thread ID first.\n");
+			compat::Print("[Error] Must register thread ID first.\n");
 			exit(getchar());
 		}
 		return id_;

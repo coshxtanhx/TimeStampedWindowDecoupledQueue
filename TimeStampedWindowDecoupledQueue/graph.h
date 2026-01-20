@@ -79,9 +79,9 @@ public:
 	}
 
 	void PrintStatus() const {
-		PRINT("     vertices: {}\n", num_vertex_);
-		PRINT("        edges: {}\n", num_edge_);
-		PRINT("shortest dist: {}\n\n", shortest_distance_);
+		compat::Print("     vertices: {}\n", num_vertex_);
+		compat::Print("        edges: {}\n", num_edge_);
+		compat::Print("shortest dist: {}\n\n", shortest_distance_);
 	}
 
 	auto GetShortestDistance() const {

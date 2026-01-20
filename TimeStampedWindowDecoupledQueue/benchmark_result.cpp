@@ -7,11 +7,11 @@ namespace benchmark {
 	{
 		for (auto i = cbegin(); i != cend(); ++i) {
 			if (scales_with_depth) {
-				PRINT("k-relaxation: {:5}", i->first);
+				compat::Print("k-relaxation: {:5}", i->first);
 			} else {
-				PRINT("threads: {:2}", i->first);
+				compat::Print("threads: {:2}", i->first);
 			}
-			PRINT("  |  ");
+			compat::Print("  |  ");
 
 			auto& results = i->second;
 
@@ -24,26 +24,26 @@ namespace benchmark {
 					return acc + r.sum_relaxation_distance;
 					});
 				auto avg_dist = static_cast<double>(sum_rd) / total_element;
-				PRINT("avg dist: {:7.2f}\n", avg_dist);
+				compat::Print("avg dist: {:7.2f}\n", avg_dist);
 			} else {
 				auto avg_sec = std::accumulate(results.begin(), results.end(), 0.0, [](double acc, const Result& r) {
 					return acc + r.elapsed_sec;
 					}) / results.size();
 				auto throughput = num_op / 1e6 / avg_sec;
-				PRINT("avg throughput: {:5.2f} MOp/s\n", throughput);
+				compat::Print("avg throughput: {:5.2f} MOp/s\n", throughput);
 			}
 		}
-		PRINT("\n");
+		compat::Print("\n");
 	}
 
 	void ResultMap::PrintResult(bool scales_with_depth, int32_t distance) const
 	{
 		for (auto i = cbegin(); i != cend(); ++i) {
 			if (scales_with_depth) {
-				PRINT("k-relaxation: {:5}", i->first);
+				compat::Print("k-relaxation: {:5}", i->first);
 				
 			} else {
-				PRINT("threads: {:2}", i->first);
+				compat::Print("threads: {:2}", i->first);
 			}
 
 			auto& results = i->second;
@@ -51,7 +51,7 @@ namespace benchmark {
 			auto avg_sec = std::accumulate(results.begin(), results.end(), 0.0, [](double acc, const Result& r) {
 				return acc + r.elapsed_sec;
 				}) / results.size();
-			PRINT("  |  avg elapsed time: {:5.2f} sec", avg_sec);
+			compat::Print("  |  avg elapsed time: {:5.2f} sec", avg_sec);
 
 			auto sum_dist = std::accumulate(results.begin(), results.end(), 0, [](int32_t acc, const Result& r) {
 				return acc + r.distance;
@@ -59,9 +59,9 @@ namespace benchmark {
 
 			auto avg_error = (static_cast<double>(sum_dist) / results.size()
 				- distance) / distance * 100.0;
-			PRINT("  |  avg error: {:.4f}%\n", avg_error);
+			compat::Print("  |  avg error: {:.4f}%\n", avg_error);
 		}
-		PRINT("\n");
+		compat::Print("\n");
 	}
 
 	void ResultMap::Save(bool checks_relaxation_distance, bool scales_with_depth,

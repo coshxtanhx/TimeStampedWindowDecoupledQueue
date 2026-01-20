@@ -14,9 +14,34 @@
 #include "subject_type.h"
 
 namespace benchmark {
+
 	class Tester {
 	public:
-		Tester() = default;
+		Tester() {
+			auto max_thread = std::thread::hardware_concurrency();
+			switch (max_thread) {
+				case 8: {
+					fixed_num_thread_ = 6;
+					num_threads_ = decltype(num_threads_){ 2, 4, 6, 8 };
+					break;
+				}
+				case 16: {
+					fixed_num_thread_ = 11;
+					num_threads_ = decltype(num_threads_){ 4, 8, 12, 16 };
+					break;
+				}
+				case 40: {
+					fixed_num_thread_ = 33;
+					num_threads_ = decltype(num_threads_){ 10, 20, 30, 40 };
+					break;
+				}
+				default: {
+					fixed_num_thread_ = 41;
+					num_threads_ = decltype(num_threads_){ 12, 24, 48, 72 };
+					break;
+				}
+			}
+		}
 
 		void Run();
 		void RunMicroBenchmark();
@@ -63,7 +88,7 @@ namespace benchmark {
 		template<class Subject>
 		void Measure(MicrobenchmarkFuncT<Subject> thread_func, int32_t key, Subject& subject) {
 			Stopwatch stopwatch;
-			auto num_thread = scales_with_depth_ ? kFixedNumThread : key;
+			auto num_thread = scales_with_depth_ ? fixed_num_thread_ : key;
 
 			results.try_emplace(key, std::vector<Result>{});
 
@@ -80,19 +105,19 @@ namespace benchmark {
 
 			results[key].emplace_back(elapsed_sec, num_element, sum_rd, max_rd);
 
-			PRINT("     threads: {}\n", num_thread);
+			compat::Print("     threads: {}\n", num_thread);
 			if (scales_with_depth_) {
-				PRINT("k-relaxation: {}\n", key);
+				compat::Print("k-relaxation: {}\n", key);
 			}
 			if (checks_relaxation_distance_) {
-				PRINT("    avg dist: {:.2f}\n", static_cast<double>(sum_rd) / num_element);
-				PRINT("    max dist: {}\n", max_rd);
+				compat::Print("    avg dist: {:.2f}\n", static_cast<double>(sum_rd) / num_element);
+				compat::Print("    max dist: {}\n", max_rd);
 			} else {
-				PRINT("elapsed time: {:.2f} sec\n", elapsed_sec);
+				compat::Print("elapsed time: {:.2f} sec\n", elapsed_sec);
 				auto throughput = kTotalNumOp / elapsed_sec / 1e6;
-				PRINT("  throughput: {:.2f} MOp/s\n", throughput);
+				compat::Print("  throughput: {:.2f} MOp/s\n", throughput);
 			}
-			PRINT("\n");
+			compat::Print("\n");
 		}
 
 		template<class Subject>
@@ -100,7 +125,7 @@ namespace benchmark {
 			graph_->Reset();
 
 			Stopwatch stopwatch;
-			auto num_thread = scales_with_depth_ ? kFixedNumThread : key;
+			auto num_thread = scales_with_depth_ ? fixed_num_thread_ : key;
 			std::vector<int32_t> distances(num_thread, std::numeric_limits<int>::max());
 			
 			results.try_emplace(key, std::vector<Result>{});
@@ -111,13 +136,13 @@ namespace benchmark {
 			auto distance = *std::min_element(distances.begin(), distances.end());
 			auto elapsed_sec = stopwatch.GetDuration();
 
-			PRINT("     threads: {}\n", num_thread);
+			compat::Print("     threads: {}\n", num_thread);
 			if (scales_with_depth_) {
-				PRINT("k-relaxation: {}\n", key);
+				compat::Print("k-relaxation: {}\n", key);
 			}
-			PRINT("elapsed time: {:.2f} sec\n", elapsed_sec);
-			PRINT("    distance: {}\n", distance);
-			PRINT("\n");
+			compat::Print("elapsed time: {:.2f} sec\n", elapsed_sec);
+			compat::Print("    distance: {}\n", distance);
+			compat::Print("\n");
 
 			results[key].emplace_back(elapsed_sec, distance);
 		}
@@ -169,9 +194,6 @@ namespace benchmark {
 
 		bool HasValidParameter() const;
 
-		static constexpr auto kFixedNumThread{ 41 };
-		static constexpr std::array<int, 4> kNumThreads{ 12, 24, 48, 72 };
-
 		std::unique_ptr<Graph> graph_{};
 		int parameter_{};
 		int width_{};
@@ -181,6 +203,9 @@ namespace benchmark {
 		bool scales_with_depth_{};
 		float enq_rate_{ 50.0f };
 		float delay_{ 1.2f };
+
+		int fixed_num_thread_{};
+		std::array<int, 4> num_threads_{};
 	};
 }
 

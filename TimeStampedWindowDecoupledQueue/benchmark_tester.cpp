@@ -402,6 +402,7 @@ namespace benchmark {
 			return;
 		}
 
+		graph_.reset();
 		graph_ = std::make_unique<Graph>(static_cast<Graph::Type>(graph_type), Graph::Option::kLoad);
 		
 		if (not graph_->IsValid()) {

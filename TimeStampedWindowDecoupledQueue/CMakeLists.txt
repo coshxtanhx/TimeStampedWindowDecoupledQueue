@@ -13,6 +13,6 @@ add_compile_options(-Wno-interference-size -Wno-volatile)
 
 add_executable(TSWD ${SOURCES})
 
-target_link_libraries(TimeStampedWindowDecoupledQueue PRIVATE
+target_link_libraries(TSWD PRIVATE
     /usr/lib/x86_64-linux-gnu/libtbb.so
 )

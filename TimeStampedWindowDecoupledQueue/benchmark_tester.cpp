@@ -271,6 +271,7 @@ namespace benchmark {
 				case Subject::kTBB: {
 					TBBQueue subject;
 					Measure(MacrobenchmarkFunc, num_thread, subject);
+					break;
 				}
 				default: {
 					compat::Print("[Error] Invalid subject.\n");

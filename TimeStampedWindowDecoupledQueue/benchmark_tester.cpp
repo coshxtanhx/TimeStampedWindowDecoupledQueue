@@ -6,7 +6,6 @@
 #include "ts_stutter.h"
 #include "twodd.h"
 #include "tswd.h"
-#include "tbb_queue.h"
 
 namespace benchmark {
 	void Tester::Run()
@@ -265,11 +264,6 @@ namespace benchmark {
 				}
 				case Subject::kTSWD: {
 					lf::tswd::TSWD subject{ num_thread, parameter_ };
-					Measure(MacrobenchmarkFunc, num_thread, subject);
-					break;
-				}
-				case Subject::kTBB: {
-					TBBQueue subject;
 					Measure(MacrobenchmarkFunc, num_thread, subject);
 					break;
 				}

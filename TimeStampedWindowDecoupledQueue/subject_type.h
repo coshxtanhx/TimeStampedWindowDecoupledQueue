@@ -7,7 +7,7 @@
 
 namespace benchmark {
 	enum class Subject : uint8_t {
-		kNone, kTSCAS, kTSStutter, kTSAtomic, kTSInterval, kCBO, k2Dd, kTSWD, kTBB
+		kNone, kTSCAS, kTSStutter, kTSAtomic, kTSInterval, kCBO, k2Dd, kTSWD
 	};
 
 	inline std::string GetSubjectName(Subject subject)

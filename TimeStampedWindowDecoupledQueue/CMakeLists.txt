@@ -12,3 +12,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 add_compile_options(-Wno-interference-size -Wno-volatile)
 
 add_executable(TSWD ${SOURCES})
+
+target_link_libraries(TimeStampedWindowDecoupledQueue PRIVATE
+    /usr/lib/x86_64-linux-gnu/libtbb.so
+)

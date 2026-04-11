@@ -35,6 +35,11 @@ namespace benchmark {
 					num_threads_ = decltype(num_threads_){ 10, 20, 30, 40 };
 					break;
 				}
+				case 56: {
+					fixed_num_thread_ = 41;
+					num_threads_ = decltype(num_threads_){ 12, 24, 40, 56 };
+					break;
+				}
 				default: {
 					fixed_num_thread_ = 41;
 					num_threads_ = decltype(num_threads_){ 12, 24, 48, 72 };
